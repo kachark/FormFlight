@@ -128,9 +128,12 @@ if __name__ == "__main__":
     ax3.set_xlabel('x')
 
 
-    plt.figure()
-    plt.plot(costs)
-    plt.title("Cost Function")
+    f, (ax1, ax2) = plt.subplots(1,2, figsize=(15, 5))
+    ax1.plot(costs)
+    ax1.set_title("Stage Cost")
+
+    ax2.plot(np.cumsum(costs))
+    ax2.set_title("Cumulative Cost")
     plt.show()
     # for ii in range()a    
     
