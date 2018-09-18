@@ -126,7 +126,11 @@ if __name__ == "__main__":
     ax3.plot(res[:, 0], res[:, 1], 'o')
     ax3.set_ylabel('y')
     ax3.set_xlabel('x')
-    
+
+
+    plt.figure()
+    plt.plot(costs)
+    plt.title("Cost Function")
     plt.show()
     # for ii in range()a    
     
