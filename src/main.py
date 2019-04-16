@@ -22,7 +22,7 @@ class Assignment:
 
     def assignment(self, t, ref_states, target_states):
         pass
-    
+
 class AssignmentLexical(Assignment):
 
     def assignment(self, t, ref_states, target_states):
@@ -34,24 +34,26 @@ class AssignmentEMD(Assignment):
     def assignment(self, t, ref_states, target_states):
         """
         ref_states and target_states are lists of tuples
-        each tuple is (state, Agent). 
+        each tuple is (state, Agent).
 
-        For the nearest neighbor EMD assignment, the information 
+        For the nearest neighbor EMD assignment, the information
         about the Agent is unnecessary. However, for other distances
         or other costs, this information should be extracted
         from the agents.
         """
-        
+
+        n = len(ref_states) +  len(target_states)
+
         ## Assume first two states are the positions
         nagents = len(ref_states)
         ntargets = len(target_states)
-        
+
         dim_state = ref_states[0][0].shape[0]
         dim_pos = int(dim_state / 2)
 
         xs = np.zeros((nagents, dim_pos))
         xt = np.zeros((ntargets, dim_pos))
-        
+
         for ii, state in enumerate(ref_states):
             # print(ii, state[0])
             xs[ii, :] = state[0][:dim_pos]
@@ -61,15 +63,16 @@ class AssignmentEMD(Assignment):
 
         a = np.ones((nagents,)) / nagents
         b = np.ones((ntargets,)) / ntargets
-        
+
         M = ot.dist(xs, xt)
         M /= M.max()
-        
+
         G0, log = ot.emd(a, b, M, log=True)
         cost = log['cost']
 
         # thresh = 4e-1 # 2v2 case
-        thresh = 4e-2 # 2v2 case
+        # thresh = 4e-2 # 2v2 case
+        thresh = 1/n
         G0[G0>thresh] = 1
 
         # print(log)
@@ -84,18 +87,20 @@ class AssignmentDyn(Assignment):
     def assignment(self, t, ref_states, target_states):
         """
         ref_states and target_states are lists of tuples
-        each tuple is (state, Agent). 
+        each tuple is (state, Agent).
 
-        For the nearest neighbor EMD assignment, the information 
+        For the nearest neighbor EMD assignment, the information
         about the Agent is unnecessary. However, for other distances
         or other costs, this information should be extracted
         from the agents.
         """
-        
+
+        n = len(ref_states) + len(target_states)
+
         ## Assume first two states are the positions
         nagents = len(ref_states)
         ntargets = len(target_states)
-        
+
         dim_state = ref_states[0][0].shape[0]
 
         M = np.zeros((nagents, ntargets))
@@ -105,17 +110,18 @@ class AssignmentDyn(Assignment):
 
         # print(M)
         M /= M.max() # I dont divide b
-        
+
         a = np.ones((nagents,)) / nagents
         b = np.ones((ntargets,)) / ntargets
 
         G0, log = ot.emd(a, b, M, log=True)
         # print(G0)
-        cost = log['cost']        
+        cost = log['cost']
         # thresh = 4e-1 # 2v2
-        thresh = 4e-2
+        # thresh = 4e-2
+        thresh = 1/n
         G0[G0>thresh] = 1
-        
+
         inds = np.arange(ntargets)
         assignment = np.dot(G0, inds)
         assignment = np.array([int(a) for a in assignment])
@@ -132,7 +138,7 @@ class ZeroPol:
 
     def evaluate(self, time, state):
         return self.u
-    
+
 class LinearFeedback:
 
     def __init__(self, A, B, Q, R):
@@ -144,7 +150,7 @@ class LinearFeedback:
         return np.dot(self.K, state)
 
     def get_P(self):
-        return self.P    
+        return self.P
 
 class LinearFeedbackTracking(LinearFeedback):
 
@@ -230,7 +236,7 @@ class TrackingAgent(Agent):
 
 ################################
 ## Big Systems
-############################### 
+################################
 class System:
 
     def __init__(self, agents):
@@ -249,7 +255,7 @@ class OneVOne(System):
         self.tsize_inds = self.size_inds[-1] + np.cumsum(self.sizes)
         self.ntargets = len(self.targets)
         self.apol = pol
-        
+
         self.current_assignment = None #(tuple of assignment, cost)
 
     def compute_assignments(self, t, x0):
@@ -267,7 +273,7 @@ class OneVOne(System):
 
         assignments, cost = self.apol.assignment(t, agents, targets)
         return assignments, cost
-        
+
     def update(self, t0, x0, dt):
 
         # print("Warning: Assumes that Each Target is Assigned To")
@@ -276,7 +282,7 @@ class OneVOne(System):
 
         if cost is not None:
             print(t0, cost, assignment)
-        
+
         def dyn(t, x):
 
             dxdt = np.zeros(x.shape)
@@ -288,7 +294,7 @@ class OneVOne(System):
                 tind_end = self.tsize_inds[jj]
                 tind_start = self.tsize_inds[jj] - self.tsizes[jj]
                 xtarget = x[tind_start:tind_end]
-                
+
                 # Target Control
                 tu = self.targets[jj].pol.evaluate(t, xtarget)
 
@@ -296,7 +302,7 @@ class OneVOne(System):
                 ind_end = self.size_inds[ii]
                 ind_start = self.size_inds[ii] - self.sizes[ii]
                 xagent = x[ind_start:ind_end]
-                
+
                 # Agent Control
                 # print(agent.pol)
                 u = agent.pol.evaluate(t, xagent, xtarget, feedforward=tu)
@@ -305,9 +311,9 @@ class OneVOne(System):
                 # print("u = ", u)
                 dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u)
                 dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
-                
+
             return dxdt
-            
+
 
         tspan = (t0, t0+dt)
         bunch = scint.solve_ivp(dyn, tspan, x0, method='BDF')
@@ -321,7 +327,7 @@ class OneVOne(System):
 
 ################################
 ## Game Engine
-###############################         
+###############################
 class Engine:
 
     def __init__(self, dt=0.1, maxtime=10):
@@ -334,7 +340,7 @@ class Engine:
             self.df = newdf
         else:
             self.df = pd.concat([self.df, newdf.iloc[1:,:]], ignore_index=True)
-            
+
     def run(self, x0, system):
 
         current_state = copy.deepcopy(x0)
@@ -347,7 +353,7 @@ class Engine:
             newdf = pd.DataFrame(np.hstack((thist[:, np.newaxis],
                                             state_hist,
                                             assign_hist)))
-            
+
             self.log(newdf)
 
             time = time + self.dt
@@ -362,15 +368,18 @@ def run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltargets, apol, nage
     # ntargets = 2
     agents = [TrackingAgent(dx, ltidyn, poltrack) for ii in range(nagents)]
     targets = [Agent(dx, ltidyn, poltarget) for ii, poltarget in enumerate(poltargets)]
-    
+
     sys = OneVOne(agents, targets, apol)
     eng = Engine(dt=0.1, maxtime=10)
     eng.run(x0, sys)
     # print(eng.df.tail(10))
-    
-    post_process_identical_2d_doubleint(eng.df, poltrack, Q, R, nagents)    
 
-            
+    # TEST
+    filtered_yout, collisions, switches = post_process_identical_2d_doubleint(eng.df, poltrack, Q, R, nagents)
+
+    return filtered_yout, collisions, switches
+
+
 if __name__ == "__main__":
 
     dx = 4
@@ -383,24 +392,31 @@ if __name__ == "__main__":
     B = np.array([[0.0, 0.0],
                   [0.0, 0.0],
                   [1.0, 0.0],
-                  [0.0, 1.0]])    
+                  [0.0, 1.0]])
 
 
     Q = np.eye(dx)
     R = np.eye(du)
 
+    # Agent dynamics
     ltidyn = LTIDyn(A, B)
+    # Agent control law
     poltrack = LinearFeedbackTracking(A, B, Q, R)
     # poltarget = LinearFeedback(A, B, Q, R)
 
 
+    # Target control law
+
     # ntargets = 2
     # cities = [np.array([-10, 0]), np.array([10, 0])]
     # cities = [np.array([-10, 0]), np.array([10, 0]), np.array([0, -10]), np.array([0, 10])]
-    # ntargets = 3
-    # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
-    ntargets = 4
-    cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
+    ntargets = 3
+    cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
+    # ntargets = 4
+    # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
+    # ntargets = 8
+    # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
+
     poltarget = [LinearFeedbackOffset(A, B, Q, R, c) for c in cities]
     # poltarget = [LinearFeedbackTracking(A, B, Q, R) for c in cities]
 
@@ -416,8 +432,8 @@ if __name__ == "__main__":
     # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, [poltarget[0]], apol, 1, 1)
 
 
-    # 2 v 2 Lexical 
-    # apol = AssignmentLexical(2, 2)    
+    # 2 v 2 Lexical
+    # apol = AssignmentLexical(2, 2)
     # x0 = np.array([5, 5, 0, 0, 10, 10, -3, 8,
     #                -10, -5, 5, 5, 20, 10, -3, -8])
 
@@ -430,26 +446,39 @@ if __name__ == "__main__":
     #                -10, -5, 5, 5, 20, 10, -3, -8])
 
     # 3 v 3 EMD
-    # apol = AssignmentEMD(3, 3)
-    # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-    #                -10, -5, 5, 5])
-    # x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
-    #                -110, -15, 15, 15])
-    # x0 = np.hstack((x0, x02))
+    apol = AssignmentEMD(3, 3)
+    x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
+                   -10, -5, 5, 5])
+    x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
+                   -110, -15, 15, 15])
+    x0 = np.hstack((x0, x02))
 
     # 4 v 4 EMD
-    apol = AssignmentEMD(4, 4)
-    x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-                   -10, -5, 5, 5, 20, 10, -3, -8])
-    x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
-                   -110, -15, 15, 15, 120, 110, -13, -18])
-    x0 = np.hstack((x0, x02))
+    # apol = AssignmentEMD(4, 4)
+    # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
+    #                -10, -5, 5, 5, 20, 10, -3, -8])
+    # x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
+    #                -110, -15, 15, 15, 120, 110, -13, -18])
+    # x0 = np.hstack((x0, x02))
+
+    # 8 v 8 EMD
+    # apol = AssignmentEMD(8, 8)
+    # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
+    #                -10, -5, 5, 5, 20, 10, -3, -8,
+    #                25, 5, 10, -155, 70, 230, -13, 13,
+    #                -92, -12, 33, 66, 123, 110, -13, -18])
+    # x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
+    #                 -110, -15, 15, 15, 120, 110, -13, -18,
+    #                 15, 15, 110, -110, 110, 110, -13, 13,
+    #                -110, -15, 15, 15, 120, 110, -13, -18])
+    # x0 = np.hstack((x0, x02))
 
 
 
     # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 2, 2)
-    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
-    run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 4, 4)
+    run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
+    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 4, 4)
+    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 8, 8)
 
 
     # 2 v 2 Dyn
@@ -457,12 +486,18 @@ if __name__ == "__main__":
     # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 2, 2)
 
     # 3 v 3 Dyn
-    # apol = AssignmentDyn(3, 3)
-    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
+    apol = AssignmentDyn(3, 3)
+    filtered_yout, collisions, switches = run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
 
     # 4 v 4 Dyn
-    apol = AssignmentDyn(4, 4)
-    run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 4, 4)
+    # apol = AssignmentDyn(4, 4)
+    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 4, 4)
+
+    # 8 v 8 Dyn
+    # apol = AssignmentDyn(8, 8)
+    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 8, 8)
 
 
     plt.show()
+
+    print("done!")
