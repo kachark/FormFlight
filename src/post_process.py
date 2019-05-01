@@ -5,7 +5,8 @@ from matplotlib.collections import PatchCollection
 import pandas as pd
 import copy
 
-def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
+# def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
+def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents, costs):
 
     du = 2
 
@@ -15,7 +16,11 @@ def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
 
     # list of n lists (each for an agent) with collision times and targets collided with
     pos_tolerance = 1
-    filtered_yout, collisions, assignment_switches = filter_collisions(df, poltrack, Q, R, nagents, pos_tolerance)
+
+    # post-processed collision
+    # filtered_yout, collisions, assignment_switches = filter_collisions(df, poltrack, Q, R, nagents, pos_tolerance)
+    _, _, assignment_switches = filter_collisions(df, poltrack, Q, R, nagents, pos_tolerance)
+    filtered_yout = copy.deepcopy(yout)
 
     # exit(1)
 
@@ -48,7 +53,7 @@ def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
         y_agent = yout[:, zz*4:(zz+1)*4]
 
         controls = np.zeros((yout.shape[0], du))
-        for ii in range(yout.shape[0]):
+        for ii in range(yout.shape[0]): # compute controls
             y_target = yout[ii, (assignments[ii][zz]+nagents)*4:(assignments[ii][zz]+nagents+1)*4]
             controls[ii, :] = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target)
 
@@ -58,12 +63,17 @@ def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
         stage_cost[0, zz] = np.dot(y_agent[0, :] - y_target,
                                    np.dot(Q, y_agent[0, :] - y_target)) + \
                             np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
+
+        # stage_cost[0, zz] = np.dot(y_agent[0, :] - y_target,
+        #                            np.dot(Q, y_agent[0, :] - y_target))
+
         for ii in range(1, yout.shape[0]):
             y_target = yout[ii, (assignments[ii][zz]+nagents)*4:(assignments[ii][zz]+nagents+1)*4]
 
             xp[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(P, y_agent[ii, :] - y_target))
             stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
                                         np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
+
 
         for ii in range(tout.shape[0]):
             final_cost[ii, zz] = np.trapz(stage_cost[:ii, zz], x=tout[:ii])
@@ -76,6 +86,11 @@ def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
 
     plt.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost')
     plt.plot(tout, np.sum(xp, axis=1), '-r', label='Cost-to-go')
+
+    # f123 = plt.figure()
+    # plt.plot(costs)
+    # plt.plot(tout, stage_cost)
+    # plt.legend()
 
     if nagents == 2:
         plt.plot(tout, final_cost[:, 0], '-.c', label='Cum. Stage Cost (1)')    
@@ -91,6 +106,14 @@ def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
             plt.plot(tout, assignments[:, ii], '-', label='A{0}'.format(ii))
 
         plt.title("Assignments")
+        plt.legend()
+
+    if nagents > 1:
+        plt.figure()
+        for ii in range(nagents):
+            plt.plot(tout, stage_cost[:, ii], label='A{0}'.format(ii))
+
+        plt.title("Agent Stage Costs")
         plt.legend()
 
 
@@ -116,10 +139,10 @@ def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
             ax.plot(y_agent[:, 0], y_agent[:, 1], '-r')
 
             # collision circles
-            collision_time = collisions[zz][0][0]
+            # collision_time = collisions[zz][0][0]
             patches = []
-            c1 = Circle( (y_agent[collision_time, 0], y_agent[collision_time, 1]), 2*pos_tolerance, color='r', fill=False)
-            patches.append(c1)
+            # c1 = Circle( (y_agent[collision_time, 0], y_agent[collision_time, 1]), 2*pos_tolerance, color='r', fill=False)
+            # patches.append(c1)
 
             # assignment switch circles
             for switch_ind in assignment_switches[zz]:
@@ -174,7 +197,7 @@ def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
         #     plt.plot()
 
     # TEST
-    return filtered_yout, collisions, assignment_switches
+    # return filtered_yout, collisions, assignment_switches
 
 
 def filter_collisions(df, poltrack, Q, R, nagents, pos_tolerance):
@@ -220,16 +243,16 @@ def filter_collisions(df, poltrack, Q, R, nagents, pos_tolerance):
         switches.append(assignment_switch_ind)
         collisions.append(agent_collision)
 
-    # every state after collision = state before collision
-    for agent_i, c in enumerate(collisions):
-        collision_start = c[0][0]
-        # filter agents
-        filtered_yout[collision_start: , agent_i*4:(agent_i+1)*4] = filtered_yout[collision_start-1, agent_i*4:(agent_i+1)*4]
-        # filter targets
-        target_j = c[0][2]
-        filtered_yout[collision_start: , (target_j+nagents)*4:(target_j+nagents+1)*4] = filtered_yout[collision_start-1, (target_j+nagents)*4:(target_j+nagents+1)*4]
-        # filter assignments - DYN may have terminal reassignments
-        # filtered_yout[collision_start: , (nagents+nagents)*4 + agent_i] = filtered_yout[collision_start-1, (nagents+nagents)*4 + agent_i]
+#     # every state after collision = state before collision
+#     for agent_i, c in enumerate(collisions):
+#         collision_start = c[0][0]
+#         # filter agents
+#         filtered_yout[collision_start: , agent_i*4:(agent_i+1)*4] = filtered_yout[collision_start-1, agent_i*4:(agent_i+1)*4]
+#         # filter targets
+#         target_j = c[0][2]
+#         filtered_yout[collision_start: , (target_j+nagents)*4:(target_j+nagents+1)*4] = filtered_yout[collision_start-1, (target_j+nagents)*4:(target_j+nagents+1)*4]
+#         # filter assignments - DYN may have terminal reassignments
+#         # filtered_yout[collision_start: , (nagents+nagents)*4 + agent_i] = filtered_yout[collision_start-1, (nagents+nagents)*4 + agent_i]
 
     return filtered_yout, collisions, switches
 
