@@ -506,31 +506,34 @@ class Engine:
 # def run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltargets, apol, nagents, ntargets):
 def run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltargets, apol, nagents, ntargets):
 
-    # nagents = 2
-    # ntargets = 2
     agents = [TrackingAgent(dx, ltidyn, poltrack) for ii in range(nagents)]
-    # targets = [Agent(dx, ltidyn, poltarget) for ii, poltarget in enumerate(poltargets)]
     targets = [Agent(dx, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
     sys = OneVOne(agents, targets, apol)
-    eng = Engine(dt=0.01, maxtime=4, collision_tol=1e-3)
+    eng = Engine(dt=0.01, maxtime=0.45, collision_tol=1e-3)
     eng.run(x0, sys)
     # print(eng.df.tail(10))
 
-    # TEST
-    # filtered_yout, collisions, switches = post_process_identical_2d_doubleint(eng.df, poltrack, Q, R, nagents)
-    # post_process_identical_2d_doubleint(eng.df, poltrack, poltargets, Q, R, nagents, ntargets, sys.costs)
-    post_process_identical_3d_doubleint(eng.df, poltrack, poltargets, Q, R, nagents, ntargets, sys.costs)
+    post_process_identical_2d_doubleint(eng.df, poltrack, poltargets, Q, R, nagents, ntargets, sys.costs)
+    # post_process_identical_3d_doubleint(eng.df, poltrack, poltargets, Q, R, nagents, ntargets, sys.costs)
 
-    # return filtered_yout, collisions, switches
-    return eng.df.iloc[:, 1:].to_numpy()
+    return eng.df.iloc[:, 1:].to_numpy() # yout
 
 
 if __name__ == "__main__": 
 
-    dim = 3
+    batch_simulation = []
+    sim = {}
+    parameters = ['dx', 'du', 'A', 'B', 'Q', 'R', 'agent_dyn', 'target_dyns', 'agent_pol', 'target_pol', 'asst_pol', 'x0']
+    sim.fromkeys(parameters)
+    results = []
+
+    # SIM SETUP
+    dim = 2
 
     if dim == 3:
+
+        apol = []
 
         # 3D CASES
         dx = 6
@@ -553,6 +556,9 @@ if __name__ == "__main__":
         Q = np.eye(dx)
         R = np.eye(du)
 
+        nagents=  2
+        ntargets = 2
+
         # Agent dynamics
         ltidyn = LTIDyn(A, B)
         dyn_target = LTIDyn(A, B)
@@ -561,24 +567,44 @@ if __name__ == "__main__":
         # poltarget = LinearFeedback(A, B, Q, R)
 
         # Target control law
-        ntargets = 2
         cities = [np.array([10, 0, 0]), np.array([5, -5, 0])]
         poltarget = [LinearFeedbackOffset(A, B, Q, R, c) for c in cities] # list of T controls
 
         # 2 v 2 EMD
         # apol = AssignmentEMD(2, 2)
-        apol = AssignmentDyn(2, 2)
+        # apol = AssignmentDyn(nagents, ntargets)
+
+        apol.append(AssignmentEMD(nagents, ntargets))
+        apol.append(AssignmentDyn(nagents, ntargets))
 
         x0 = np.array([-10, -9, -6, -8, -6, -8,
                        6, -2, -10, 7, -10, 7,
                        7, 1, 1, -8, 1, -8,
                        -2, -1, 0, 8, 0, 8])
 
-        yout_dyn = run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, apol, 2, 2)
+        # yout_dyn = run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, apol, 2, 2)
+
+        runner = run_identical_doubleint
+
+        sim['dx'] = dx
+        sim['du'] = du
+        sim['x0'] = x0
+        sim['agent_dyn'] = ltidyn
+        sim['target_dyns'] = dyn_target
+        sim['agent_pol'] = poltrack
+        sim['target_pol'] = poltarget
+        sim['asst_pol'] = apol
+        sim['nagents'] = nagents
+        sim['ntargets'] = ntargets
+        sim['runner'] = runner
+
 
     if dim == 2:
 
         # 2D CASES
+
+        apol = []
+
         dx = 4
         du = 2
         A = np.array([[0.0, 0.0, 1.0, 0.0],
@@ -595,6 +621,9 @@ if __name__ == "__main__":
         Q = np.eye(dx)
         R = np.eye(du)
 
+        nagents=  2
+        ntargets = 2
+
         # Agent dynamics
         ltidyn = LTIDyn(A, B)
         dyn_target = LTIDyn(A, B)
@@ -609,8 +638,6 @@ if __name__ == "__main__":
 
 
         # Target control law
-
-        ntargets = 2
         cities = [np.array([10, 0]), np.array([5, -5])]
 
 
@@ -645,7 +672,6 @@ if __name__ == "__main__":
         # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 2, 2)
 
         # 2 v 2 EMD
-        # apol = AssignmentEMD(2, 2)
         # x0 = np.random.rand(16) * 20 - 10
         x0 = np.array([-10, -9, -6, -8, 6, -2, -10, 7,
                        7, 1, 1, -8, -2, -1, 0, 8])
@@ -691,10 +717,16 @@ if __name__ == "__main__":
         # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 4, 4)
         # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)
 
+        # 2 v 2 EMD
+        # apol = AssignmentEMD(2, 2)
+        apol.append(AssignmentEMD(nagents, ntargets))
 
         # 2 v 2 Dyn
-        apol = AssignmentDyn(2, 2)
-        yout_dyn = run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, apol, 2, 2)
+        # apol = AssignmentDyn(nagents, ntargets)
+        apol.append(AssignmentDyn(nagents, ntargets))
+        # yout_dyn = run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, apol, 2, 2)
+
+        sim_runner = run_identical_doubleint
 
         # 3 v 3 Dyn
         # apol = AssignmentDyn(3, 3)
@@ -710,19 +742,56 @@ if __name__ == "__main__":
         # apol = AssignmentDyn(8, 8)
         # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)
 
+        sim['dx'] = dx
+        sim['du'] = du
+        sim['x0'] = x0
+        sim['agent_dyn'] = ltidyn
+        sim['target_dyns'] = dyn_target
+        sim['agent_pol'] = poltrack
+        sim['target_pol'] = poltarget
+        sim['asst_pol'] = apol
+        sim['nagents'] = nagents
+        sim['ntargets'] = ntargets
+        sim['runner'] = sim_runner
 
-        
-        # superimposed trajectories from emd and dyn simulations
-        # plt.figure()
-        # for zz in range(2):
-        #     y_agent = yout[:, zz*4:(zz+1)*4]
-        #     plt.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-        #     plt.plot(y_agent[:, 0], y_agent[:, 1], '-r')
+    batch_simulation.append(sim)
 
-        # for zz in range(2):
-        #     y_agent = yout_dyn[:, zz*4:(zz+1)*4]
-        #     plt.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-        #     plt.plot(y_agent[:, 0], y_agent[:, 1], '-r')
+
+    # RUN SIMULATION
+    for sim in batch_simulation:
+        dx = sim['dx']
+        du = sim['du']
+        x0 = sim['x0']
+        ltidyn = sim['agent_dyn']
+        target_dyn = sim['target_dyns']
+        poltrack = sim['agent_pol']
+        poltargets = sim['target_pol']
+        apol = sim['asst_pol']
+        nagents = sim['nagents']
+        ntargets = sim['ntargets']
+        runner = sim['runner']
+
+        # run different assignment policies with same conditions
+        for assignment_pol in apol:
+            yout = runner(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, assignment_pol, nagents, ntargets)
+
+        # store results
+        # results.append(yout)
+
+    # simulation comparison post-process
+    # for r in results:
+
+    #     # superimposed trajectories from emd and dyn simulations
+    #     plt.figure()
+    #     for zz in range(2):
+    #         y_agent = yout[:, zz*4:(zz+1)*4]
+    #         plt.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
+    #         plt.plot(y_agent[:, 0], y_agent[:, 1], '-r')
+
+    #     for zz in range(2):
+    #         y_agent = yout_dyn[:, zz*4:(zz+1)*4]
+    #         plt.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
+    #         plt.plot(y_agent[:, 0], y_agent[:, 1], '-r')
 
 
     plt.show()
