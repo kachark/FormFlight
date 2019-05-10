@@ -65,9 +65,14 @@ class AssignmentEMD(Assignment):
         b = np.ones((ntargets,)) / ntargets
 
         M = ot.dist(xs, xt)
+
+        # if t >= 0.45:
+        #     import ipdb; ipdb.set_trace()
+
         M /= M.max()
 
         G0, log = ot.emd(a, b, M, log=True)
+        print("M: ", M, "GO: ", G0)
         cost = log['cost']
 
         # thresh = 4e-1 # 2v2 case
@@ -111,7 +116,12 @@ class AssignmentDyn(Assignment):
             for jj, target in enumerate(target_states):
                 M[ii, jj] = agent[1].pol.cost_to_go(t, agent[0], target[0])
 
-        # print(M)
+
+        # if M[0,0] >= 894:
+        #     import ipdb; ipdb.set_trace()
+
+        if t >= 0.05:
+            print("---- M: ", M)
         # M /= M.max() # I dont divide b
         M = M/M.max()
 
@@ -119,7 +129,13 @@ class AssignmentDyn(Assignment):
         b = np.ones((ntargets,)) / ntargets
 
         G0, log = ot.emd(a, b, M, log=True)
-        # print(G0)
+        if t >= 0.45:
+            print("---- M/Mmax: ", M)
+            print("---- G0: ", G0)
+
+        # if t >= 0.088:
+        #     import ipdb; ipdb.set_trace()
+
         cost = log['cost']
         # thresh = 4e-1 # 2v2
         # thresh = 4e-2
@@ -188,7 +204,8 @@ class LinearFeedbackOffset(LinearFeedback):
 
         s1 = copy.deepcopy(state1)
         diff = copy.deepcopy(state1)
-        diff[:self.dim_offset] = s1[:self.dim_offset] - self.offset
+        # diff[:self.dim_offset] = s1[:self.dim_offset] - self.offset
+        diff[:self.dim_offset] -= self.offset
         # print("state = ", state1, diff)
         agent_pol = np.dot(self.K, diff)
         return agent_pol
@@ -323,7 +340,8 @@ class OneVOne(System):
         self.costs.append(cost)
 
         if cost is not None:
-            print(t0, cost, assignment)
+            # print(t0, cost, assignment)
+            print("TIME: ", t0, "COST: ", cost, "ASST: ", assignment)
 
         def dyn(t, x):
 
@@ -352,8 +370,8 @@ class OneVOne(System):
                 # print("u = ", u)
 
                 # if not collisions:
-                dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, xtarget, tu) #ltidyn_cl
-                # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u) #ltidyn
+                # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, xtarget, tu) #ltidyn_cl
+                dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u) #ltidyn
                 dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
                 # else:
                     # for c in collisions:
@@ -391,7 +409,9 @@ class Engine:
         else:
             self.df = pd.concat([self.df, newdf.iloc[1:,:]], ignore_index=True)
 
-    def check_collisions(self, current_state, nagents, ntargets, time):
+    # Physics
+    # 2d and 3d
+    def apriori_collisions(self, current_state, nagents, ntargets, time):
 
         tstart = time
         tfinal = time + self.dt
@@ -465,10 +485,11 @@ class Engine:
         time = 0
         while running:
             # print("Time: {0:3.2E}".format(time))
-            collisions = self.check_collisions(current_state, system.nagents, system.ntargets, time)
+            collisions = self.apriori_collisions(current_state, system.nagents, system.ntargets, time)
 
             # thist, state_hist, assign_hist = system.update(time, current_state, self.dt)
             thist, state_hist, assign_hist = system.update(time, current_state, collisions, self.dt)
+
 
             newdf = pd.DataFrame(np.hstack((thist[:, np.newaxis],
                                             state_hist,
@@ -492,147 +513,216 @@ def run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltargets
     targets = [Agent(dx, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
     sys = OneVOne(agents, targets, apol)
-    eng = Engine(dt=0.01, maxtime=6, collision_tol=1e-3)
+    eng = Engine(dt=0.01, maxtime=4, collision_tol=1e-3)
     eng.run(x0, sys)
     # print(eng.df.tail(10))
 
     # TEST
     # filtered_yout, collisions, switches = post_process_identical_2d_doubleint(eng.df, poltrack, Q, R, nagents)
-    post_process_identical_2d_doubleint(eng.df, poltrack, Q, R, nagents, sys.costs)
+    # post_process_identical_2d_doubleint(eng.df, poltrack, poltargets, Q, R, nagents, ntargets, sys.costs)
+    post_process_identical_3d_doubleint(eng.df, poltrack, poltargets, Q, R, nagents, ntargets, sys.costs)
 
     # return filtered_yout, collisions, switches
+    return eng.df.iloc[:, 1:].to_numpy()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
 
-    dx = 4
-    du = 2
-    A = np.array([[0.0, 0.0, 1.0, 0.0],
-                  [0.0, 0.0, 0.0, 1.0],
-                  [0.0, 0.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0, 0.0]], dtype=np.float_)
+    dim = 3
 
-    B = np.array([[0.0, 0.0],
-                  [0.0, 0.0],
-                  [1.0, 0.0],
-                  [0.0, 1.0]], dtype=np.float_)
+    if dim == 3:
 
+        # 3D CASES
+        dx = 6
+        du = 3
+        A = np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]])
 
-    Q = np.eye(dx)
-    R = np.eye(du)
-
-    # Agent dynamics
-    ltidyn = LTIDyn(A, B)
-    # Agent control law
-    poltrack = LinearFeedbackTracking(A, B, Q, R)
-    # poltarget = LinearFeedback(A, B, Q, R)
-
-    # NEW
-    # Agent Closed-Loop Dynamics
-    ltidyn_cl = LTIDyn_closedloop(A, B, poltrack.K)
-    # ltidyn_cl = LTIDyn(A, B)
+        B = np.array([[0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0],
+                      [1.0, 0.0, 0.0],
+                      [0.0, 1.0, 0.0],
+                      [0.0, 0.0, 1.0]])
 
 
-    # Target control law
+        Q = np.eye(dx)
+        R = np.eye(du)
 
-    # ntargets = 2
-    # cities = [np.array([-10, 0]), np.array([10, 0])]
-    # cities = [np.array([-10, 0]), np.array([10, 0]), np.array([0, -10]), np.array([0, 10])]
-    ntargets = 3
-    # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
-    cities = [np.array([-10,0], np.float_), np.array([10,0], dtype=np.float_), np.array([5,-5], dtype=np.float_)] # ntargets = 4
-    # ntargets = 4
-    # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
-    # ntargets = 8
-    # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
+        # Agent dynamics
+        ltidyn = LTIDyn(A, B)
+        dyn_target = LTIDyn(A, B)
+        # Agent control law
+        poltrack = LinearFeedbackTracking(A, B, Q, R) # same controls shared by A's
+        # poltarget = LinearFeedback(A, B, Q, R)
 
-    poltarget = [LinearFeedbackOffset(A, B, Q, R, c) for c in cities]
-    # poltarget = [LinearFeedbackTracking(A, B, Q, R) for c in cities]
+        # Target control law
+        ntargets = 2
+        cities = [np.array([10, 0, 0]), np.array([5, -5, 0])]
+        poltarget = [LinearFeedbackOffset(A, B, Q, R, c) for c in cities] # list of T controls
 
-    # poltarget = [LinearFeedback(A, B, Q, R) for ii in range(ntargets)]
+        # 2 v 2 EMD
+        # apol = AssignmentEMD(2, 2)
+        apol = AssignmentDyn(2, 2)
 
-    # poltarget = [ZeroPol(du) for ii in range(ntargets)]
-    # poltarget = ZeroPol(du)
+        x0 = np.array([-10, -9, -6, -8, -6, -8,
+                       6, -2, -10, 7, -10, 7,
+                       7, 1, 1, -8, 1, -8,
+                       -2, -1, 0, 8, 0, 8])
 
-    # 1v1
-    # x0 = np.array([5, 5, 0, 0,
-    #                -10, -5, 5, 5])
-    # apol = AssignmentLexical(1, 1)
-    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, [poltarget[0]], apol, 1, 1)
+        yout_dyn = run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, apol, 2, 2)
 
+    if dim == 2:
 
-    # 2 v 2 Lexical
-    # apol = AssignmentLexical(2, 2)
-    # x0 = np.array([5, 5, 0, 0, 10, 10, -3, 8,
-    #                -10, -5, 5, 5, 20, 10, -3, -8])
+        # 2D CASES
+        dx = 4
+        du = 2
+        A = np.array([[0.0, 0.0, 1.0, 0.0],
+                      [0.0, 0.0, 0.0, 1.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0]], dtype=np.float_)
 
-    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 2, 2)
-
-    # 2 v 2 EMD
-    # apol = AssignmentEMD(2, 2)
-    # x0 = np.random.rand(16) * 20 - 10
-    # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-    #                -10, -5, 5, 5, 20, 10, -3, -8])
-
-    # 3 v 3 EMD
-    apol = AssignmentEMD(3, 3)
-    # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-    #                -10, -5, 5, 5])
-    # x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
-    #                -110, -15, 15, 15])
-    # x0 = np.hstack((x0, x02))
-
-    x0 = np.array([-9.49472109, -9.01609684, -6.30746324, -8.61933317, -4.85049153,  8.27163463,
-        -0.84300976, -7.39576421,  6.19783331, -1.93060319, -9.5113471,   7.13662085,
-        -4.51410362,  4.18211928, -2.88455314,  5.88618124,  6.89237722,  0.76295034,
-         1.18173033, -7.54980037, -2.44716163, -1.42505342,  0.22417293,  7.8352514 ], dtype=np.float_)
-
-    # 4 v 4 EMD
-    # apol = AssignmentEMD(4, 4)
-    # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-    #                -10, -5, 5, 5, 20, 10, -3, -8])
-    # x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
-    #                -110, -15, 15, 15, 120, 110, -13, -18])
-    # x0 = np.hstack((x0, x02))
-
-    # 8 v 8 EMD
-    # apol = AssignmentEMD(8, 8)
-    # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-    #                -10, -5, 5, 5, 20, 10, -3, -8,
-    #                25, 5, 10, -155, 70, 230, -13, 13,
-    #                -92, -12, 33, 66, 123, 110, -13, -18])
-    # x02 = np.array([15, 15, 11, -11, 110, 110, -13, 13,
-    #                 -110, -15, 15, 15, 120, 130, -13, -18,
-    #                 25, 35, 18, -17, 150, 100, -13, 13,
-    #                -140, -45, 15, 15, 220, 140, -13, -18])
-    # x0 = np.hstack((x0, x02))
+        B = np.array([[0.0, 0.0],
+                      [0.0, 0.0],
+                      [1.0, 0.0],
+                      [0.0, 1.0]], dtype=np.float_)
 
 
+        Q = np.eye(dx)
+        R = np.eye(du)
 
-    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 2, 2)
-    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
-    run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 3, 3)
-    # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 4, 4)
-    # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)
+        # Agent dynamics
+        ltidyn = LTIDyn(A, B)
+        dyn_target = LTIDyn(A, B)
+        # Agent control law
+        poltrack = LinearFeedbackTracking(A, B, Q, R)
+        # poltarget = LinearFeedback(A, B, Q, R)
+
+        # NEW
+        # Agent Closed-Loop Dynamics
+        # ltidyn_cl = LTIDyn_closedloop(A, B, poltrack.K)
+        # ltidyn_cl = LTIDyn(A, B)
 
 
-    # 2 v 2 Dyn
-    # apol = AssignmentDyn(2, 2)
-    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 2, 2)
+        # Target control law
 
-    # 3 v 3 Dyn
-    apol = AssignmentDyn(3, 3)
-    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
-    run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 3, 3)
-    # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
+        ntargets = 2
+        cities = [np.array([10, 0]), np.array([5, -5])]
 
-    # 4 v 4 Dyn
-    # apol = AssignmentDyn(4, 4)
-    # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 4, 4)
 
-    # 8 v 8 Dyn
-    # apol = AssignmentDyn(8, 8)
-    # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)
+        # ntargets = 3
+        # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
+        # cities = [np.array([-10,0], np.float_), np.array([10,0], dtype=np.float_), np.array([5,-5], dtype=np.float_)] # ntargets = 4
+        # ntargets = 4
+        # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
+        # ntargets = 8
+        # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
+
+        poltarget = [LinearFeedbackOffset(A, B, Q, R, c) for c in cities]
+        # poltarget = [LinearFeedbackTracking(A, B, Q, R) for c in cities]
+
+        # poltarget = [LinearFeedback(A, B, Q, R) for ii in range(ntargets)]
+
+        # poltarget = [ZeroPol(du) for ii in range(ntargets)]
+        # poltarget = ZeroPol(du)
+
+        # 1v1
+        # x0 = np.array([5, 5, 0, 0,
+        #                -10, -5, 5, 5])
+        # apol = AssignmentLexical(1, 1)
+        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, [poltarget[0]], apol, 1, 1)
+
+
+        # 2 v 2 Lexical
+        # apol = AssignmentLexical(2, 2)
+        # x0 = np.array([5, 5, 0, 0, 10, 10, -3, 8,
+        #                -10, -5, 5, 5, 20, 10, -3, -8])
+
+        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 2, 2)
+
+        # 2 v 2 EMD
+        # apol = AssignmentEMD(2, 2)
+        # x0 = np.random.rand(16) * 20 - 10
+        x0 = np.array([-10, -9, -6, -8, 6, -2, -10, 7,
+                       7, 1, 1, -8, -2, -1, 0, 8])
+
+        # 3 v 3 EMD
+        # apol = AssignmentEMD(3, 3)
+        # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
+        #                -10, -5, 5, 5])
+        # x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
+        #                -110, -15, 15, 15])
+        # x0 = np.hstack((x0, x02))
+
+        # x0 = np.array([-9.49472109, -9.01609684, -6.30746324, -8.61933317, -4.85049153,  8.27163463,
+        #     -0.84300976, -7.39576421,  6.19783331, -1.93060319, -9.5113471,   7.13662085,
+        #     -4.51410362,  4.18211928, -2.88455314,  5.88618124,  6.89237722,  0.76295034,
+        #      1.18173033, -7.54980037, -2.44716163, -1.42505342,  0.22417293,  7.8352514 ], dtype=np.float_)
+
+        # 4 v 4 EMD
+        # apol = AssignmentEMD(4, 4)
+        # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
+        #                -10, -5, 5, 5, 20, 10, -3, -8])
+        # x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
+        #                -110, -15, 15, 15, 120, 110, -13, -18])
+        # x0 = np.hstack((x0, x02))
+
+        # 8 v 8 EMD
+        # apol = AssignmentEMD(8, 8)
+        # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
+        #                -10, -5, 5, 5, 20, 10, -3, -8,
+        #                25, 5, 10, -155, 70, 230, -13, 13,
+        #                -92, -12, 33, 66, 123, 110, -13, -18])
+        # x02 = np.array([15, 15, 11, -11, 110, 110, -13, 13,
+        #                 -110, -15, 15, 15, 120, 130, -13, -18,
+        #                 25, 35, 18, -17, 150, 100, -13, 13,
+        #                -140, -45, 15, 15, 220, 140, -13, -18])
+        # x0 = np.hstack((x0, x02))
+
+
+
+        # yout = run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, apol, 2, 2)
+        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
+        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 3, 3)
+        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 4, 4)
+        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)
+
+
+        # 2 v 2 Dyn
+        apol = AssignmentDyn(2, 2)
+        yout_dyn = run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, apol, 2, 2)
+
+        # 3 v 3 Dyn
+        # apol = AssignmentDyn(3, 3)
+        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
+        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 3, 3)
+        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
+
+        # 4 v 4 Dyn
+        # apol = AssignmentDyn(4, 4)
+        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 4, 4)
+
+        # 8 v 8 Dyn
+        # apol = AssignmentDyn(8, 8)
+        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)
+
+
+        
+        # superimposed trajectories from emd and dyn simulations
+        # plt.figure()
+        # for zz in range(2):
+        #     y_agent = yout[:, zz*4:(zz+1)*4]
+        #     plt.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
+        #     plt.plot(y_agent[:, 0], y_agent[:, 1], '-r')
+
+        # for zz in range(2):
+        #     y_agent = yout_dyn[:, zz*4:(zz+1)*4]
+        #     plt.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
+        #     plt.plot(y_agent[:, 0], y_agent[:, 1], '-r')
 
 
     plt.show()
