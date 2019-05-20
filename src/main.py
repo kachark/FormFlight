@@ -111,10 +111,20 @@ class AssignmentDyn(Assignment):
 
         dim_state = ref_states[0][0].shape[0]
 
+        cities = [np.array([10, 0, 0, 0]), np.array([5, -5, 0, 0])]
+        # cities = [np.array([10, -3, -8, -9]), np.array([5, -5, 22, -6])]
+        # cities = [np.array([-10,0,0,0], np.float_), np.array([10,0,0,0], dtype=np.float_), np.array([5,-5,0,0], dtype=np.float_)] # ntargets = 4
+        # cities = [np.array([10, 4, -2, 3]), np.array([2, -12, -12, 12]),
+        #           np.array([-12, 10, 0, -5]), np.array([7, -2, 0, 6]), 
+        #           np.array([13, -23, 1, -7]), np.array([5, -5, 0, -9]),
+        #           np.array([44, 3, 0, 9]), np.array([15, -15, 0, 10])]
+
         M = np.zeros((nagents, ntargets))
         for ii, agent in enumerate(ref_states):
+            # for jj, city in enumerate(cities):
             for jj, target in enumerate(target_states):
                 M[ii, jj] = agent[1].pol.cost_to_go(t, agent[0], target[0])
+                # M[ii, jj] = agent[1].pol.cost_to_go(t, agent[0], city)
 
 
         # if M[0,0] >= 894:
@@ -164,10 +174,15 @@ class LinearFeedback:
     def __init__(self, A, B, Q, R):
         self.P = care(A, B, Q, R)
         self.K = -np.linalg.solve(R, np.dot(B.T, self.P))
+        # self.K = np.linalg.solve(R, np.dot(B.T, self.P)) # ltidyn_cl
+        self.B = B
+        self.R = R
+        self.Q = Q
 
     def evaluate(self, time, state):
         # print("TIME: ", time, " CONTROL: ", np.dot(self.K, state))
-        return np.dot(self.K, state)
+        # return np.dot(self.K, state)
+        return np.dot(-self.K, state)
 
     def get_P(self):
         return self.P
@@ -205,9 +220,11 @@ class LinearFeedbackOffset(LinearFeedback):
         s1 = copy.deepcopy(state1)
         diff = copy.deepcopy(state1)
         # diff[:self.dim_offset] = s1[:self.dim_offset] - self.offset
-        diff[:self.dim_offset] -= self.offset
+        # diff[:self.dim_offset] -= self.offset
+        diff -= self.offset
         # print("state = ", state1, diff)
         agent_pol = np.dot(self.K, diff)
+        # agent_pol = np.dot(-self.K, diff) # ltidyn_cl
         return agent_pol
 
     def cost_to_go(self, time, state1):
@@ -237,18 +254,16 @@ class LTIDyn_closedloop(LTIDyn):
         super(LTIDyn_closedloop, self).__init__(A, B)
         self.A = A
         self.B = B
-        self.Acl = self.A + np.dot(self.B, K)
-        self.Bcl = np.dot(self.B, K)
+        self.Acl = self.A - np.dot(self.B, K)
         self.K = K
 
-    # def rhs(self, t, x):
-    def rhs(self, t, x, xt, tu):
+    def rhs(self, t, x, xt, ud):
         s1 = copy.deepcopy(x)
         s2 = copy.deepcopy(xt)
-        diff = s1-s2
-        # return np.dot(self.Acl, s1) - np.dot(self.Bcl, s2) # no feedforward
-        return np.dot(self.Acl, diff) # error system
-        # return np.dot(self.Acl, s1) - np.dot(self.Bcl, s2) + np.dot(self.B, tu) # w/ feedforward
+        su = copy.deepcopy(ud)
+        ucl = np.dot(self.K, s2) + su
+        utr = np.dot(self.K, s2)
+        return np.dot(self.Acl, s1) + np.dot(self.B, utr)
 
 
 #################################
@@ -370,7 +385,8 @@ class OneVOne(System):
                 # print("u = ", u)
 
                 # if not collisions:
-                # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, xtarget, tu) #ltidyn_cl
+                xd_c = self.targets[jj].pol.offset # city for target jj - ltidyn_cl
+                # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, xd_c, tu) #ltidyn_cl
                 dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u) #ltidyn
                 dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
                 # else:
@@ -510,7 +526,7 @@ def run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltargets
     targets = [Agent(dx, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
     sys = OneVOne(agents, targets, apol)
-    eng = Engine(dt=0.01, maxtime=0.45, collision_tol=1e-3)
+    eng = Engine(dt=0.01, maxtime=6, collision_tol=1e-3)
     eng.run(x0, sys)
     # print(eng.df.tail(10))
 
@@ -536,14 +552,56 @@ if __name__ == "__main__":
         apol = []
 
         # 3D CASES
+
+        # linearized quadcopter dynamics
+        m = 0.1         #kg
+        Ixx = 0.00062   #kg-m^2
+        Iyy = 0.00113   #kg-m^2
+        Izz = 0.9*(Ixx + Iyy) #kg-m^2 (Assume nearly flat object, z=0)
+        # dx = 0.114      #m
+        # dy = 0.0825     #m
+        g = 9.81  #m/s/s
+        # DTR = 1/57.3; RTD = 57.3 
+
+        dx = 6
+        du = 3
+        A = np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, -g, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [g, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]])
+
+        B = np.array([[0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 1.0/Ixx, 0.0, 0.0],
+                      [0.0, 0.0, 1.0/Iyy, 0.0],
+                      [0.0, 0.0, 0.0, 1.0/Izz],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [1.0/m, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0]])
+
+
+
+        # double integrator
         dx = 6
         du = 3
         A = np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
                       [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
                       [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
                       [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                      [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-                      [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]])
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
 
         B = np.array([[0.0, 0.0, 0.0],
                       [0.0, 0.0, 0.0],
@@ -623,6 +681,8 @@ if __name__ == "__main__":
 
         nagents=  2
         ntargets = 2
+        # nagents=  3
+        # ntargets = 3
 
         # Agent dynamics
         ltidyn = LTIDyn(A, B)
@@ -638,12 +698,19 @@ if __name__ == "__main__":
 
 
         # Target control law
-        cities = [np.array([10, 0]), np.array([5, -5])]
+        # cities = [np.array([10, 0]), np.array([5, -5])]
+        cities = [np.array([10, 0, 0, 0]), np.array([5, -5, 0, 0])]
+        # cities = [np.array([10, 4, -2, 3]), np.array([2, -12, -12, 12]),
+        #           np.array([-12, 10, 0, -5]), np.array([7, -2, 0, 6]), 
+        #           np.array([13, -23, 1, -7]), np.array([5, -5, 0, -9]),
+        #           np.array([44, 3, 0, 9]), np.array([15, -15, 0, 10])]
+        # cities = [np.array([10, -3, -8, -9]), np.array([5, -5, 22, -6])]
 
 
         # ntargets = 3
         # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
         # cities = [np.array([-10,0], np.float_), np.array([10,0], dtype=np.float_), np.array([5,-5], dtype=np.float_)] # ntargets = 4
+        # cities = [np.array([-10,0,0,0], np.float_), np.array([10,0,0,0], dtype=np.float_), np.array([5,-5,0,0], dtype=np.float_)] # ntargets = 4
         # ntargets = 4
         # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
         # ntargets = 8
@@ -701,12 +768,12 @@ if __name__ == "__main__":
         # apol = AssignmentEMD(8, 8)
         # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
         #                -10, -5, 5, 5, 20, 10, -3, -8,
-        #                25, 5, 10, -155, 70, 230, -13, 13,
-        #                -92, -12, 33, 66, 123, 110, -13, -18])
-        # x02 = np.array([15, 15, 11, -11, 110, 110, -13, 13,
-        #                 -110, -15, 15, 15, 120, 130, -13, -18,
-        #                 25, 35, 18, -17, 150, 100, -13, 13,
-        #                -140, -45, 15, 15, 220, 140, -13, -18])
+        #                25, 5, 10, -15, 7, 23, -1, 13,
+        #                -92, -12, 33, 66, 123, 11, -1, -18])
+        # x02 = np.array([15, 15, 11, -11, 11, 11, -1, 13,
+        #                 -7, -15, 15, 15, 17, 13, -13, -18,
+        #                 25, 35, 18, -17, -9, 10, -13, 13,
+        #                -14, -45, 15, 15, 20, 14, -16, -18])
         # x0 = np.hstack((x0, x02))
 
 
@@ -718,13 +785,10 @@ if __name__ == "__main__":
         # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)
 
         # 2 v 2 EMD
-        # apol = AssignmentEMD(2, 2)
-        apol.append(AssignmentEMD(nagents, ntargets))
+        # apol.append(AssignmentEMD(nagents, ntargets))
 
         # 2 v 2 Dyn
-        # apol = AssignmentDyn(nagents, ntargets)
         apol.append(AssignmentDyn(nagents, ntargets))
-        # yout_dyn = run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, apol, 2, 2)
 
         sim_runner = run_identical_doubleint
 

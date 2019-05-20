@@ -15,9 +15,6 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, Q, R, nagents,
     tout = df.iloc[:, 0].to_numpy()
     # print(yout)
 
-    # list of n lists (each for an agent) with collision times and targets collided with
-    pos_tolerance = 1
-
     yout = copy.deepcopy(yout)
     assignment_switches = find_switches(tout, yout, nagents, nagents, 4, 4)
 
@@ -68,9 +65,19 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, Q, R, nagents,
         for ii in range(1, yout.shape[0]):
             y_target = yout[ii, (assignments[ii][zz]+nagents)*4:(assignments[ii][zz]+nagents+1)*4]
 
-            xp[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(P, y_agent[ii, :] - y_target))
+            # TEST
+            asst_ii = assignments[ii] # assignments at time ii
+            sigma_i = asst_ii[zz] # target assigned-to agent zz
+            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
+            controls_ag = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
+            # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
+            #                             np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
             stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
-                                        np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
+                                        np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
+
+            xp[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(P, y_agent[ii, :] - y_target))
+            # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
+            #                             np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
 
 
         for ii in range(tout.shape[0]):
@@ -101,6 +108,12 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, Q, R, nagents,
         plt.plot(tout, xp[:, 1], '--r', label='Cost-to-go (assuming no switch) (1)')
     # plt.legend()
 
+    print("initial optimal cost: ", optcost)
+    print("initial incurred cost: ", final_cost[0])
+    print("cost-to-go: ", np.sum(xp, axis=1)[-1])
+    print("incurred cost: ", np.sum(final_cost, axis=1)[-1])
+
+    # import ipdb; ipdb.set_trace()
 
     # PLOT ASSIGNMENTS
     if nagents > 1:
@@ -172,6 +185,9 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, Q, R, nagents,
             ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
             ax.plot(y_target[:, 0], y_target[:, 1], '-b')
             ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+
+            print("TARGET FINAL POS: ", y_target[-1])
+            print("AGENT FINAL POS: ", y_agent[-1])
 
         ax.set_title("Trajectory")
         ax.set_xlabel("x")
