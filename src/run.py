@@ -20,8 +20,8 @@ def run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltargets
     eng.run(x0, sys)
     # print(eng.df.tail(10))
 
-    # post_process_identical_2d_doubleint(eng.df, poltrack, poltargets, nagents, ntargets, sys.costs)
-    post_process_identical_3d_doubleint(eng.df, poltrack, poltargets, nagents, ntargets, sys.costs)
+    post_process_identical_2d_doubleint(eng.df, poltrack, poltargets, nagents, ntargets, sys.costs)
+    # post_process_identical_3d_doubleint(eng.df, poltrack, poltargets, nagents, ntargets, sys.costs)
 
     return eng.df.iloc[:, 1:].to_numpy() # yout
 
