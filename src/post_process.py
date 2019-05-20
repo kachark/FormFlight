@@ -7,7 +7,7 @@ import pandas as pd
 import copy
 
 # def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
-def post_process_identical_2d_doubleint(df, poltrack, poltargets, Q, R, nagents, ntargets, ot_costs):
+def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntargets, ot_costs):
 
     du = 2
 
@@ -19,6 +19,8 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, Q, R, nagents,
     assignment_switches = find_switches(tout, yout, nagents, nagents, 4, 4)
 
     P = poltrack.get_P()
+    Q = poltrack.get_Q()
+    R = poltrack.get_R()
 
     # plt.figure()
     # plt.plot(yout[:, 0], yout[:, 1], '-r')
@@ -263,7 +265,7 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, Q, R, nagents,
     # TEST
     # return filtered_yout, collisions, assignment_switches
 
-def post_process_identical_3d_doubleint(df, poltrack, poltargets, Q, R, nagents, ntargets, costs):
+def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntargets, costs):
 
     du = 3
 
@@ -275,6 +277,8 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, Q, R, nagents,
     assignment_switches = find_switches(tout, yout, nagents, nagents, 6, 6)
 
     P = poltrack.get_P()
+    Q = poltrack.get_Q()
+    R = poltrack.get_R()
 
     # plt.figure()
     # plt.plot(yout[:, 0], yout[:, 1], '-r')
