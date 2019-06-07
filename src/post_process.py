@@ -7,7 +7,7 @@ import pandas as pd
 import copy
 
 # def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
-def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntargets, ot_costs):
+def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntargets, ot_costs, polagents):
 
     du = 2
 
@@ -18,9 +18,15 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
     yout = copy.deepcopy(yout)
     assignment_switches = find_switches(tout, yout, nagents, nagents, 4, 4)
 
-    P = poltrack.get_P()
+    # P = poltrack.get_P()
+    # Q = poltrack.get_Q()
+    # R = poltrack.get_R()
+
+    P = polagents[0].Paug
     Q = poltrack.get_Q()
     R = poltrack.get_R()
+
+    print("INITIAL CONDITION: ", yout[0])
 
     # plt.figure()
     # plt.plot(yout[:, 0], yout[:, 1], '-r')
@@ -52,14 +58,35 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
         controls = np.zeros((yout.shape[0], du))
         for ii in range(yout.shape[0]): # compute controls
             y_target = yout[ii, (assignments[ii][zz]+nagents)*4:(assignments[ii][zz]+nagents+1)*4]
-            controls[ii, :] = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target)
+            # controls[ii, :] = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target)
+
+            # AUGMENTED TRACKER
+            asst_ii = assignments[ii] # assignments at time ii
+            sigma_i = asst_ii[zz] # target assigned-to agent zz
+            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
+            poltrack = polagents[sigma_i]
+
+            controls_targ = controls_targ.reshape((controls_targ.shape[0], 1))
+            xd_c = poltargets[sigma_i].offset
+            cu = -np.matmul(poltargets[sigma_i].K, xd_c)
+            controls_ag = poltrack.evaluate2(tout[ii], y_agent[ii, :], xd_c)
+            controls_ag = controls_ag.reshape(controls_ag.shape[0],)
+            controls[ii, :] = controls_ag
 
         y_target = yout[0, (assignments[0][zz]+nagents)*4:(assignments[0][zz]+nagents+1)*4]
-        xp[0, zz] = np.dot(y_agent[0, :]- y_target, np.dot(P, y_agent[0, :] - y_target))
+        # xp[0, zz] = np.dot(y_agent[0, :]- y_target, np.dot(P, y_agent[0, :] - y_target))
 
+
+        # TEST augmented value function
+        X = np.hstack((y_agent[0, :]-xd_c, y_target-xd_c))
+        xp[0, zz] = np.dot(X, np.dot(P, X))
         stage_cost[0, zz] = np.dot(y_agent[0, :] - y_target,
                                    np.dot(Q, y_agent[0, :] - y_target)) + \
                             np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
+
+        # stage_cost[0, zz] = np.dot(y_agent[0, :] - y_target,
+        #                            np.dot(Q, y_agent[0, :] - y_target)) + \
+        #                     np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
 
         # stage_cost[0, zz] = np.dot(y_agent[0, :] - y_target,
         #                            np.dot(Q, y_agent[0, :] - y_target))
@@ -68,16 +95,55 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
             y_target = yout[ii, (assignments[ii][zz]+nagents)*4:(assignments[ii][zz]+nagents+1)*4]
 
             # TEST
+            Q = np.eye(4)
+            # Q[2,2] = 0
+            # Q[3,3] = 0
+            C1 = np.concatenate((np.eye(4), -np.eye(4)), axis=1)
+            Q1 = np.matmul(C1.T, np.matmul(Q, C1))
             asst_ii = assignments[ii] # assignments at time ii
             sigma_i = asst_ii[zz] # target assigned-to agent zz
+            xd_c = poltargets[sigma_i].offset
+            cu = -np.matmul(poltargets[sigma_i].K, xd_c)
             controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
-            controls_ag = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
+            X = np.hstack((y_agent[ii, :]-xd_c, y_target-xd_c))
+
+            # # FEEDFORWARD LQR
+            # controls_ag = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
             # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
             #                             np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
-            stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
-                                        np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
 
-            xp[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(P, y_agent[ii, :] - y_target))
+            # AUGMENTED LQ TRACKER
+            poltrack = polagents[sigma_i]
+            controls_targ = controls_targ.reshape((controls_targ.shape[0], 1))
+            controls_ag = poltrack.evaluate2(tout[ii], y_agent[ii, :]-xd_c, y_target-xd_c)
+            controls_ag = controls_ag.reshape(controls_ag.shape[0],)
+            stage_cost[ii, zz] = np.dot(X, np.dot(Q1, X)) + \
+                                        np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
+            # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
+            #                             np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
+
+            # NON-AUGMENTED LQ TRACKER (NO FEEDFORWARD)
+            # controls_ag = poltrack.evaluate3(tout[ii], y_agent[ii, :], y_target)
+            # stage_cost[ii, zz] = np.dot(X, np.dot(Q1, X)) + \
+            #                             np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
+            # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
+            #                             np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
+
+            # # NON-AUGMENTED LQ TRACKER (FEEDFORWARD)
+            # controls_ag = poltrack.evaluate4(tout[ii], y_agent[ii, :], y_target, cu)
+            # stage_cost[ii, zz] = np.dot(X, np.dot(Q1, X)) + \
+            #                             np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
+            # # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
+            # #                             np.dot(controls_ag[:]-controls_targ, np.dot(R, controls_ag[:]-controls_targ))
+
+            # COST-TO-GO
+            # TEST augmented value function
+            X = np.hstack((y_agent[ii, :]-xd_c, y_target-xd_c))
+            xp[ii, zz] = np.dot(X, np.dot(P, X))
+
+
+            # P = poltrack.get_P()
+            # xp[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(P, y_agent[ii, :] - y_target))
             # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
             #                             np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
 
@@ -102,6 +168,10 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
     # plt.xlabel('time')
     # plt.ylabel('cost')
     # plt.legend()
+
+    if nagents == 1:
+        plt.plot(tout, final_cost[:, 0], '-.c', label='Cum. Stage Cost (0)')    
+        plt.plot(tout, xp[:, 0], '-.r', label='Cost-to-go (assuming no switch) (0)')
 
     if nagents == 2:
         plt.plot(tout, final_cost[:, 0], '-.c', label='Cum. Stage Cost (0)')    
@@ -159,7 +229,7 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
 
     # PLOT TRAJECTORIES
 
-    if nagents == 2:
+    if nagents:
         # plt.figure()
         fig, ax = plt.subplots()
 
@@ -242,15 +312,40 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
         plt.figure()
 
     if nagents == 8:
-        plt.figure()
-        for zz in range(nagents):
-            y_agent = yout[:, zz*4:(zz+1)*4]
-            plt.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-            plt.plot(y_agent[:, 0], y_agent[:, 1], '-r')
+        # plt.figure()
+        fig, ax = plt.subplots()
 
+        for zz in range(nagents):
+
+            # agent state over time
+            y_agent = yout[:, zz*4:(zz+1)*4]
+
+            # plot agent trajectory with text
+            ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
+            ax.plot(y_agent[:, 0], y_agent[:, 1], '-r') # returns line2d object
+            ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
+
+            # plot location of assignment switches
+            patches = []
+            for switch_ind in assignment_switches[zz]:
+                ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 5, color='m', fill=True)
+                patches.append(ci)
+
+            p = PatchCollection(patches)
+            ax.add_collection(p)
+
+            # plot target trajectory
             y_target = yout[:, (zz+nagents)*4:(zz+nagents+1)*4]
-            plt.plot(y_target[0, 0], y_target[0, 1], 'bs')
-            plt.plot(y_target[:, 0], y_target[:, 1], '-b')
+            ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
+            ax.plot(y_target[:, 0], y_target[:, 1], '-b')
+            ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+
+            print("TARGET FINAL POS: ", y_target[-1])
+            print("AGENT FINAL POS: ", y_agent[-1])
+
+        ax.set_title("Trajectory")
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
 
         # for i, t in enumerate(tout):
         #     agents = []
@@ -325,10 +420,19 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
         for ii in range(1, yout.shape[0]):
             y_target = yout[ii, (assignments[ii][zz]+nagents)*6:(assignments[ii][zz]+nagents+1)*6]
 
-            xp[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(P, y_agent[ii, :] - y_target))
+            # TEST
+            asst_ii = assignments[ii] # assignments at time ii
+            sigma_i = asst_ii[zz] # target assigned-to agent zz
+            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
+            controls_ag = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
+            # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
+            #                             np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
             stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
-                                        np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
+                                        np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
 
+            xp[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(P, y_agent[ii, :] - y_target))
+            # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
+            #                             np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
 
         for ii in range(tout.shape[0]):
             final_cost[ii, zz] = np.trapz(stage_cost[:ii, zz], x=tout[:ii])
@@ -442,6 +546,47 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
         ax.set_xlabel("x")
         ax.set_ylabel("y")
 
+    if nagents == 8:
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+
+        # destination location
+        # IF zeropol just set to target last position
+        # for zz in range(ntargets):
+        #     pt = poltargets[zz]
+        #     offset = pt.offset
+        #     ax.scatter3D(offset[0], offset[1], offset[2], color='k')
+
+        # agent/target trajectories
+        for zz in range(nagents):
+
+            # agent state over time
+            y_agent = yout[:, zz*6:(zz+1)*6]
+
+            # plot agent trajectory with text
+            ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
+            ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r') # returns line2d object
+            # ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
+
+            # plot location of assignment switches
+            # patches = []
+            for switch_ind in assignment_switches[zz]:
+                ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m')
+                # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='m', fill=True)
+                # patches.append(ci)
+
+            # p = PatchCollection(patches)
+            # ax.add_collection(p)
+
+            # plot target trajectory
+            y_target = yout[:, (zz+nagents)*6:(zz+nagents+1)*6]
+            ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
+            ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
+            # ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+
+        ax.set_title("Trajectory")
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
 
 
 def find_switches(tout, yout, nagents, ntargets, agent_config_size, target_config_size):

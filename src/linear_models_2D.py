@@ -15,5 +15,9 @@ def double_integrator_2D():
                   [1.0, 0.0],
                   [0.0, 1.0]], dtype=np.float_)
 
-    return A, B, dx, du
+    C = np.eye(dx)
+
+    D = 0
+
+    return A, B, C, D, dx, du
 

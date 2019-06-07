@@ -1,5 +1,6 @@
 
 import matplotlib.pyplot as plt
+import numpy as np
 from setup import *
 from post_process import *
 
@@ -9,13 +10,16 @@ if __name__ == "__main__":
     results = []
 
     # SIM SETUP
-    dim = 3
+    dim = 2
     nagents = 2
     ntargets = 2
     agent_model = "Double Integrator"
     target_model = "Double Integrator"
-    # initial_conditions = --> pass input filename into setup_simulation
-    sim = setup_simulation(agent_model, target_model, nagents, ntargets, dim)
+    # initial_conditions = np.loadtxt("initial_conditions_2d.txt") # agents and targets
+    # initial_conditions = np.loadtxt("initial_conditions_3d.txt")
+    # cities = --> some distribution
+    control_policy = "LQR"
+    sim = setup_simulation(agent_model, target_model, control_policy, nagents, ntargets, dim)
 
     batch_simulation.append(sim)
 

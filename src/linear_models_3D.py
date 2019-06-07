@@ -40,7 +40,10 @@ def quadcopter_3D():
                   [0.0, 0.0, 0.0, 0.0],
                   [0.0, 0.0, 0.0, 0.0]])
 
-    return A, B, dx, du
+    C = np.eye(A.shape[0])
+    D = 0
+
+    return A, B, C, D, dx, du
 
 def double_integrator_3D():
     # 3D double integrator
@@ -60,5 +63,8 @@ def double_integrator_3D():
                   [0.0, 1.0, 0.0],
                   [0.0, 0.0, 1.0]])
 
-    return A, B, dx, du
+    C = np.eye(dx)
+    D = 0
+
+    return A, B, C, D, dx, du
 

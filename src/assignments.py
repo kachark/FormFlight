@@ -103,20 +103,16 @@ class AssignmentDyn(Assignment):
 
         dim_state = ref_states[0][0].shape[0]
 
-        cities = [np.array([10, 0, 0, 0]), np.array([5, -5, 0, 0])]
-        # cities = [np.array([10, -3, -8, -9]), np.array([5, -5, 22, -6])]
-        # cities = [np.array([-10,0,0,0], np.float_), np.array([10,0,0,0], dtype=np.float_), np.array([5,-5,0,0], dtype=np.float_)] # ntargets = 4
-        # cities = [np.array([10, 4, -2, 3]), np.array([2, -12, -12, 12]),
-        #           np.array([-12, 10, 0, -5]), np.array([7, -2, 0, 6]), 
-        #           np.array([13, -23, 1, -7]), np.array([5, -5, 0, -9]),
-        #           np.array([44, 3, 0, 9]), np.array([15, -15, 0, 10])]
-
         M = np.zeros((nagents, ntargets))
         for ii, agent in enumerate(ref_states):
-            # for jj, city in enumerate(cities):
             for jj, target in enumerate(target_states):
-                M[ii, jj] = agent[1].pol.cost_to_go(t, agent[0], target[0])
-                # M[ii, jj] = agent[1].pol.cost_to_go(t, agent[0], city)
+                # M[ii, jj] = agent[1].pol.cost_to_go(t, agent[0], target[0])
+
+                # AUGMENTED LQ TRACKER COST-TO-GO (pol.cost_to_go2 )
+                Fcl = target[1].pol.Acl
+                r = target[1].pol.r
+                xd_c = target[1].pol.offset
+                M[ii, jj] = agent[1].pol.cost_to_go2(t, agent[0]-xd_c, target[0]-xd_c, Fcl, r)
 
 
         # if M[0,0] >= 894:

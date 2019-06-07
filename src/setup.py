@@ -8,7 +8,8 @@ from linear_models_2D import *
 from linear_models_3D import *
 from run import *
 
-def setup_simulation(agent_model, target_model, nagents, ntargets, dim=2):
+# def setup_simulation(agent_model, target_model, nagents, ntargets, initial_conditions, dim=2):
+def setup_simulation(agent_model, target_model, control_policy, nagents, ntargets, dim=2):
 
     sim = {}
     parameters = ['dx', 'du', 'A', 'B', 'agent_dyn', 'target_dyns', 'agent_pol', 'target_pol', 'asst_pol', 'x0']
@@ -25,20 +26,85 @@ def setup_simulation(agent_model, target_model, nagents, ntargets, dim=2):
 
         if agent_model == "Double Integrator":
 
-            A, B, dx, du = double_integrator_2D()
+            A, B, C, D, dx, du = double_integrator_2D()
+
+            # x0 = np.array([-10, -9, -6, -8,
+            #                7, 1, 1, -8])
 
             ### Initial conditions
             x0 = np.array([-10, -9, -6, -8, 6, -2, -10, 7,
                            7, 1, 1, -8, -2, -1, 0, 8])
 
-        # Target Terminal Location
-        cities = [np.array([10, 0, 0, 0]), np.array([5, -5, 0, 0])]
+            # randomized Agents
+            # x0 = np.array([np.random.randn(), np.random.randn(), 0, 0, np.random.randn(), np.random.randn(), 0, 0,
+            #                7, 1, 1, -8, -2, -1, 0, 8])
+
+            # x0 = np.zeros((nagents, dx))
+            # for ii, aa in enumerate(x0):
+            #     x0[ii] = np.array([
+
+            # nagents = 8
+            # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
+            #                -10, -5, 5, 5, 20, 10, -3, -8,
+            #                25, 5, 10, -15, 7, 23, -1, 13,
+            #                -92, -12, 33, 66, 123, 11, -1, -18])
+            # x02 = np.array([15, 15, 11, -11, 11, 11, -1, 13,
+            #                 -7, -15, 15, 15, 17, 13, -13, -18,
+            #                 25, 35, 18, -17, -9, 10, -13, 13,
+            #                -14, -45, 15, 15, 20, 14, -16, -18])
+            # x0 = np.hstack((x0, x02))
+
+            # generate target positions x,y as a circle; randomize velocity magnitudes
+            # agents
+            # x0 = np.array([5, 5, 10, -10,
+            #                10, 10, -30, 3,
+            #                -10, -5, 50, 50,
+            #                20, 10, -30, -80,
+            #                25, 5, 10, -15,
+            #                7, 23, -100, 13,
+            #                -92, -12, 33, 66,
+            #                123, 11, -10, -18])
+            # # Targets
+            # r = 50
+            # xy = [circle(r, ntargets, t) for t in range(ntargets)]
+            # # x02 = np.zeros(dx*ntargets)
+            # # random velocity
+            # x02 = np.array([xy[0][0], xy[0][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[1][0], xy[1][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[2][0], xy[2][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[3][0], xy[3][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[4][0], xy[4][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[5][0], xy[5][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[6][0], xy[6][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[7][0], xy[7][1], np.random.rand(1)[0], np.random.rand(1)[0]])
+
+            # # not random velocity
+            # x02 = np.array([xy[0][0], xy[0][1], 1, 1,
+            #                 xy[1][0], xy[1][1], 1, 1,
+            #                 xy[2][0], xy[2][1], -1, 1,
+            #                 xy[3][0], xy[3][1], -1, 1,
+            #                 xy[4][0], xy[4][1], -1, -1,
+            #                 xy[5][0], xy[5][1], -1, -1,
+            #                 xy[6][0], xy[6][1], 1, -1,
+            #                 xy[7][0], xy[7][1], 1, -1])
+
+            # x0 = np.hstack((x0, r*x02))
+
+            # cities = [100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4)]
+
+            # Target Terminal Location
+            cities = [np.array([10, 0, 0, 0]), np.array([5, -5, 0, 0])] # 2v2 test case
+            # cities = [np.array([10, 0, 0, 0])] # 1v1 test case
+
+
+            ### runner
+            sim_runner = run_identical_doubleint_2D
 
     if dim == 3:
 
         if agent_model == "Double Integrator":
 
-            A, B, dx, du = double_integrator_3D()
+            A, B, C, D, dx, du = double_integrator_3D()
 
             ### Initial conditions
             x0 = np.array([-10, -9, -6, -8, -6, -8,
@@ -49,9 +115,52 @@ def setup_simulation(agent_model, target_model, nagents, ntargets, dim=2):
             # Target Terminal Locations
             cities = [np.array([10, 0, 0, 0, 0, 0]), np.array([5, -5, 0, 0, 0, 0])]
 
+            # nagents = 8
+            x0 = np.array([5, 5, 7, 10, -10, 10,
+                           10, -3, 3, 32, 12, 9,
+                           -10, -5, 5, 5, 20, 10,
+                           -3, -8, 25, 5, 10, -15,
+                           7, 23, -1, 13, -92, -12,
+                           33, 66, 12, 11, -1, -18,
+                           1, 123, 3, 50, 51, -123,
+                           -20, -2, 10, 15, 14, -22])
+            # Targets
+            r = 50
+            xy = [circle(r, ntargets, t) for t in range(ntargets)]
+            # x02 = np.zeros(dx*ntargets)
+            # for (x,y) in xy:
+            #     x02
+            # random velocity
+            # x02 = np.array([xy[0][0], xy[0][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[1][0], xy[1][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[2][0], xy[2][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[3][0], xy[3][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[4][0], xy[4][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[5][0], xy[5][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[6][0], xy[6][1], np.random.rand(1)[0], np.random.rand(1)[0],
+            #                 xy[7][0], xy[7][1], np.random.rand(1)[0], np.random.rand(1)[0]])
+            r = 50
+            xy = [circle(r, ntargets, t) for t in range(ntargets)]
+            # not random velocity
+            x02 = np.array([xy[0][0], 0, xy[0][1], 1, 1, 1,
+                            xy[1][0], 0, xy[1][1], 1, 1, 1,
+                            xy[2][0], 0, xy[2][1], -1, 1, 1,
+                            xy[3][0], 0, xy[3][1], -1, 1, 1,
+                            xy[4][0], 0, xy[4][1], -1, 1, -1,
+                            xy[5][0], 0, xy[5][1], -1, 1, -1,
+                            xy[6][0], 0, xy[6][1], 1, 1, -1,
+                            xy[7][0], 0, xy[7][1], 1, 1, -1])
+
+            x0 = np.hstack((x0, r*x02))
+
+            cities = [100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4)]
+
+            ### runner
+            sim_runner = run_identical_doubleint_3D
+
         if agent_model == "Linearized Quadcopter":
 
-            A, B, dx, du = quadcopter_3D()
+            A, B, C, D, dx, du = quadcopter_3D()
             ### Initial conditions
             x0 = np.array([-10, -9, -6, -8, -6, -8,
                            6, -2, -10, 7, -10, 7,
@@ -61,18 +170,29 @@ def setup_simulation(agent_model, target_model, nagents, ntargets, dim=2):
             # Target Terminal Locations
             cities = [np.array([10, 0, 0]), np.array([5, -5, 0])]
 
-    ### Dynamics
-    ltidyn = LTIDyn(A, B)
+            ### runner
+            sim_runner = run_identical_doubleint_3D
+
+    Q = np.eye(dx)
+    R = np.eye(du)
+
+    ### target control law
+    poltarget = [LinearFeedbackOffset(A, B, C, Q, R, c) for c in cities]
+    # poltarget = [ZeroPol(du) for c in cities]
+    ### target Dynamics
     dyn_target = LTIDyn(A, B)
 
     ### agent control law
-    Q = np.eye(dx)
-    R = np.eye(du)
-    poltrack = LinearFeedbackTracking(A, B, Q, R)
-    ### target control law
-    Q = np.eye(dx)
-    R = np.eye(du)
-    poltarget = [LinearFeedbackOffset(A, B, Q, R, c) for c in cities]
+    if control_policy == "LQR":
+        poltrack = LinearFeedbackTracking(A, B, C, Q, R)
+
+    if control_policy == "LQI":
+        A, B, Qaug, Raug = LQI_augmented_system(A, B, C) # augmented A, B
+        dx = A.shape[0]
+        poltrack = LinearFeedbackIntegralTracking(A, B, Qaug, Raug)
+
+    ### Agent Dynamics
+    ltidyn = LTIDyn(A, B)
 
     ### assignment policy
     apol = []
@@ -80,10 +200,6 @@ def setup_simulation(agent_model, target_model, nagents, ntargets, dim=2):
     apol.append(AssignmentEMD(nagents, ntargets)) 
     # Dyn
     apol.append(AssignmentDyn(nagents, ntargets))
-
-    ### runner
-    sim_runner = run_identical_doubleint
-
 
     sim['dx'] = dx
     sim['du'] = du
@@ -100,8 +216,25 @@ def setup_simulation(agent_model, target_model, nagents, ntargets, dim=2):
     return sim
 
 
+def LQI_augmented_system(A, B, C):
 
+    # augmented matrices
+    n = A.shape[0]
+    Aaug = np.concatenate((A, np.zeros(A.shape)), axis=1)
+    C = np.eye(n)
+    lower = np.concatenate((-C, np.zeros(A.shape)), axis=1)
+    Aaug = np.concatenate((Aaug, lower), axis=0)
+    Baug = np.concatenate((B, np.zeros(B.shape)), axis=0)
+    Qaug = np.eye(Aaug.shape[0])
+    Raug = np.eye(Baug.shape[1])
 
+    return Aaug, Baug, Qaug, Raug
+
+def circle(r, ntargets, target):
+    angle = target*(2*np.pi)/ntargets
+    y = np.sin(angle)
+    x = np.cos(angle)
+    return x,y
 
 
 
@@ -240,4 +373,3 @@ def setup_simulation(agent_model, target_model, nagents, ntargets, dim=2):
         # 8 v 8 Dyn
         # apol = AssignmentDyn(8, 8)
         # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)
-
