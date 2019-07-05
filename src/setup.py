@@ -8,8 +8,7 @@ from linear_models_2D import *
 from linear_models_3D import *
 from run import *
 
-# def setup_simulation(agent_model, target_model, nagents, ntargets, initial_conditions, dim=2):
-def setup_simulation(agent_model, target_model, control_policy, nagents, ntargets, dim=2):
+def setup_simulation(agent_model, target_model, control_policy, nagents, ntargets, dim=2, dt=0.01, maxtime=10):
 
     sim = {}
     parameters = ['dx', 'du', 'A', 'B', 'agent_dyn', 'target_dyns', 'agent_pol', 'target_pol', 'asst_pol', 'x0']
@@ -28,74 +27,60 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
 
             A, B, C, D, dx, du = double_integrator_2D()
 
-            # x0 = np.array([-10, -9, -6, -8,
-            #                7, 1, 1, -8])
-
             ### Initial conditions
-            x0 = np.array([-10, -9, -6, -8, 6, -2, -10, 7,
-                           7, 1, 1, -8, -2, -1, 0, 8])
 
-            # randomized Agents
-            # x0 = np.array([np.random.randn(), np.random.randn(), 0, 0, np.random.randn(), np.random.randn(), 0, 0,
-            #                7, 1, 1, -8, -2, -1, 0, 8])
+            # Agents
+            x0 = np.zeros((nagents, dx))
+            x0p = np.random.uniform(-50, 50, (nagents,dim)) # position spread
+            x0v = np.random.uniform(-50, 50, (nagents,(dx-dim))) # velocity spread
+            for ii, (pos, vel) in enumerate(zip(x0p, x0v)):
+                x0[ii] = np.concatenate((pos, vel), axis=0)
+            x0 = x0.flatten()
 
-            # x0 = np.zeros((nagents, dx))
-            # for ii, aa in enumerate(x0):
-            #     x0[ii] = np.array([
+            # Targets
+            # r = 150 # circle radius
+            # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
+            x02p = np.random.uniform(-50, 50, (nagents,dim)) # position spread
+            x02 = np.zeros((ntargets, dx))
+            vel_range = 10
+            for ii, tt in enumerate(x02):
+                # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 0, 0])
+                # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 1, 0])
+                x02[ii] = np.array([x02p[ii][0], x02p[ii][1], np.random.uniform(-vel_range, vel_range, 1)[0],
+                                    np.random.uniform(-vel_range, vel_range, 1)[0]])
 
-            # nagents = 8
-            # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-            #                -10, -5, 5, 5, 20, 10, -3, -8,
-            #                25, 5, 10, -15, 7, 23, -1, 13,
-            #                -92, -12, 33, 66, 123, 11, -1, -18])
-            # x02 = np.array([15, 15, 11, -11, 11, 11, -1, 13,
-            #                 -7, -15, 15, 15, 17, 13, -13, -18,
-            #                 25, 35, 18, -17, -9, 10, -13, 13,
-            #                -14, -45, 15, 15, 20, 14, -16, -18])
-            # x0 = np.hstack((x0, x02))
+            x02 = x02.flatten()
+            x0 = np.hstack((x0, x02))
 
-            # generate target positions x,y as a circle; randomize velocity magnitudes
-            # agents
-            # x0 = np.array([5, 5, 10, -10,
-            #                10, 10, -30, 3,
-            #                -10, -5, 50, 50,
-            #                20, 10, -30, -80,
-            #                25, 5, 10, -15,
-            #                7, 23, -100, 13,
-            #                -92, -12, 33, 66,
-            #                123, 11, -10, -18])
-            # # Targets
-            # r = 50
-            # xy = [circle(r, ntargets, t) for t in range(ntargets)]
-            # # x02 = np.zeros(dx*ntargets)
-            # # random velocity
-            # x02 = np.array([xy[0][0], xy[0][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[1][0], xy[1][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[2][0], xy[2][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[3][0], xy[3][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[4][0], xy[4][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[5][0], xy[5][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[6][0], xy[6][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[7][0], xy[7][1], np.random.rand(1)[0], np.random.rand(1)[0]])
-
-            # # not random velocity
-            # x02 = np.array([xy[0][0], xy[0][1], 1, 1,
-            #                 xy[1][0], xy[1][1], 1, 1,
-            #                 xy[2][0], xy[2][1], -1, 1,
-            #                 xy[3][0], xy[3][1], -1, 1,
-            #                 xy[4][0], xy[4][1], -1, -1,
-            #                 xy[5][0], xy[5][1], -1, -1,
-            #                 xy[6][0], xy[6][1], 1, -1,
-            #                 xy[7][0], xy[7][1], 1, -1])
-
-            # x0 = np.hstack((x0, r*x02))
-
-            # cities = [100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4)]
 
             # Target Terminal Location
-            cities = [np.array([10, 0, 0, 0]), np.array([5, -5, 0, 0])] # 2v2 test case
-            # cities = [np.array([10, 0, 0, 0])] # 1v1 test case
+            cities = np.zeros((ntargets, dx))
+            r = 50
+            # cities_p = [circle(r, ntargets, t) for t in range(ntargets)]
+            cities_p = np.random.uniform(-30, 30, (ntargets,dim)) # city position spread
+            for ii, tt in enumerate(cities):
+                cities[ii] = np.array([cities_p[ii][0], cities_p[ii][1], 0, 0])
 
+            cities = cities.flatten()
+            # cities = r*cities
+            cities = np.split(cities, ntargets)
+
+
+
+            # # TEST CASES - 1v1
+            # # x0 = np.array([-10, -9, -6, -8,
+            # #                7, 1, 1, -8])
+
+            # # x0 = np.array([5, 5, 0, 0,
+            # #                -10, -5, 5, 5])
+            # # TEST CASES - 2v2
+            # x0 = np.array([-10, -9, -6, -8, 6, -2, -10, 7,
+            #                7, 1, 1, -8, -2, -1, 0, 8])
+
+            # cities = [np.array([10, 0, 0, 0]), np.array([5, -5, 0, 0])] # 2v2 test case
+            # # cities = [np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0])] # 2v2 test case
+            # # cities = [np.array([-10, 0, 0, 0])] # 1v1 test case
+            # # cities = [np.array([0, 0, 0, 0])] # 1v1 test case
 
             ### runner
             sim_runner = run_identical_doubleint_2D
@@ -106,54 +91,48 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
 
             A, B, C, D, dx, du = double_integrator_3D()
 
-            ### Initial conditions
-            x0 = np.array([-10, -9, -6, -8, -6, -8,
-                           6, -2, -10, 7, -10, 7,
-                           7, 1, 1, -8, 1, -8,
-                           -2, -1, 0, 8, 0, 8])
+            # Agents
+            x0 = np.zeros((nagents, dx))
+            x0p = np.random.uniform(-50, 50, (nagents,dim)) # position spread
+            x0v = np.random.uniform(-50, 50, (nagents,(dx-dim))) # velocity spread
+            for ii, (pos, vel) in enumerate(zip(x0p, x0v)):
+                x0[ii] = np.concatenate((pos, vel), axis=0)
+            x0 = x0.flatten()
 
-            # Target Terminal Locations
-            cities = [np.array([10, 0, 0, 0, 0, 0]), np.array([5, -5, 0, 0, 0, 0])]
-
-            # nagents = 8
-            x0 = np.array([5, 5, 7, 10, -10, 10,
-                           10, -3, 3, 32, 12, 9,
-                           -10, -5, 5, 5, 20, 10,
-                           -3, -8, 25, 5, 10, -15,
-                           7, 23, -1, 13, -92, -12,
-                           33, 66, 12, 11, -1, -18,
-                           1, 123, 3, 50, 51, -123,
-                           -20, -2, 10, 15, 14, -22])
             # Targets
-            r = 50
-            xy = [circle(r, ntargets, t) for t in range(ntargets)]
-            # x02 = np.zeros(dx*ntargets)
-            # for (x,y) in xy:
-            #     x02
-            # random velocity
-            # x02 = np.array([xy[0][0], xy[0][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[1][0], xy[1][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[2][0], xy[2][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[3][0], xy[3][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[4][0], xy[4][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[5][0], xy[5][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[6][0], xy[6][1], np.random.rand(1)[0], np.random.rand(1)[0],
-            #                 xy[7][0], xy[7][1], np.random.rand(1)[0], np.random.rand(1)[0]])
-            r = 50
-            xy = [circle(r, ntargets, t) for t in range(ntargets)]
-            # not random velocity
-            x02 = np.array([xy[0][0], 0, xy[0][1], 1, 1, 1,
-                            xy[1][0], 0, xy[1][1], 1, 1, 1,
-                            xy[2][0], 0, xy[2][1], -1, 1, 1,
-                            xy[3][0], 0, xy[3][1], -1, 1, 1,
-                            xy[4][0], 0, xy[4][1], -1, 1, -1,
-                            xy[5][0], 0, xy[5][1], -1, 1, -1,
-                            xy[6][0], 0, xy[6][1], 1, 1, -1,
-                            xy[7][0], 0, xy[7][1], 1, 1, -1])
+            # r = 150 # circle radius
+            # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
+            x02p = np.random.uniform(-50, 50, (nagents,dim)) # position spread
+            x02 = np.zeros((ntargets, dx))
+            vel_range = 10
+            for ii, tt in enumerate(x02):
+                # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 0, 0])
+                # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 1, 0])
+                x02[ii] = np.array([x02p[ii][0], 
+                                    x02p[ii][1],
+                                    x02p[ii][2],
+                                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                                    np.random.uniform(-vel_range, vel_range, 1)[0]])
 
-            x0 = np.hstack((x0, r*x02))
+            x02 = x02.flatten()
+            x0 = np.hstack((x0, x02))
 
-            cities = [100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4), 100*np.random.rand(4)]
+            # Target Terminal Location
+            # cities = [np.array([10, 0, 0, 0]), np.array([5, -5, 0, 0])] # 2v2 test case
+            # cities = [np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0])] # 2v2 test case
+            # cities = [np.array([-10, 0, 0, 0])] # 1v1 test case
+            # cities = [np.array([0, 0, 0, 0])] # 1v1 test case
+            cities = np.zeros((ntargets, dx))
+            r = 300
+            cities_p = [circle(r, ntargets, t) for t in range(ntargets)]
+            # cities_p = np.random.uniform(-300, 300, (ntargets,dim)) # city position spread
+            for ii, tt in enumerate(cities):
+                cities[ii] = np.array([cities_p[ii][0], 0, cities_p[ii][1], 0, 0, 0])
+
+            cities = cities.flatten()
+            cities = r*cities
+            cities = np.split(cities, ntargets)
 
             ### runner
             sim_runner = run_identical_doubleint_3D
@@ -176,15 +155,52 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
     Q = np.eye(dx)
     R = np.eye(du)
 
+    #TEST
+    ######################
+    if dim == 2:
+        Q2 = copy.deepcopy(Q)
+        Q2[2,2] = 0.0
+        Q2[3,3] = 0.0
+
+        Q3 = copy.deepcopy(Q)
+        Q3[0, 0] = 1000
+        Q3[1, 1] = 1000
+        Q3[2,2] = 0.0
+        Q3[3,3] = 0.0
+        
+    if dim == 3:
+        Q2 = copy.deepcopy(Q)
+        Q2[3,3] = 0.0
+        Q2[4,4] = 0.0
+        Q2[5,5] = 0.0
+
+        Q3 = copy.deepcopy(Q)
+        Q3[0, 0] = 10
+        Q3[1, 1] = 10
+        Q3[2, 2] = 10
+        Q3[3,3] = 0.0
+        Q3[4,4] = 0.0
+        Q3[5,5] = 0.0
+ 
+    ######################
+
     ### target control law
-    poltarget = [LinearFeedbackOffset(A, B, C, Q, R, c) for c in cities]
+    # poltarget = [LinearFeedbackOffset(A, B, C, Q, R, c) for c in cities]
     # poltarget = [ZeroPol(du) for c in cities]
+    poltargets = [LinearFeedbackConstTracker(A, B, Q2, 2*R, c) for c in cities]
     ### target Dynamics
     dyn_target = LTIDyn(A, B)
 
     ### agent control law
     if control_policy == "LQR":
-        poltrack = LinearFeedbackTracking(A, B, C, Q, R)
+        # poltrack = LinearFeedbackTracking(A, B, C, Q, R)
+
+        #TEST
+        # initialize LinearFeedbackAugmented by pre-assigning/augmenting this policy with Target 0
+        Acl = poltargets[0].get_closed_loop_A()
+        gcl = poltargets[0].get_closed_loop_g()
+        print("gcl = ", gcl)
+        poltrack = LinearFeedbackAugmented(A, B, Q3, R, Acl, gcl) # initial augmentation: agent_i tracks target_i
 
     if control_policy == "LQI":
         A, B, Qaug, Raug = LQI_augmented_system(A, B, C) # augmented A, B
@@ -197,17 +213,19 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
     ### assignment policy
     apol = []
     # EMD
-    apol.append(AssignmentEMD(nagents, ntargets)) 
+    # apol.append(AssignmentEMD(nagents, ntargets)) 
     # Dyn
     apol.append(AssignmentDyn(nagents, ntargets))
 
+    sim['dt'] = dt
+    sim['maxtime'] = maxtime
     sim['dx'] = dx
     sim['du'] = du
     sim['x0'] = x0
     sim['agent_dyn'] = ltidyn
     sim['target_dyns'] = dyn_target
     sim['agent_pol'] = poltrack
-    sim['target_pol'] = poltarget
+    sim['target_pol'] = poltargets
     sim['asst_pol'] = apol
     sim['nagents'] = nagents
     sim['ntargets'] = ntargets
@@ -215,161 +233,10 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
 
     return sim
 
-
-def LQI_augmented_system(A, B, C):
-
-    # augmented matrices
-    n = A.shape[0]
-    Aaug = np.concatenate((A, np.zeros(A.shape)), axis=1)
-    C = np.eye(n)
-    lower = np.concatenate((-C, np.zeros(A.shape)), axis=1)
-    Aaug = np.concatenate((Aaug, lower), axis=0)
-    Baug = np.concatenate((B, np.zeros(B.shape)), axis=0)
-    Qaug = np.eye(Aaug.shape[0])
-    Raug = np.eye(Baug.shape[1])
-
-    return Aaug, Baug, Qaug, Raug
-
+# Formations
 def circle(r, ntargets, target):
     angle = target*(2*np.pi)/ntargets
     y = np.sin(angle)
     x = np.cos(angle)
     return x,y
 
-
-
-
-
-
-
-
-
-
-
-
-        # nagents=  2
-        # ntargets = 2
-        # nagents=  3
-        # ntargets = 3
-
-        # Agent dynamics
-        # ltidyn = LTIDyn(A, B)
-        # dyn_target = LTIDyn(A, B)
-        # Agent control law
-        # poltrack = LinearFeedbackTracking(A, B, Q, R)
-        # poltarget = LinearFeedback(A, B, Q, R)
-
-        # NEW
-        # Agent Closed-Loop Dynamics
-        # ltidyn_cl = LTIDyn_closedloop(A, B, poltrack.K)
-        # ltidyn_cl = LTIDyn(A, B)
-
-
-        # Target control law
-        # cities = [np.array([10, 0]), np.array([5, -5])]
-        # cities = [np.array([10, 0, 0, 0]), np.array([5, -5, 0, 0])]
-        # cities = [np.array([10, 4, -2, 3]), np.array([2, -12, -12, 12]),
-        #           np.array([-12, 10, 0, -5]), np.array([7, -2, 0, 6]), 
-        #           np.array([13, -23, 1, -7]), np.array([5, -5, 0, -9]),
-        #           np.array([44, 3, 0, 9]), np.array([15, -15, 0, 10])]
-        # cities = [np.array([10, -3, -8, -9]), np.array([5, -5, 22, -6])]
-
-
-        # ntargets = 3
-        # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
-        # cities = [np.array([-10,0], np.float_), np.array([10,0], dtype=np.float_), np.array([5,-5], dtype=np.float_)] # ntargets = 4
-        # cities = [np.array([-10,0,0,0], np.float_), np.array([10,0,0,0], dtype=np.float_), np.array([5,-5,0,0], dtype=np.float_)] # ntargets = 4
-        # ntargets = 4
-        # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
-        # ntargets = 8
-        # cities = [100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2), 100*np.random.rand(2)]
-
-        # poltarget = [LinearFeedbackOffset(A, B, Q, R, c) for c in cities]
-        # poltarget = [LinearFeedbackTracking(A, B, Q, R) for c in cities]
-
-        # poltarget = [LinearFeedback(A, B, Q, R) for ii in range(ntargets)]
-
-        # poltarget = [ZeroPol(du) for ii in range(ntargets)]
-        # poltarget = ZeroPol(du)
-
-        # 1v1
-        # x0 = np.array([5, 5, 0, 0,
-        #                -10, -5, 5, 5])
-        # apol = AssignmentLexical(1, 1)
-        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, [poltarget[0]], apol, 1, 1)
-
-
-        # 2 v 2 Lexical
-        # apol = AssignmentLexical(2, 2)
-        # x0 = np.array([5, 5, 0, 0, 10, 10, -3, 8,
-        #                -10, -5, 5, 5, 20, 10, -3, -8])
-
-        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 2, 2)
-
-        # 2 v 2 EMD
-        # x0 = np.random.rand(16) * 20 - 10
-        # x0 = np.array([-10, -9, -6, -8, 6, -2, -10, 7,
-        #                7, 1, 1, -8, -2, -1, 0, 8])
-
-        # 3 v 3 EMD
-        # apol = AssignmentEMD(3, 3)
-        # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-        #                -10, -5, 5, 5])
-        # x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
-        #                -110, -15, 15, 15])
-        # x0 = np.hstack((x0, x02))
-
-        # x0 = np.array([-9.49472109, -9.01609684, -6.30746324, -8.61933317, -4.85049153,  8.27163463,
-        #     -0.84300976, -7.39576421,  6.19783331, -1.93060319, -9.5113471,   7.13662085,
-        #     -4.51410362,  4.18211928, -2.88455314,  5.88618124,  6.89237722,  0.76295034,
-        #      1.18173033, -7.54980037, -2.44716163, -1.42505342,  0.22417293,  7.8352514 ], dtype=np.float_)
-
-        # 4 v 4 EMD
-        # apol = AssignmentEMD(4, 4)
-        # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-        #                -10, -5, 5, 5, 20, 10, -3, -8])
-        # x02 = np.array([15, 15, 110, -110, 110, 110, -13, 13,
-        #                -110, -15, 15, 15, 120, 110, -13, -18])
-        # x0 = np.hstack((x0, x02))
-
-        # 8 v 8 EMD
-        # apol = AssignmentEMD(8, 8)
-        # x0 = np.array([5, 5, 10, -10, 10, 10, -3, 3,
-        #                -10, -5, 5, 5, 20, 10, -3, -8,
-        #                25, 5, 10, -15, 7, 23, -1, 13,
-        #                -92, -12, 33, 66, 123, 11, -1, -18])
-        # x02 = np.array([15, 15, 11, -11, 11, 11, -1, 13,
-        #                 -7, -15, 15, 15, 17, 13, -13, -18,
-        #                 25, 35, 18, -17, -9, 10, -13, 13,
-        #                -14, -45, 15, 15, 20, 14, -16, -18])
-        # x0 = np.hstack((x0, x02))
-
-
-
-        # yout = run_identical_doubleint(dx, du, x0, ltidyn, dyn_target, poltrack, poltarget, apol, 2, 2)
-        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
-        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 3, 3)
-        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 4, 4)
-        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)
-
-        # 2 v 2 EMD
-        # apol.append(AssignmentEMD(nagents, ntargets))
-
-        # 2 v 2 Dyn
-        # apol.append(AssignmentDyn(nagents, ntargets))
-
-        # sim_runner = run_identical_doubleint
-
-        # 3 v 3 Dyn
-        # apol = AssignmentDyn(3, 3)
-        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
-        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 3, 3)
-        # run_identical_doubleint(dx, du, x0, ltidyn, poltrack, poltarget, apol, 3, 3)
-
-        # 4 v 4 Dyn
-        # apol = AssignmentDyn(4, 4)
-        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 4, 4)
-
-        # 8 v 8 Dyn
-        # apol = AssignmentDyn(8, 8)
-        # run_identical_doubleint(dx, du, x0, ltidyn_cl, ltidyn, poltrack, poltarget, apol, 8, 8)

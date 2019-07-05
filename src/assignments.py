@@ -109,10 +109,9 @@ class AssignmentDyn(Assignment):
                 # M[ii, jj] = agent[1].pol.cost_to_go(t, agent[0], target[0])
 
                 # AUGMENTED LQ TRACKER COST-TO-GO (pol.cost_to_go2 )
-                Fcl = target[1].pol.Acl
-                r = target[1].pol.r
-                xd_c = target[1].pol.offset
-                M[ii, jj] = agent[1].pol.cost_to_go2(t, agent[0]-xd_c, target[0]-xd_c, Fcl, r)
+                Fcl = target[1].pol.get_closed_loop_A()
+                g = target[1].pol.get_closed_loop_g()
+                M[ii, jj] = agent[1].pol.aug_cost_to_go(t, agent[0], target[0], Fcl, g)
 
 
         # if M[0,0] >= 894:

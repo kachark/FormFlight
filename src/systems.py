@@ -65,7 +65,7 @@ class OneVOne(System):
         # pre-compute tracking control policy
         for ii, agent in enumerate(self.agents):
             jj = assignment[ii]
-            agent.pol.track(t0, jj, self.targets[jj].pol.Acl, self.targets[jj].pol.r)
+            agent.pol.track(t0, jj, self.targets[jj].pol.get_closed_loop_A(), self.targets[jj].pol.get_closed_loop_g())
 
         # record cost-to-go
         self.costs.append(cost)
@@ -84,11 +84,9 @@ class OneVOne(System):
                 tind_end = self.tsize_inds[jj]
                 tind_start = self.tsize_inds[jj] - self.tsizes[jj]
                 xtarget = x[tind_start:tind_end]
-                xd_c = self.targets[jj].pol.offset # city for target jj - ltidyn_cl
 
                 # Target Control
                 tu = self.targets[jj].pol.evaluate(t, xtarget)
-                cu = -np.matmul(self.targets[jj].pol.K, self.targets[jj].pol.offset)
 
                 # Agent Indices
                 ind_end = self.size_inds[ii]
@@ -97,32 +95,21 @@ class OneVOne(System):
 
                 # Agent Control
                 # print(agent.pol)
-                # u = agent.pol.evaluate(t, xagent, xtarget, feedforward=tu) # original control
-                # u = agent.pol.evaluate3(t, xagent, xd_c) # non-augmented LQ Tracker
-                # u = agent.pol.evaluate4(t, xagent, xtarget, cu) # deprecate
-
-                # print(x[ind_start:ind_end])
-                # print("u = ", u)
+                u = agent.pol.evaluate(t, xagent, xtarget, feedforward=tu)
 
                 # if not collisions:
                 # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, xd_c, tu) #ltidyn_cl
 
                 # NON-AUGMENTED DYNAMICS SOLVED HERE
-                # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u) #ltidyn
-                # dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
+                dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u)
+                dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
+                # if not collisions:
+                #     dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u)
+                #     dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
                 # else:
-                    # for c in collisions:
-                    #     if ii == c[0] or jj == c[1]:
-                    #         break
-
-                # TEST - AUGMENTED DYANMICS
-                agent_tracking_dyn = LTI_Tracking_Dyn(agent.dyn, self.targets[jj].dyn, self.targets[jj].pol.Acl, self.targets[jj].pol.r)
-                u = agent.pol.evaluate2(t, xagent-xd_c, xtarget-xd_c) # SOLVE AUGMENTED CONTROL
-                u = u.reshape(u.shape[0],1)
-                dxagentdt, dxtargetdt = agent_tracking_dyn.rhs(t, xagent-xd_c, xtarget-xd_c, u)
-                # dxagentdt, dxtargetdt = agent_tracking_dyn.rhs(t, xagent, xtarget, u)
-                dxdt[ind_start:ind_end] = dxagentdt.reshape(dxagentdt.shape[0],)
-                dxdt[tind_start:tind_end] = dxtargetdt.reshape(dxtargetdt.shape[0],)
+                #     for c in collisions:
+                #         if ii == c[0] or jj == c[1]:
+                #             break
 
             return dxdt
 
