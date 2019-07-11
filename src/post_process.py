@@ -5,9 +5,9 @@ from mpl_toolkits import mplot3d
 from matplotlib.collections import PatchCollection
 import pandas as pd
 import copy
+from controls import *
 
-# def post_process_identical_2d_doubleint(df, poltrack, Q, R, nagents):
-def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntargets, ot_costs, polagents):
+def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntargets, ot_costs, polagents, opt_asst):
 
     dx = 4
     du = 2
@@ -18,10 +18,6 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
 
     yout = copy.deepcopy(yout)
     assignment_switches = find_switches(tout, yout, nagents, nagents, 4, 4)
-
-    P = poltrack.get_P()
-    Q = poltrack.get_Q()
-    R = poltrack.get_R()
 
     print("INITIAL CONDITION: ", yout[0])
 
@@ -42,60 +38,85 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
     # axs[2].set_ylabel('y')
 
     # assignments = yout[:, nagents*2*4:].astype(np.int32)
-    assignments = yout[:, nagents*2*4:].astype(np.int32)
-
+    assignments = yout[:, nagents*2*dx:].astype(np.int32)
 
     # PLOT COSTS
     final_cost = np.zeros((tout.shape[0], nagents))
     stage_cost = np.zeros((tout.shape[0], nagents))
     xp = np.zeros((yout.shape[0], nagents))
+    optimal_cost = np.zeros((1, nagents))
+
+    xss = np.zeros((yout.shape[0], nagents*2*dx))
     for zz in range(nagents):
-        y_agent = yout[:, zz*4:(zz+1)*4]
-        p1 = np.zeros((yout.shape[0], P.shape[0]))
+        y_agent = yout[:, zz*dx:(zz+1)*dx]
 
         controls = np.zeros((yout.shape[0], du))
         for ii in range(yout.shape[0]): # compute controls
-            y_target = yout[ii, (assignments[ii][zz]+nagents)*4:(assignments[ii][zz]+nagents+1)*4]
-            # controls[ii, :] = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target)
+            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
 
             # AUGMENTED TRACKER
             asst_ii = assignments[ii] # assignments at time ii
             sigma_i = asst_ii[zz] # target assigned-to agent zz
             controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
-            poltrack = polagents[sigma_i]
 
-            # T = polagents[zz].T
-            # B1 = polagents[zz].B1
-            # G = polagents[zz].R1
-            # R = polagents[zz].R
-            p1[ii, :] = polagents[zz].get_p() # function of tracked state, so may change with time
+            # NEW
+            # Get agent policy in correct tracking state for P, Q, p at time ii
+            Acl = poltargets[sigma_i].get_closed_loop_A()
+            gcl = poltargets[sigma_i].get_closed_loop_g()
+            polagents[zz].track(ii, sigma_i, Acl, gcl)
 
-            controls_targ = controls_targ.reshape((controls_targ.shape[0], 1))
-            controls[ii, :] = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
+            controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
 
-        y_target = yout[0, (assignments[0][zz]+nagents)*4:(assignments[0][zz]+nagents+1)*4]
-        # xp[0, zz] = np.dot(y_agent[0, :]- y_target, np.dot(P, y_agent[0, :] - y_target))
+        # COSTS
 
+        # post-process for t=0
+        y_target = yout[0, (assignments[0][zz]+nagents)*dx:(assignments[0][zz]+nagents+1)*dx]
 
-        # TEST augmented value function
-        X = np.hstack((y_agent[0, :], y_target))
-        # xp[0, zz] = np.dot(X, np.dot(Paug, X))
-        xp[0, zz] = np.matmul(X.T, np.matmul(P, X)) + 2*np.matmul(p1[0, :].T, X)
+        # Get agent policy in correct tracking state for P, Q, p at t=0
+        asst_0 = assignments[0] # assignments at time ii
+        sigma_i = asst_0[zz] # target assigned-to agent zz
+        Acl_0 = poltargets[sigma_i].get_closed_loop_A()
+        gcl_0 = poltargets[sigma_i].get_closed_loop_g()
+        polagents[zz].track(0, sigma_i, Acl_0, gcl_0)
 
+        R = polagents[zz].get_R()
+        Q_0 = polagents[zz].get_Q()
+        P_0 = polagents[zz].get_P()
+        p_0 = polagents[zz].get_p()
 
-        # stage_cost[0, zz] = np.dot(y_agent[0, :] - y_target,
-        #                            np.dot(Q, y_agent[0, :] - y_target)) + \
-        #                     np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
+        uss_0 = polagents[zz].get_uss()
+        Xss_0 = polagents[zz].get_xss()
+        X_0 = np.hstack((y_agent[0, :], y_target))
+        xp[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
+            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
 
-        # stage_cost[0, zz] = np.dot(y_agent[0, :] - y_target,
-        #                            np.dot(Q, y_agent[0, :] - y_target)) + \
-        #                     np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
+        stage_cost[0, zz] = np.dot(X_0, np.dot(Q_0, X_0)) + np.dot(controls[0, :], np.dot(R, controls[0, :])) -\
+            (np.dot(Xss_0, np.dot(Q_0, Xss_0)) + np.dot(uss_0, np.dot(R, uss_0)))
 
-        # stage_cost[0, zz] = np.dot(y_agent[0, :] - y_target,
-        #                            np.dot(Q, y_agent[0, :] - y_target))
+        # optimal cost (ie. DYN)
+        opt_asst_y_target = yout[0, (opt_asst[zz]+nagents)*dx:(opt_asst[zz]+nagents+1)*dx]
+        X_0 = np.hstack((y_agent[0, :], opt_asst_y_target))
 
+        # Get agent policy in correct tracking state for P, Q, p at t=0
+        optasst_0 = opt_asst # assignments at time ii
+        optasst_sigma_i = asst_0[zz] # target assigned-to agent zz
+        optasst_Acl_0 = poltargets[optasst_sigma_i].get_closed_loop_A()
+        optasst_gcl_0 = poltargets[optasst_sigma_i].get_closed_loop_g()
+        polagents[zz].track(0, optasst_sigma_i, optasst_Acl_0, optasst_gcl_0)
+
+        R = polagents[zz].get_R()
+        optasst_Q_0 = polagents[zz].get_Q()
+        optasst_P_0 = polagents[zz].get_P()
+        optasst_p_0 = polagents[zz].get_p()
+
+        optasst_uss_0 = polagents[zz].get_uss()
+        optasst_Xss_0 = polagents[zz].get_xss()
+        optimal_cost[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
+            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
+
+        # continue post-processing for rest of time points
         for ii in range(1, yout.shape[0]):
-            y_target = yout[ii, (assignments[ii][zz]+nagents)*4:(assignments[ii][zz]+nagents+1)*4]
+            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
 
             # TEST
             asst_ii = assignments[ii] # assignments at time ii
@@ -103,42 +124,36 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
             controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
             X = np.hstack((y_agent[ii, :], y_target))
 
+            # Get agent policy in correct tracking state for P, Q, p at time ii
+            asst_ii = assignments[ii] # assignments at time ii
+            sigma_i = asst_ii[zz] # target assigned-to agent zz
+            Acl = poltargets[sigma_i].get_closed_loop_A()
+            gcl = poltargets[sigma_i].get_closed_loop_g()
+            polagents[zz].track(ii, sigma_i, Acl, gcl)
+
+            R = polagents[zz].get_R()
+            Q = polagents[zz].get_Q()
+            P = polagents[zz].get_P()
+            p = polagents[zz].get_p()
+
+            # STEADY-STATE TERMS
             uss = polagents[zz].get_uss()
             Xss = polagents[zz].get_xss()
 
-            # FEEDFORWARD LQR
-            controls_ag = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
-            stage_cost[ii, zz] = np.dot(X, np.dot(Q, X)) + np.dot(controls[ii, :], np.dot(R, controls[ii, :])) - (np.dot(Xss, np.dot(Q, Xss)) + np.dot(uss, np.dot(R, uss)))
-            # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
-                                        # np.dot(controls_ag[:], np.dot(R, controls_ag[:]))
-
-            # # AUGMENTED LQ TRACKER
-            # poltrack = polagents[sigma_i]
-            # # controls_targ = controls_targ.reshape((controls_targ.shape[0], 1))
-            # controls_ag = poltrack.evaluate2(tout[ii], y_agent[ii, :], y_target)
-            # controls_ag = controls_ag.reshape(controls_ag.shape[0],)
-            # G = polagents[zz].R1
-            # uss = polagents[zz].steady_state_con(0, G) ### REVIEW
-            # Xss = polagents[zz].steady_state(G) ### REVIEW
-            # stage_cost[ii, zz] = np.matmul(X.T, np.matmul(Qaug, X)) + np.matmul(controls[ii, :].T, np.matmul(R, controls[ii, :])) - (np.matmul(Xss.T, np.matmul(Qaug, Xss)) + np.matmul(uss.T, np.matmul(R, uss)))
+            # STAGE COST
+            stage_cost[ii, zz] = np.dot(X, np.dot(Q, X)) + np.dot(controls[ii, :], np.dot(R, controls[ii, :])) -\
+                (np.dot(Xss, np.dot(Q, Xss)) + np.dot(uss, np.dot(R, uss)))
 
             # COST-TO-GO
-            # TEST augmented value function
-            # xp[ii, zz] = np.dot(X, np.dot(Paug, X))
-            xp[ii, zz] = np.matmul(X.T, np.matmul(P, X)) + 2*np.matmul(p1[ii, :].T, X)
-
-
-            # P = poltrack.get_P()
-            # xp[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(P, y_agent[ii, :] - y_target))
-            # stage_cost[ii, zz] = np.dot(y_agent[ii, :] - y_target, np.dot(Q, y_agent[ii, :] - y_target)) + \
-            #                             np.dot(controls[ii, :], np.dot(R, controls[ii, :]))
-
+            xp[ii, zz] = np.dot(X, np.dot(P, X)) + 2*np.dot(p, X) -\
+                (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
 
         for ii in range(tout.shape[0]):
             final_cost[ii, zz] = np.trapz(stage_cost[:ii, zz], x=tout[:ii])
 
+    # optcost = np.sum(xp[0, :])
+    optcost = np.sum(optimal_cost[0, :])
 
-    optcost = np.sum(xp[0, :])
     # final_cost = np.sum(final_cost, axis=1)
     fig, axs = plt.subplots(1,1)
     axs.plot(tout, optcost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching')
@@ -166,12 +181,24 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
         plt.plot(tout, xp[:, 1], '--r', label='Cost-to-go (assuming no switch) (1)')
     # plt.legend()
 
+
+    print("POLICY: ", poltrack.__class__.__name__)
+    print("FINAL TIME: ", tout[-1])
     print("initial optimal cost: ", optcost)
     print("initial incurred cost: ", final_cost[0])
-    print("cost-to-go: ", np.sum(xp, axis=1)[-1])
-    print("incurred cost: ", np.sum(final_cost, axis=1)[-1])
+    print("final cost-to-go value: ", np.sum(xp, axis=1)[-1])
+    print("final incurred cost value: ", np.sum(final_cost, axis=1)[-1]) # last stage cost
+    print("initial optimal cost - final incurred cost value = ", optcost - np.sum(final_cost, axis=1)[-1])
+    print("INITIAL CONDITIONS")
+    print(yout[0, :])
+    print("FINAL STATE")
+    print(yout[-1, :])
+    print("OFFSET")
+    for pt in poltargets:
+        print(pt.const)
 
-    # import ipdb; ipdb.set_trace()
+    print("FINAL CONTROL")
+    print(controls[-1, :])
 
     # PLOT ASSIGNMENTS
     if nagents > 1:
@@ -237,7 +264,7 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
             # plot location of assignment switches
             patches = []
             for switch_ind in assignment_switches[zz]:
-                ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='m', fill=True)
+                ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
                 patches.append(ci)
 
             p = PatchCollection(patches)
@@ -351,8 +378,7 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
     # TEST
     # return filtered_yout, collisions, assignment_switches
 
-# def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntargets, costs):
-def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntargets, ot_costs, polagents):
+def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntargets, ot_costs, polagents, opt_asst):
 
     dx = 6
     du = 3
@@ -364,9 +390,9 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
     yout = copy.deepcopy(yout)
     assignment_switches = find_switches(tout, yout, nagents, nagents, 6, 6)
 
-    P = poltrack.get_P()
-    Q = poltrack.get_Q()
-    R = poltrack.get_R()
+    # P = poltrack.get_P()
+    # Q = poltrack.get_Q()
+    # R = poltrack.get_R()
 
     # plt.figure()
     # plt.plot(yout[:, 0], yout[:, 1], '-r')
@@ -385,43 +411,86 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
     # axs[2].set_ylabel('y')
 
     # assignments = yout[:, nagents*2*4:].astype(np.int32)
-    assignments = yout[:, nagents*2*6:].astype(np.int32)
+    assignments = yout[:, nagents*2*dx:].astype(np.int32)
 
     # PLOT COSTS
     final_cost = np.zeros((tout.shape[0], nagents))
     stage_cost = np.zeros((tout.shape[0], nagents))
     xp = np.zeros((yout.shape[0], nagents))
+    optimal_cost = np.zeros((1, nagents))
+
+    xss = np.zeros((yout.shape[0], nagents*2*dx))
     for zz in range(nagents):
         y_agent = yout[:, zz*dx:(zz+1)*dx]
-        p1 = np.zeros((yout.shape[0], P.shape[0]))
 
         controls = np.zeros((yout.shape[0], du))
         for ii in range(yout.shape[0]): # compute controls
-            y_target = yout[ii, (assignments[ii][zz]+nagents)*6:(assignments[ii][zz]+nagents+1)*6]
-            # controls[ii, :] = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target)
+            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
 
             # AUGMENTED TRACKER
             asst_ii = assignments[ii] # assignments at time ii
             sigma_i = asst_ii[zz] # target assigned-to agent zz
             controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
-            poltrack = polagents[sigma_i]
 
-            p1[ii, :] = polagents[zz].get_p() # function of tracked state, so may change with time
+            # NEW
+            # Get agent policy in correct tracking state for P, Q, p at time ii
+            Acl = poltargets[sigma_i].get_closed_loop_A()
+            gcl = poltargets[sigma_i].get_closed_loop_g()
+            polagents[zz].track(ii, sigma_i, Acl, gcl)
 
-            controls_targ = controls_targ.reshape((controls_targ.shape[0], 1))
-            controls[ii, :] = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
+            controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
 
-        y_target = yout[0, (assignments[0][zz]+nagents)*6:(assignments[0][zz]+nagents+1)*6]
-        # xp[0, zz] = np.dot(y_agent[0, :]- y_target, np.dot(P, y_agent[0, :] - y_target))
+        # COSTS
+
+        # post-process for t=0
+        y_target = yout[0, (assignments[0][zz]+nagents)*dx:(assignments[0][zz]+nagents+1)*dx]
+
+        # Get agent policy in correct tracking state for P, Q, p at t=0
+        asst_0 = assignments[0] # assignments at time ii
+        sigma_i = asst_0[zz] # target assigned-to agent zz
+        Acl_0 = poltargets[sigma_i].get_closed_loop_A()
+        gcl_0 = poltargets[sigma_i].get_closed_loop_g()
+        polagents[zz].track(0, sigma_i, Acl_0, gcl_0)
+
+        R = polagents[zz].get_R()
+        Q_0 = polagents[zz].get_Q()
+        P_0 = polagents[zz].get_P()
+        p_0 = polagents[zz].get_p()
+
+        uss_0 = polagents[zz].get_uss()
+        Xss_0 = polagents[zz].get_xss()
+        X_0 = np.hstack((y_agent[0, :], y_target))
+        xp[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
+            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
+
+        stage_cost[0, zz] = np.dot(X_0, np.dot(Q_0, X_0)) + np.dot(controls[0, :], np.dot(R, controls[0, :])) -\
+            (np.dot(Xss_0, np.dot(Q_0, Xss_0)) + np.dot(uss_0, np.dot(R, uss_0)))
+
+        # optimal cost (ie. DYN)
+        opt_asst_y_target = yout[0, (opt_asst[zz]+nagents)*dx:(opt_asst[zz]+nagents+1)*dx]
+        X_0 = np.hstack((y_agent[0, :], opt_asst_y_target))
+
+        # Get agent policy in correct tracking state for P, Q, p at t=0
+        optasst_0 = opt_asst # assignments at time ii
+        optasst_sigma_i = asst_0[zz] # target assigned-to agent zz
+        optasst_Acl_0 = poltargets[optasst_sigma_i].get_closed_loop_A()
+        optasst_gcl_0 = poltargets[optasst_sigma_i].get_closed_loop_g()
+        polagents[zz].track(0, optasst_sigma_i, optasst_Acl_0, optasst_gcl_0)
+
+        R = polagents[zz].get_R()
+        optasst_Q_0 = polagents[zz].get_Q()
+        optasst_P_0 = polagents[zz].get_P()
+        optasst_p_0 = polagents[zz].get_p()
+
+        optasst_uss_0 = polagents[zz].get_uss()
+        optasst_Xss_0 = polagents[zz].get_xss()
+        optimal_cost[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
+            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
 
 
-        # TEST augmented value function
-        X = np.hstack((y_agent[0, :], y_target))
-        # xp[0, zz] = np.dot(X, np.dot(Paug, X))
-        xp[0, zz] = np.matmul(X.T, np.matmul(P, X)) + 2*np.matmul(p1[0, :].T, X)
-
+        # continue post-processing for rest of time points
         for ii in range(1, yout.shape[0]):
-            y_target = yout[ii, (assignments[ii][zz]+nagents)*6:(assignments[ii][zz]+nagents+1)*6]
+            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
 
             # TEST
             asst_ii = assignments[ii] # assignments at time ii
@@ -429,22 +498,35 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
             controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
             X = np.hstack((y_agent[ii, :], y_target))
 
+            # Get agent policy in correct tracking state for P, Q, p at time ii
+            asst_ii = assignments[ii] # assignments at time ii
+            sigma_i = asst_ii[zz] # target assigned-to agent zz
+            Acl = poltargets[sigma_i].get_closed_loop_A()
+            gcl = poltargets[sigma_i].get_closed_loop_g()
+            polagents[zz].track(ii, sigma_i, Acl, gcl)
+
+            R = polagents[zz].get_R()
+            Q = polagents[zz].get_Q()
+            P = polagents[zz].get_P()
+            p = polagents[zz].get_p()
+
+            # STEADY-STATE TERMS
             uss = polagents[zz].get_uss()
             Xss = polagents[zz].get_xss()
 
-            # FEEDFORWARD LQR
-            controls_ag = poltrack.evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
-            stage_cost[ii, zz] = np.dot(X, np.dot(Q, X)) + np.dot(controls[ii, :], np.dot(R, controls[ii, :])) - (np.dot(Xss, np.dot(Q, Xss)) + np.dot(uss, np.dot(R, uss)))
+            # STAGE COST
+            stage_cost[ii, zz] = np.dot(X, np.dot(Q, X)) + np.dot(controls[ii, :], np.dot(R, controls[ii, :])) -\
+                (np.dot(Xss, np.dot(Q, Xss)) + np.dot(uss, np.dot(R, uss)))
 
             # COST-TO-GO
-            xp[ii, zz] = np.matmul(X.T, np.matmul(P, X)) + 2*np.matmul(p1[ii, :].T, X)
+            xp[ii, zz] = np.dot(X, np.dot(P, X)) + 2*np.dot(p, X) -\
+                (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
 
         for ii in range(tout.shape[0]):
             final_cost[ii, zz] = np.trapz(stage_cost[:ii, zz], x=tout[:ii])
 
+    optcost = np.sum(optimal_cost[0, :])
 
-
-    optcost = np.sum(xp[0, :])
     # final_cost = np.sum(final_cost, axis=1)
     fig, axs = plt.subplots(1,1)
     axs.plot(tout, optcost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching')
@@ -461,12 +543,40 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
     # plt.ylabel('cost')
     # plt.legend()
 
-    if nagents == 2:
-        plt.plot(tout, final_cost[:, 0], '-.c', label='Cum. Stage Cost (0)')    
-        plt.plot(tout, final_cost[:, 1], '--c', label='Cum. Stage Cost (1)')        
-        plt.plot(tout, xp[:, 0], '-.r', label='Cost-to-go (assuming no switch) (0)')
-        plt.plot(tout, xp[:, 1], '--r', label='Cost-to-go (assuming no switch) (1)')
-    # plt.legend()
+    print("POLICY: ", poltrack.__class__.__name__)
+    print("FINAL TIME: ", tout[-1])
+    print("initial optimal cost: ", optcost)
+    print("initial incurred cost: ", final_cost[0])
+    print("final cost-to-go value: ", np.sum(xp, axis=1)[-1])
+    print("final incurred cost value: ", np.sum(final_cost, axis=1)[-1]) # last stage cost
+    print("initial optimal cost - final incurred cost value = ", optcost - np.sum(final_cost, axis=1)[-1])
+    print("INITIAL CONDITIONS")
+    print(yout[0, :])
+    print("FINAL STATE")
+    print(yout[-1, :])
+    print("OFFSET")
+    for pt in poltargets:
+        print(pt.const)
+
+    print("FINAL CONTROL")
+    print(controls[-1, :])
+
+
+    # plt.figure()
+    # for zz in range(nagents):
+    #     plt.plot(tout, xss[:, zz*2*dx:(zz+1)*2*dx][0], 'r')
+    #     plt.plot(tout, xss[:, zz*2*dx:(zz+1)*2*dx][1], 'b')
+    #     plt.plot(tout, xss[:, zz*2*dx:(zz+1)*2*dx][2], 'm')
+    #     plt.plot(tout, yout[:, zz*2*dx:(zz+1)*2*dx][0], 'rx') 
+    #     plt.plot(tout, yout[:, zz*2*dx:(zz+1)*2*dx][1], 'bx') 
+    #     plt.plot(tout, yout[:, zz*2*dx:(zz+1)*2*dx][2], 'mx') 
+
+    # if nagents == 2:
+    #     plt.plot(tout, final_cost[:, 0], '-.c', label='Cum. Stage Cost (0)')    
+    #     plt.plot(tout, final_cost[:, 1], '--c', label='Cum. Stage Cost (1)')        
+    #     plt.plot(tout, xp[:, 0], '-.r', label='Cost-to-go (assuming no switch) (0)')
+    #     plt.plot(tout, xp[:, 1], '--r', label='Cost-to-go (assuming no switch) (1)')
+    # # plt.legend()
 
 
     # PLOT ASSIGNMENTS
@@ -486,7 +596,7 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
         for ii in range(nagents):
             # plt.plot(tout, stage_cost[:, ii], label='A{0}'.format(ii))
             plt.plot(tout, xp[:, ii], label='Cost-to-go A{0}'.format(ii))
-            # plt.plot(tout, final_cost[:, ii], label='Cum. Stage Cost A{0}'.format(ii))    
+            # plt.plot(tout, final_cost[:, ii], label='Cum. Stage Cost A{0}'.format(ii))
 
         plt.plot(tout, np.sum(xp, axis=1), '-r', label='Cost-to-go')
         # plt.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost')
@@ -600,6 +710,345 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
         ax.set_ylabel("y")
 
 
+def post_process_batch_simulation(batch_results):
+    # final_cost = np.zeros((tout.shape[0], nagents))
+    # stage_cost = np.zeros((tout.shape[0], nagents))
+    # xp = np.zeros((yout.shape[0], nagents))
+    # optimal_cost = np.zeros((1, nagents))
+
+    sim_performance_metrics = {}
+    sim_components = {}
+
+    # for every simulation within a batch, post-process results
+    for sim_name, sim in batch_results.items():
+        parameters = sim[0]
+        sim_results = sim[1]
+
+        nagents = sim_results['nagents']
+        ntargets = sim_results['ntargets']
+        poltargets = sim_results['target_pol']
+        apol = sim_results['asst_policy']
+        components = {'nagents': nagents, 'ntargets': ntargets, 'poltargets': poltargets, 'apol': apol}
+        sim_components.update({sim_name: components})
+
+        if parameters['dim'] == 2:
+            if parameters['agent_model'] == 'Double Integrator':
+                yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost = post_process_identical_2d_doubleint_TEST(sim_results)
+
+            # if parameters['agent_model'] == 'Linearized Quadcopter':
+            #     post_process_identical_2d_doubleint()
+
+            sim_performance_metrics.update({sim_name: [yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost]})
+
+        # if parameters['dim'] == 3:
+        #     if parameters['agent_model'] == 'Double Integrator':
+        #         post_process_identical_3d_doubleint_TEST(sim_name, results)
+
+            # if parameters['agent_model'] == 'Linearized Quadcopter':
+            #     post_process_identical_3d_doubleint()
+
+    # plot batch simulation results
+
+    fig, axs = plt.subplots(1,1)
+    for sim_name, metrics in sim_performance_metrics.items():
+        yout = metrics[0]
+        tout = metrics[1]
+        final_cost = metrics[4]
+        xp = metrics[6]
+        optimal_cost = metrics[7]
+
+        apol = sim_components[sim_name]['apol']
+
+        ### cost plots
+        if apol.__class__.__name__ == 'AssignmentDyn':
+            axs.plot(tout, optimal_cost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching - DYN')
+            axs.plot(tout, np.sum(final_cost, axis=1), '--c', label='Cum. Stage Cost'+' '+apol.__class__.__name__)
+            axs.plot(tout, np.sum(xp, axis=1), '--r', label='Cost-to-go'+' '+apol.__class__.__name__)
+        else:
+            axs.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost'+' '+apol.__class__.__name__)
+            axs.plot(tout, np.sum(xp, axis=1), '-r', label='Cost-to-go'+' '+apol.__class__.__name__)
+
+        axs.legend()
+
+    plt.figure()
+    for sim_name, metrics in sim_performance_metrics.items():
+        tout = metrics[1]
+        final_cost = metrics[4]
+        xp = metrics[6]
+
+        nagents = sim_components[sim_name]['nagents']
+
+        for zz in range(nagents):
+            plt.plot(tout, final_cost[:, zz], '-.c', label='Cum. Stage Cost ({0})'.format(zz))
+            plt.plot(tout, xp[:, zz], '-.r', label='Cost-to-go (assuming no switch) ({0})'.format(zz))
+
+        plt.legend()
+
+    ### assignment plots
+    for sim_name, metrics in sim_performance_metrics.items():
+        nagents = sim_components[sim_name]['nagents']
+        ntargets = sim_components[sim_name]['ntargets']
+        poltargets = sim_components[sim_name]['poltargets']
+
+        tout = metrics[1]
+        assignments = metrics[2]
+
+        for ii in range(nagents):
+            plt.figure()
+            plt.plot(tout, assignments[:, ii], '-', label='A{0}'.format(ii))
+            plt.title("Assignments")
+            plt.legend()
+
+    ### trajectory plots
+
+    fig, ax = plt.subplots()
+
+    for sim_name, metrics in sim_performance_metrics.items():
+        nagents = sim_components[sim_name]['nagents']
+        ntargets = sim_components[sim_name]['ntargets']
+        poltargets = sim_components[sim_name]['poltargets']
+        apol = sim_components[sim_name]['apol']
+
+        yout = metrics[0]
+        tout = metrics[1]
+
+        ### stationary points
+        for zz in range(ntargets):
+            pt = poltargets[zz]
+            offset = pt.const
+            ax.plot(offset[0], offset[1], 'ks')
+            ax.text(offset[0], offset[1], 'C{0}'.format(zz))
+
+        ### Agent / Target Trajectories
+        # optimal trajectories (solid lines)
+        if apol.__class__.__name__ == 'AssignmentDyn':
+            for zz in range(nagents):
+
+                # agent state over time
+                y_agent = yout[:, zz*4:(zz+1)*4]
+
+                # plot agent trajectory with text
+                ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
+                ax.plot(y_agent[:, 0], y_agent[:, 1], '-r') # returns line2d object
+                ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
+
+                # plot location of assignment switches
+                patches = []
+                for switch_ind in assignment_switches[zz]:
+                    ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
+                    patches.append(ci)
+
+                p = PatchCollection(patches)
+                ax.add_collection(p)
+
+                # plot target trajectory
+                y_target = yout[:, (zz+nagents)*4:(zz+nagents+1)*4]
+                ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
+                ax.plot(y_target[:, 0], y_target[:, 1], '-b')
+                ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+
+                print("TARGET FINAL POS: ", y_target[-1])
+                print("AGENT FINAL POS: ", y_agent[-1])
+
+            ax.set_title("Trajectory")
+            ax.set_xlabel("x")
+            ax.set_ylabel("y")
+        else:
+            # non-optimal trajectories (dotted lines)
+            for zz in range(nagents):
+
+                # agent state over time
+                y_agent = yout[:, zz*4:(zz+1)*4]
+
+                # plot agent trajectory with text
+                ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
+                ax.plot(y_agent[:, 0], y_agent[:, 1], '--r') # returns line2d object
+                ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
+
+                # plot location of assignment switches
+                patches = []
+                for switch_ind in assignment_switches[zz]:
+                    ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
+                    patches.append(ci)
+
+                p = PatchCollection(patches)
+                ax.add_collection(p)
+
+                # plot target trajectory
+                y_target = yout[:, (zz+nagents)*4:(zz+nagents+1)*4]
+                ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
+                ax.plot(y_target[:, 0], y_target[:, 1], '-b')
+                ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+
+                print("TARGET FINAL POS: ", y_target[-1])
+                print("AGENT FINAL POS: ", y_agent[-1])
+
+            ax.set_title("Trajectory")
+            ax.set_xlabel("x")
+            ax.set_ylabel("y")
+
+
+
+
+def post_process_identical_2d_doubleint_TEST(sim_results):
+
+    df = sim_results['data']
+    poltrack = sim_results['tracking_policy']
+    poltargets = sim_results['target_pol']
+    nagents = sim_results['nagents']
+    ntargets = sim_results['ntargets']
+    ot_costs = sim_results['asst_cost']
+    polagents = sim_results['agent_pol']
+    opt_asst = sim_results['optimal_asst']
+    asst_policy = sim_results['asst_policy']
+
+    dx = 4
+    du = 2
+
+    yout = df.iloc[:, 1:].to_numpy()
+    tout = df.iloc[:, 0].to_numpy()
+    # print(yout)
+
+    yout = copy.deepcopy(yout)
+    assignment_switches = find_switches(tout, yout, nagents, nagents, 4, 4)
+
+    print("INITIAL CONDITION: ", yout[0])
+
+    # plt.figure()
+    # plt.plot(yout[:, 0], yout[:, 1], '-r')
+    # plt.plot(yout[0, 0], yout[0, 1], 'rs')
+    # plt.plot(yout[:, 4], yout[:, 5], '--g')
+    # plt.plot(yout[0, 4], yout[0, 5], 'gx')
+
+
+    # fig, axs = plt.subplots(3, 1, figsize=(10, 5))
+    # axs[0].plot(tout, yout[:, 0] - yout[:, 4])
+    # axs[0].set_ylabel('x')
+    # axs[1].plot(tout, yout[:, 1] - yout[:, 5])
+    # axs[1].set_ylabel('y')
+    # axs[2].plot(yout[:, 0], yout[:,1])
+    # axs[2].set_xlabel('x')
+    # axs[2].set_ylabel('y')
+
+    # assignments = yout[:, nagents*2*4:].astype(np.int32)
+    assignments = yout[:, nagents*2*dx:].astype(np.int32)
+
+    # PLOT COSTS
+    final_cost = np.zeros((tout.shape[0], nagents))
+    stage_cost = np.zeros((tout.shape[0], nagents))
+    xp = np.zeros((yout.shape[0], nagents))
+    optimal_cost = np.zeros((1, nagents))
+
+    xss = np.zeros((yout.shape[0], nagents*2*dx))
+    for zz in range(nagents):
+        y_agent = yout[:, zz*dx:(zz+1)*dx]
+
+        controls = np.zeros((yout.shape[0], du))
+        for ii in range(yout.shape[0]): # compute controls
+            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
+
+            # AUGMENTED TRACKER
+            asst_ii = assignments[ii] # assignments at time ii
+            sigma_i = asst_ii[zz] # target assigned-to agent zz
+            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
+
+            # NEW
+            # Get agent policy in correct tracking state for P, Q, p at time ii
+            Acl = poltargets[sigma_i].get_closed_loop_A()
+            gcl = poltargets[sigma_i].get_closed_loop_g()
+            polagents[zz].track(ii, sigma_i, Acl, gcl)
+
+            controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
+
+        # COSTS
+
+        # post-process for t=0
+        y_target = yout[0, (assignments[0][zz]+nagents)*dx:(assignments[0][zz]+nagents+1)*dx]
+
+        # Get agent policy in correct tracking state for P, Q, p at t=0
+        asst_0 = assignments[0] # assignments at time ii
+        sigma_i = asst_0[zz] # target assigned-to agent zz
+        Acl_0 = poltargets[sigma_i].get_closed_loop_A()
+        gcl_0 = poltargets[sigma_i].get_closed_loop_g()
+        polagents[zz].track(0, sigma_i, Acl_0, gcl_0)
+
+        R = polagents[zz].get_R()
+        Q_0 = polagents[zz].get_Q()
+        P_0 = polagents[zz].get_P()
+        p_0 = polagents[zz].get_p()
+
+        uss_0 = polagents[zz].get_uss()
+        Xss_0 = polagents[zz].get_xss()
+        X_0 = np.hstack((y_agent[0, :], y_target))
+        xp[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
+            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
+
+        stage_cost[0, zz] = np.dot(X_0, np.dot(Q_0, X_0)) + np.dot(controls[0, :], np.dot(R, controls[0, :])) -\
+            (np.dot(Xss_0, np.dot(Q_0, Xss_0)) + np.dot(uss_0, np.dot(R, uss_0)))
+
+        # optimal cost (ie. DYN)
+        opt_asst_y_target = yout[0, (opt_asst[zz]+nagents)*dx:(opt_asst[zz]+nagents+1)*dx]
+        X_0 = np.hstack((y_agent[0, :], opt_asst_y_target))
+
+        # Get agent policy in correct tracking state for P, Q, p at t=0
+        optasst_0 = opt_asst # assignments at time ii
+        optasst_sigma_i = asst_0[zz] # target assigned-to agent zz
+        optasst_Acl_0 = poltargets[optasst_sigma_i].get_closed_loop_A()
+        optasst_gcl_0 = poltargets[optasst_sigma_i].get_closed_loop_g()
+        polagents[zz].track(0, optasst_sigma_i, optasst_Acl_0, optasst_gcl_0)
+
+        R = polagents[zz].get_R()
+        optasst_Q_0 = polagents[zz].get_Q()
+        optasst_P_0 = polagents[zz].get_P()
+        optasst_p_0 = polagents[zz].get_p()
+
+        optasst_uss_0 = polagents[zz].get_uss()
+        optasst_Xss_0 = polagents[zz].get_xss()
+        optimal_cost[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
+            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
+
+        # continue post-processing for rest of time points
+        for ii in range(1, yout.shape[0]):
+            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
+
+            # TEST
+            asst_ii = assignments[ii] # assignments at time ii
+            sigma_i = asst_ii[zz] # target assigned-to agent zz
+            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
+            X = np.hstack((y_agent[ii, :], y_target))
+
+            # Get agent policy in correct tracking state for P, Q, p at time ii
+            asst_ii = assignments[ii] # assignments at time ii
+            sigma_i = asst_ii[zz] # target assigned-to agent zz
+            Acl = poltargets[sigma_i].get_closed_loop_A()
+            gcl = poltargets[sigma_i].get_closed_loop_g()
+            polagents[zz].track(ii, sigma_i, Acl, gcl)
+
+            R = polagents[zz].get_R()
+            Q = polagents[zz].get_Q()
+            P = polagents[zz].get_P()
+            p = polagents[zz].get_p()
+
+            # STEADY-STATE TERMS
+            uss = polagents[zz].get_uss()
+            Xss = polagents[zz].get_xss()
+
+            # STAGE COST
+            stage_cost[ii, zz] = np.dot(X, np.dot(Q, X)) + np.dot(controls[ii, :], np.dot(R, controls[ii, :])) -\
+                (np.dot(Xss, np.dot(Q, Xss)) + np.dot(uss, np.dot(R, uss)))
+
+            # COST-TO-GO
+            xp[ii, zz] = np.dot(X, np.dot(P, X)) + 2*np.dot(p, X) -\
+                (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
+
+        for ii in range(tout.shape[0]):
+            final_cost[ii, zz] = np.trapz(stage_cost[:ii, zz], x=tout[:ii])
+
+    optcost = np.sum(optimal_cost[0, :])
+
+    return yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optcost
+
+
 def find_switches(tout, yout, nagents, ntargets, agent_config_size, target_config_size):
 
     # Output:
@@ -620,7 +1069,7 @@ def find_switches(tout, yout, nagents, ntargets, agent_config_size, target_confi
     return switches
 
 def index_at_time(tout, time):
-     
+
     """
     input: time history, time point
     output: index in data of time point

@@ -17,18 +17,17 @@ class ZeroPol:
 
 class LinearFeedback: # Continuous Infinite-Horizon Linear Quadratic Regulator
 
-    def __init__(self, A, B, C, Q, R):
+    def __init__(self, A, B, Q, R):
         self.P = care(A, B, Q, R)
-        self.K = -np.linalg.solve(np.linalg.inv(R), np.dot(B.T, self.P))
+        self.K = np.linalg.solve(np.linalg.inv(R), np.dot(B.T, self.P))
         self.A = A
         self.B = B
-        self.C = C
 
         self.R = R
         self.Q = Q
 
     def evaluate(self, time, state):
-        return np.dot(self.K, state)
+        return -np.dot(self.K, state)
 
     def get_P(self):
         return self.P
@@ -38,6 +37,54 @@ class LinearFeedback: # Continuous Infinite-Horizon Linear Quadratic Regulator
 
     def get_R(self):
         return self.R
+
+class LinearFeedbackTracking(LinearFeedback):
+
+    def __init__(self, A, B, Q, R):
+        super(LinearFeedbackTracking, self).__init__(A, B, Q, R)
+
+        self.P = care(A, B, Q, R)
+        self.K = np.linalg.solve(R, np.dot(B.T, self.P))
+        self.Bt = copy.deepcopy(B.T)
+        self.RBt = np.dot(np.linalg.inv(R), self.Bt)
+        self.BRBt = np.dot(B, self.RBt)
+
+        self.R = copy.deepcopy(R)
+
+        # Closed loop is
+        # \dot{x} = A_cl x + g_cl
+        self.Acl = A - np.dot(B, self.K)
+
+        self.tracking = None
+
+        # steady-state
+        self.xss = None
+
+        # steady-state optimal control
+        # self.uss = self.evaluate(0, self.xss)
+        self.uss = None
+
+
+    def evaluate(self, time, state1, state2, feedforward=0):
+        # print("state = ", state)
+        diff = state1 - state2
+        # print("TIME: ", time, " CONTROL: ", np.dot(self.K, diff))
+        agent_pol = -np.dot(self.K, diff) + feedforward
+        return agent_pol
+
+    def cost_to_go(self, time, state1, state2):
+        diff = state1 - state2
+        cost_to_go = np.dot(diff, np.dot(self.P, diff))
+        return cost_to_go
+
+    def get_uss(self, xss, ud_ss):
+        self.uss = -np.dot(self.K, xss) + ud_ss
+        return self.uss
+        # return -np.dot(self.RBt, np.dot(self.P, self.xss) + self.p)
+
+    def get_xss(self, ud_ss):
+        self.xss = -np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), np.dot(self.B, ud_ss))
+        return self.xss
 
 ##################################3
 # NEW
@@ -52,28 +99,28 @@ class LinearFeedbackConstTracker:
         print("Q = ")
         print(Q)
         print("R = ")
-        print(R)        
+        print(R)
 
         self.A = A
         self.B = B
         self.Q = Q
         self.R = R
-        
+
         self.P = care(A, B, Q, R)
         self.K = np.linalg.solve(R, np.dot(B.T, self.P))
         self.Bt = copy.deepcopy(B.T)
-        self.RBt = np.dot(np.linalg.inv(R), self.Bt)        
+        self.RBt = np.dot(np.linalg.inv(R), self.Bt)
         self.BRBt = np.dot(B, self.RBt)
         if g is None:
             self.g = np.dot(A, const)
         else:
             self.g = copy.deepcopy(g)
         print("g = ", self.g)
-            
+
         self.p = -np.linalg.solve(A.T - np.dot(self.P, self.BRBt), np.dot(self.P, self.g))
         self.R = copy.deepcopy(R)
         self.const = copy.deepcopy(const)
-        
+
         # Closed loop is
         # \dot{x} = A_cl x + g_cl
         self.Acl = A - np.dot(B, self.K)
@@ -85,6 +132,7 @@ class LinearFeedbackConstTracker:
         # steady-state
         self.xss = np.dot(self.BRBt, self.p) - self.g
         self.xss = np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), self.xss)
+        self.xss = self.xss - self.const
 
         # steady-state optimal control
         # self.uss = self.evaluate(0, self.xss)
@@ -118,6 +166,7 @@ class LinearFeedbackConstTracker:
 
     def get_uss(self):
         return self.uss
+        # return -np.dot(self.RBt, np.dot(self.P, self.xss) + self.p)
 
     def get_xss(self):
         return self.xss
@@ -181,7 +230,7 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
             self.xss = np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), self.xss)
 
             # steady-state optimal control
-            self.uss = super(LinearFeedbackAugmented, self).evaluate(0, self.xss)
+            self.uss = super(LinearFeedbackAugmented, self).evaluate(0, self.xss) # subtracts const inside this function
 
         if self.tracking != jj: # recompute P for LQ TRACKER if assignment changes
             self.tracking = jj
@@ -224,7 +273,23 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
         Aconcat, Bconcat, Qconcat, gconcat = self.augment(self.pre_augmented_A, self.pre_augmented_B,
                                                           self.pre_augmented_Q, self.R, Fcl, g)
 
-        cost_to_go = np.dot(aug_state, np.dot(self.P, aug_state)) + 2*np.dot(self.p.T, aug_state)
+        P = care(Aconcat, Bconcat, Qconcat, self.R)
+
+        Bt = copy.deepcopy(Bconcat.T)
+        RBt = np.dot(np.linalg.inv(self.R), Bt)
+        BRBt = np.dot(Bconcat, RBt)
+        p = -np.linalg.solve(Aconcat.T - np.dot(P, BRBt), np.dot(P, gconcat))
+
+        # steady-state
+        xss = np.dot(BRBt, p) - gconcat
+        xss = np.dot(np.linalg.inv(Aconcat - np.dot(BRBt.T, P)), xss)
+
+        # steady-state optimal control
+        self.uss = super(LinearFeedbackAugmented, self).evaluate(time, xss)
+
+        cost_to_go = np.dot(aug_state, np.dot(P, aug_state)) + 2*np.dot(p.T, aug_state) -\
+            np.dot(xss, np.dot(P, xss)) + 2*np.dot(p.T, xss)
+
         return cost_to_go
 
 ##################################3

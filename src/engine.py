@@ -8,10 +8,12 @@ import copy
 ###############################
 class Engine:
 
-    def __init__(self, dt=0.1, maxtime=10, collision_tol=0.25):
+    def __init__(self, dim, dt=0.1, maxtime=10, collisions=False, collision_tol=0.25):
+        self.dim = dim
         self.dt = dt
         self.maxtime = maxtime
         self.df = None
+        self.collisions = collisions
         self.collision_tol = collision_tol
 
     def log(self, newdf):
@@ -24,6 +26,14 @@ class Engine:
     # 2d and 3d
     def apriori_collisions(self, current_state, nagents, ntargets, time):
 
+        # assumes agent and targets share the same state shape
+        dim = self.dim
+
+        if self.dim == 3:
+            dx = 6
+        if self.dim == 2:
+            dx = 4
+
         tstart = time
         tfinal = time + self.dt
 
@@ -31,7 +41,7 @@ class Engine:
 
         # implement a-prior (continuous) collision detection
         # use bounding circles/spheres around each particle
-            # easy to calculate distances for
+            # easy to calculate distances for circles
             # more complicated shapes - use gilbert-johnson-keerthi algorithm (GJK)
 
         # for now consider all agent-target pairs - can be optimized
@@ -39,20 +49,27 @@ class Engine:
         bounding_radius_agent = self.collision_tol
         bounding_radius_target = self.collision_tol
         for i in range(nagents):
-            y_agent = updated_state[i*4:(i+1)*4] # time history of agent i
-            y_agent_final = y_agent[:2] + np.array([y_agent[2], y_agent[3]])*self.dt
+            y_agent = updated_state[i*dx:(i+1)*dx] # time history of agent i
+
+            if dim == 2:
+                y_agent_final = y_agent[:dim] + np.array([y_agent[2], y_agent[3]])*self.dt
+            if dim == 3:
+                y_agent_final = y_agent[:dim] + np.array([y_agent[3], y_agent[4], y_agent[5]])*self.dt
             # print(y_agent)
 
             # check each agent against each target
             for j in range(ntargets):
-                y_target = updated_state[(j+ntargets)*4:(j+ntargets+1)*4]
-                y_target_final = y_target[:2] + np.array([y_target[2], y_target[3]])*self.dt
+                y_target = updated_state[(j+ntargets)*dx:(j+ntargets+1)*dx]
+                if dim == 2:
+                    y_target_final = y_target[:dim] + np.array([y_target[2], y_target[3]])*self.dt # final position components
+                if dim == 3:
+                    y_target_final = y_target[:dim] + np.array([y_target[3], y_target[4], y_target[5]])*self.dt # final position components
 
                 # agent/target current and future positions
-                a0 = y_agent[:2]
-                af = y_agent_final[:2]
-                t0 = y_target[:2]
-                tf = y_target_final[:2]
+                a0 = y_agent[:dim]
+                af = y_agent_final[:dim]
+                t0 = y_target[:dim]
+                tf = y_target_final[:dim]
                 del_a = af - a0
                 del_t = tf - t0
 
@@ -78,15 +95,15 @@ class Engine:
                 # print(t_collision[np.isreal(t_collision)])
                 for t in t_collisions[np.isreal(t_collisions)]:
                     if 0 < t < 1:
-                        # print("COLLISION DETECTED ", "(", i, ", ", j, ") ", t)
-                        # print("       ", a0, " t0: ", t0)
+                        print("COLLISION DETECTED ", "(", i, ", ", j, ") ", t)
+                        print("       ", a0, " t0: ", t0)
                         collided.add((i,j))
 
                 # if t_collisions.size != 0:
                 #     if 0 <= np.amin(t_collisions[np.isreal(t_collisions)]) <= 1:
                 #         collided.append((i,j))
 
-        print(collided)
+        print("COLLISIONS: ", collided)
         return collided
 
     def run(self, x0, system):
@@ -96,7 +113,10 @@ class Engine:
         time = 0
         while running:
             # print("Time: {0:3.2E}".format(time))
-            collisions = self.apriori_collisions(current_state, system.nagents, system.ntargets, time)
+            if self.collisions:
+                collisions = self.apriori_collisions(current_state, system.nagents, system.ntargets, time)
+            else:
+                collisions = set()
 
             # thist, state_hist, assign_hist = system.update(time, current_state, self.dt)
             thist, state_hist, assign_hist = system.update(time, current_state, collisions, self.dt)

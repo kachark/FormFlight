@@ -3,6 +3,7 @@ import scipy.integrate as scint
 import numpy as np
 
 from dynamics import *
+from assignments import *
 
 ################################
 ## Big Systems
@@ -26,6 +27,8 @@ class OneVOne(System):
         self.ntargets = len(self.targets)
         self.apol = pol
 
+        self.optimal_assignment = None
+
         self.costs = []
 
         self.current_assignment = None #(tuple of assignment, cost)
@@ -35,30 +38,36 @@ class OneVOne(System):
         agents = [None] * self.nagents
         ind = 0
         for ii in range(self.nagents):
-            # for c in collisions: # if this agent predicted to collide, skip
-            #     if ii == c[0]:
-            #         continue
+            for c in collisions: # if this agent predicted to collide, skip assignment
+                if ii == c[0]:
+                    continue
 
             agents[ii] = (x0[ind:self.size_inds[ii]], self.agents[ii])
             ind = self.size_inds[ii]
 
         targets = [None] * self.ntargets
         for ii in range(self.ntargets):
-            # for c in collisions: # if this target predicted to collided, skip
-            #     if ii == c[1]:
-            #         continue
+            for c in collisions: # if this target predicted to collided, don't use in assignment
+                if ii == c[1]:
+                    continue
 
             targets[ii] = (x0[ind:self.tsize_inds[ii]], self.targets[ii])
             ind = self.tsize_inds[ii]
 
+        # perform assignment
         assignments, cost = self.apol.assignment(t, agents, targets)
+
+        # Get dyn assignment at initial conditions (optimal asst that we use to compare against)
+        if t == 0:
+            opt_asst_pol = AssignmentDyn(self.nagents, self.ntargets)
+            self.optimal_assignment, _ = opt_asst_pol.assignment(t, agents, targets)
+
         return assignments, cost
 
     def update(self, t0, x0, collisions, dt):
 
         # print("Warning: Assumes that Each Target is Assigned To")
         # print("Dont forget to fix this (easy fix)")
-        # assignment, cost = self.compute_assignments(t0, x0)
         assignment, cost = self.compute_assignments(t0, x0, collisions)
 
         # after assignment done
@@ -101,15 +110,17 @@ class OneVOne(System):
                 # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, xd_c, tu) #ltidyn_cl
 
                 # NON-AUGMENTED DYNAMICS SOLVED HERE
-                dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u)
-                dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
-                # if not collisions:
-                #     dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u)
-                #     dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
-                # else:
-                #     for c in collisions:
-                #         if ii == c[0] or jj == c[1]:
-                #             break
+                # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u)
+                # dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
+
+                if not bool(collisions):
+                    dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u)
+                    dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
+                else: # don't propogate dynamics
+                    for c in collisions: # collisions = set of tuples
+                        if ii == c[0] or jj == c[1]:
+                            # break # or continue?
+                            continue
 
             return dxdt
 

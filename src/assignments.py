@@ -106,9 +106,8 @@ class AssignmentDyn(Assignment):
         M = np.zeros((nagents, ntargets))
         for ii, agent in enumerate(ref_states):
             for jj, target in enumerate(target_states):
-                # M[ii, jj] = agent[1].pol.cost_to_go(t, agent[0], target[0])
 
-                # AUGMENTED LQ TRACKER COST-TO-GO (pol.cost_to_go2 )
+                # AUGMENTED LQ TRACKER COST-TO-GO )
                 Fcl = target[1].pol.get_closed_loop_A()
                 g = target[1].pol.get_closed_loop_g()
                 M[ii, jj] = agent[1].pol.aug_cost_to_go(t, agent[0], target[0], Fcl, g)
@@ -117,8 +116,6 @@ class AssignmentDyn(Assignment):
         # if M[0,0] >= 894:
         #     import ipdb; ipdb.set_trace()
 
-        if t >= 0.05:
-            print("---- M: ", M)
         # M /= M.max() # I dont divide b
         M = M/M.max()
 
@@ -126,9 +123,6 @@ class AssignmentDyn(Assignment):
         b = np.ones((ntargets,)) / ntargets
 
         G0, log = ot.emd(a, b, M, log=True)
-        if t >= 0.45:
-            print("---- M/Mmax: ", M)
-            print("---- G0: ", G0)
 
         # if t >= 0.088:
         #     import ipdb; ipdb.set_trace()
