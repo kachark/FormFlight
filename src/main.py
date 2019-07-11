@@ -6,15 +6,15 @@ from post_process import *
 
 if __name__ == "__main__":
 
+    ensemble_simulation = []
     batch_simulation = []
-    batch_results = {}
 
     # SIM SETUP
     dt = 0.01
     maxtime = 5
     dim = 3
-    nagents = 5
-    ntargets = 5
+    nagents = 3
+    ntargets = 3
     agent_model = "Double Integrator"
     target_model = "Double Integrator"
     collisions = False
@@ -22,44 +22,70 @@ if __name__ == "__main__":
     # initial_conditions = np.loadtxt("initial_conditions_3d.txt")
     # cities = --> some distribution
     control_policy = "LQR"
-    sim = setup_simulation(
-        agent_model,
-        target_model,
-        control_policy,
-        nagents,
-        ntargets,
-        collisions,
-        dim,
-        dt,
-        maxtime,
-    )
 
-    # batch simulation: collection of simulations running on the same initial conditions, but with different assignment
-    # policies
-    batch_simulation.append(sim)
+    ####### INFO ######
+    # simulation: set of initial conditions with 1 asst pol
+    # batch_simulation: set of simulations with SAME initial conditions each with same/different single asst pol
+    # ensemble_simulation: set of different batch simulations
+
+    # ex. ic_i = ith initial_conditions
+    # sim1 = ic_1 and EMD
+    # sim2 = ic_1 and DYN
+    # batch_1 = [sim1, sim2] = [ic_1 and EMD, ic_1 and DYN]
+    # sim3 = ic_2 and EMD
+    # sim4 = ic_2 and DYN
+    # batch_2 = [sim3, sim4] = [ic_2 and EMD, ic_2 and DYN]
+    # ensemble_1 = [batch_1, batch_2] = [ [sim1, sim2], [sim3, sim4] ]
+    #            = [ [ic_1 and EMD, ic_1 and DYN], [ic_2 and EMD, ic_2 and DYN] ]
+
+    # setup_simulation() creates i sims corresponding to i assignment policies --> creates a batch
+
+    # ENSEMBLE OF SIMULATIONS
+    nbatches = 2
+    for batch_i in range(nbatches):
+
+        # get batch (same initial_conditions with multiple asst policies)
+        batch = setup_simulation(
+            agent_model,
+            target_model,
+            control_policy,
+            nagents,
+            ntargets,
+            collisions,
+            dim,
+            dt,
+            maxtime,
+        )
+
+        # batch simulation: collection of simulations running on the same initial conditions, but with different assignment
+        # policies
+        ensemble_simulation.append(batch)
 
     # RUN SIMULATION
-    for sim in batch_simulation:
+    ensemble_results = {}
+    for ii, batch in enumerate(ensemble_simulation):
+
+        batch_results = {}
 
         # Simulation parameters
-        collisions = sim["collisions"]
-        dt = sim["dt"]
-        maxtime = sim["maxtime"]
-        dx = sim["dx"]
-        du = sim["du"]
-        x0 = sim["x0"]
-        ltidyn = sim["agent_dyn"]
-        target_dyn = sim["target_dyns"]
-        poltrack = sim["agent_pol"]
-        poltargets = sim["target_pol"]
-        apol = sim["asst_pol"]
-        nagents = sim["nagents"]
-        ntargets = sim["ntargets"]
-        runner = sim["runner"]
+        collisions = batch["collisions"]
+        dt = batch["dt"]
+        maxtime = batch["maxtime"]
+        dx = batch["dx"]
+        du = batch["du"]
+        x0 = batch["x0"]
+        ltidyn = batch["agent_dyn"]
+        target_dyn = batch["target_dyns"]
+        poltrack = batch["agent_pol"]
+        poltargets = batch["target_pol"]
+        apol = batch["asst_pol"]
+        nagents = batch["nagents"]
+        ntargets = batch["ntargets"]
+        runner = batch["runner"]
 
         # Other simulation information
-        agent_model = sim["agent_model"]
-        target_model = sim["target_model"]
+        agent_model = batch["agent_model"]
+        target_model = batch["target_model"]
 
         # run different assignment policies with same conditions
         for assignment_pol in apol:
@@ -109,11 +135,15 @@ if __name__ == "__main__":
             for (col, res) in zip(columns, results):
                 sim_results.update({col: res})
 
-            # store results
+            # store sim results
             batch_results.update({sim_name: [sim_parameters, sim_results]})
 
+        # store batch results
+        ensemble_results.update({'Batch_{0}'.format(ii): batch_results})
+
     # post-process
-    post_process_batch_simulation(batch_results)
+    for batch_i, batch_results in ensemble_results.items():
+        post_process_batch_simulation(batch_results)
 
     plt.show()
 
