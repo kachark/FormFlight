@@ -177,12 +177,12 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
             # Target Terminal Location
             cities = np.zeros((ntargets, dx))
             r = 100
-            cities_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
-            # cities_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            # cities_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
+            cities_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
             # cities_p = np.random.uniform(-300, 300, (ntargets,dim)) # random city position spread
             for ii, tt in enumerate(cities):
-                cities[ii] = np.array([cities_p[ii][0], 1, cities_p[ii][1], 0, 0, 0]) # circle
-                # cities[ii] = np.array([cities_p[ii][0], cities_p[ii][1], cities_p[ii][2], 0, 0, 0])
+                # cities[ii] = np.array([cities_p[ii][0], 1, cities_p[ii][1], 0, 0, 0]) # circle
+                cities[ii] = np.array([cities_p[ii][0], cities_p[ii][1], cities_p[ii][2], 0, 0, 0])
 
             cities = cities.flatten()
             cities = r*cities
@@ -313,7 +313,7 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
     # poltargets = [LinearFeedbackOffset(A, B, C, Q, R, c) for c in cities]
     # poltargets = [ZeroPol(du) for c in cities]
     # poltargets = [LinearFeedbackConstTracker(A, B, Q2, 2*R, c) for c in cities]
-    poltargets = [LinearFeedbackConstTracker(A, B, Q2, R, c) for c in cities]
+    poltargets = [LinearFeedbackConstTracker(A, B, Q, R, c) for c in cities]
 
     ### target Dynamics
     dyn_target = LTIDyn(A, B)

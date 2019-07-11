@@ -20,7 +20,6 @@ def run_identical_doubleint_2D(dx, du, x0, ltidyn, dyn_target, poltrack, poltarg
     # tells system to update, collisions
     eng = Engine(dim=2, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=1e-3)
     eng.run(x0, sys)
-    # print(eng.df.tail(10))
 
     opt_asst = sys.optimal_assignment
 
@@ -41,11 +40,17 @@ def run_identical_doubleint_3D(dx, du, x0, ltidyn, dyn_target, poltrack, poltarg
     sys = OneVOne(agents, targets, apol)
     eng = Engine(dim=3, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=1e-1)
     eng.run(x0, sys)
-    # print(eng.df.tail(10))
+
+    opt_asst = sys.optimal_assignment
 
     # post processing
     polagents = [agent.pol for agent in agents]
-    post_process_identical_3d_doubleint(eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents)
-    # post_process_identical_3d_doubleint(eng.df, poltrack, poltargets, nagents, ntargets, sys.costs)
+    # post_process_identical_3d_doubleint(eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents)
 
-    return eng.df.iloc[:, 1:].to_numpy() # yout
+    # return eng.df.iloc[:, 1:].to_numpy() # yout
+
+    # TEST
+    return [agents, targets, eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents, opt_asst, apol]
+
+
+

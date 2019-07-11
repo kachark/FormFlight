@@ -21,22 +21,6 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
 
     print("INITIAL CONDITION: ", yout[0])
 
-    # plt.figure()
-    # plt.plot(yout[:, 0], yout[:, 1], '-r')
-    # plt.plot(yout[0, 0], yout[0, 1], 'rs')
-    # plt.plot(yout[:, 4], yout[:, 5], '--g')
-    # plt.plot(yout[0, 4], yout[0, 5], 'gx')
-
-
-    # fig, axs = plt.subplots(3, 1, figsize=(10, 5))
-    # axs[0].plot(tout, yout[:, 0] - yout[:, 4])
-    # axs[0].set_ylabel('x')
-    # axs[1].plot(tout, yout[:, 1] - yout[:, 5])
-    # axs[1].set_ylabel('y')
-    # axs[2].plot(yout[:, 0], yout[:,1])
-    # axs[2].set_xlabel('x')
-    # axs[2].set_ylabel('y')
-
     # assignments = yout[:, nagents*2*4:].astype(np.int32)
     assignments = yout[:, nagents*2*dx:].astype(np.int32)
 
@@ -160,15 +144,6 @@ def post_process_identical_2d_doubleint(df, poltrack, poltargets, nagents, ntarg
 
     axs.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost')
     axs.plot(tout, np.sum(xp, axis=1), '-r', label='Cost-to-go')
-
-    # f123 = plt.figure()
-    # tt = np.linspace(0,4,4/0.01 + 1) % run with dt=0.01, maxtime=4
-    # plt.plot(tt,costs)
-    # plt.plot(tout, stage_cost)
-    # plt.title('Optimal Transport Cost')
-    # plt.xlabel('time')
-    # plt.ylabel('cost')
-    # plt.legend()
 
     if nagents == 1:
         plt.plot(tout, final_cost[:, 0], '-.c', label='Cum. Stage Cost (0)')    
@@ -624,8 +599,6 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
         fig = plt.figure()
         ax = plt.axes(projection='3d')
 
-        data_lines = []
-
         # destination location
         # IF zeropol just set to target last position
         for zz in range(ntargets):
@@ -648,7 +621,7 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
             # plot location of assignment switches
             # patches = []
             for switch_ind in assignment_switches[zz]:
-                ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m')
+                ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
                 # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='m', fill=True)
                 # patches.append(ci)
 
@@ -666,89 +639,59 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
         ax.set_ylabel("y")
         ax.legend()
 
-
-    if nagents == 8:
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-
-        # destination location
-        # IF zeropol just set to target last position
-        # for zz in range(ntargets):
-        #     pt = poltargets[zz]
-        #     offset = pt.offset
-        #     ax.scatter3D(offset[0], offset[1], offset[2], color='k')
-
-        # agent/target trajectories
-        for zz in range(nagents):
-
-            # agent state over time
-            y_agent = yout[:, zz*6:(zz+1)*6]
-
-            # plot agent trajectory with text
-            ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
-            ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r') # returns line2d object
-            # ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
-
-            # plot location of assignment switches
-            # patches = []
-            for switch_ind in assignment_switches[zz]:
-                ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m')
-                # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='m', fill=True)
-                # patches.append(ci)
-
-            # p = PatchCollection(patches)
-            # ax.add_collection(p)
-
-            # plot target trajectory
-            y_target = yout[:, (zz+nagents)*6:(zz+nagents+1)*6]
-            ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
-            ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
-            # ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
-
-        ax.set_title("Trajectory")
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
-
-
 def post_process_batch_simulation(batch_results):
-    # final_cost = np.zeros((tout.shape[0], nagents))
-    # stage_cost = np.zeros((tout.shape[0], nagents))
-    # xp = np.zeros((yout.shape[0], nagents))
-    # optimal_cost = np.zeros((1, nagents))
 
-    sim_performance_metrics = {}
-    sim_components = {}
+    sim_names = []
+    sim_performance_metrics = {} # performance metrics
+    sim_components = {} # useful parameters and objects used within the simulation
+
+    dim = 2 # default value. also uniform across batch simulations
 
     # for every simulation within a batch, post-process results
     for sim_name, sim in batch_results.items():
+        sim_names.append(sim_name)
         parameters = sim[0]
         sim_results = sim[1]
 
+        dx = parameters['dx']
+        du = parameters['du']
+        dim = parameters['dim']
+        agent_model = parameters['agent_model']
+        target_model = parameters['target_model']
         nagents = sim_results['nagents']
         ntargets = sim_results['ntargets']
         poltargets = sim_results['target_pol']
         apol = sim_results['asst_policy']
-        components = {'nagents': nagents, 'ntargets': ntargets, 'poltargets': poltargets, 'apol': apol}
+
+        components = {'dx': dx, 'du': du, 'dim': dim, 'agent_model': agent_model, 'target_model': target_model, 'nagents': nagents, 'ntargets': ntargets, 'poltargets': poltargets, 'apol': apol}
+
         sim_components.update({sim_name: components})
 
+        # post-process
         if parameters['dim'] == 2:
             if parameters['agent_model'] == 'Double Integrator':
-                yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost = post_process_identical_2d_doubleint_TEST(sim_results)
+                yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost = post_process_identical_doubleint_TEST(parameters, sim_results)
 
             # if parameters['agent_model'] == 'Linearized Quadcopter':
             #     post_process_identical_2d_doubleint()
 
-            sim_performance_metrics.update({sim_name: [yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost]})
 
-        # if parameters['dim'] == 3:
-        #     if parameters['agent_model'] == 'Double Integrator':
-        #         post_process_identical_3d_doubleint_TEST(sim_name, results)
+        if parameters['dim'] == 3:
+            if parameters['agent_model'] == 'Double Integrator':
+                yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost = post_process_identical_doubleint_TEST(parameters, sim_results)
 
             # if parameters['agent_model'] == 'Linearized Quadcopter':
             #     post_process_identical_3d_doubleint()
 
-    # plot batch simulation results
+        # collect post-processed performance metrics
+        sim_performance_metrics.update({sim_name: [yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost]})
 
+
+
+    # TODO refactor into individual functions - cost_plots, assignment_plots, trajectory_plots depending on agent/target models
+    # plot batch performance metrics
+
+    # NOTE independent of dimension
     fig, axs = plt.subplots(1,1)
     for sim_name, metrics in sim_performance_metrics.items():
         yout = metrics[0]
@@ -784,6 +727,7 @@ def post_process_batch_simulation(batch_results):
 
         plt.legend()
 
+    # NOTE independent of dimension
     ### assignment plots
     for sim_name, metrics in sim_performance_metrics.items():
         nagents = sim_components[sim_name]['nagents']
@@ -793,104 +737,194 @@ def post_process_batch_simulation(batch_results):
         tout = metrics[1]
         assignments = metrics[2]
 
+        plt.figure()
         for ii in range(nagents):
-            plt.figure()
             plt.plot(tout, assignments[:, ii], '-', label='A{0}'.format(ii))
             plt.title("Assignments")
             plt.legend()
 
+
     ### trajectory plots
 
-    fig, ax = plt.subplots()
+    # want to display all trajectories on same figure
+    if dim == 2:
+        fig, ax = plt.subplots()
+    if dim == 3:
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
 
-    for sim_name, metrics in sim_performance_metrics.items():
-        nagents = sim_components[sim_name]['nagents']
-        ntargets = sim_components[sim_name]['ntargets']
-        poltargets = sim_components[sim_name]['poltargets']
-        apol = sim_components[sim_name]['apol']
+    for sim_name in sim_names:
+        metrics = sim_performance_metrics[sim_name]
+        components = sim_components[sim_name]
+
+        dx = components['dx']
+        du = components['du']
+        dim = components['dim']
+        nagents = components['nagents']
+        ntargets = components['ntargets']
+        poltargets = components['poltargets']
+        apol = components['apol']
 
         yout = metrics[0]
         tout = metrics[1]
 
-        ### stationary points
-        for zz in range(ntargets):
-            pt = poltargets[zz]
-            offset = pt.const
-            ax.plot(offset[0], offset[1], 'ks')
-            ax.text(offset[0], offset[1], 'C{0}'.format(zz))
+        if dim == 2: # and agent/target models both double integrator (omit requirement for now)
+            ### stationary points
+            for zz in range(ntargets):
+                pt = poltargets[zz]
+                offset = pt.const
+                ax.plot(offset[0], offset[1], 'ks')
+                ax.text(offset[0], offset[1], 'C{0}'.format(zz))
 
-        ### Agent / Target Trajectories
-        # optimal trajectories (solid lines)
-        if apol.__class__.__name__ == 'AssignmentDyn':
-            for zz in range(nagents):
+            ### Agent / Target Trajectories
+            # optimal trajectories (solid lines)
+            if apol.__class__.__name__ == 'AssignmentDyn':
+                for zz in range(nagents):
 
-                # agent state over time
-                y_agent = yout[:, zz*4:(zz+1)*4]
+                    # agent state over time
+                    y_agent = yout[:, zz*dx:(zz+1)*dx]
 
-                # plot agent trajectory with text
-                ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-                ax.plot(y_agent[:, 0], y_agent[:, 1], '-r') # returns line2d object
-                ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
+                    # plot agent trajectory with text
+                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
+                    ax.plot(y_agent[:, 0], y_agent[:, 1], '-r') # returns line2d object
+                    ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
 
-                # plot location of assignment switches
-                patches = []
-                for switch_ind in assignment_switches[zz]:
-                    ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
-                    patches.append(ci)
+                    # plot location of assignment switches
+                    patches = []
+                    for switch_ind in assignment_switches[zz]:
+                        ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='b', fill=True)
+                        patches.append(ci)
 
-                p = PatchCollection(patches)
-                ax.add_collection(p)
+                    p = PatchCollection(patches)
+                    ax.add_collection(p)
 
-                # plot target trajectory
-                y_target = yout[:, (zz+nagents)*4:(zz+nagents+1)*4]
-                ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
-                ax.plot(y_target[:, 0], y_target[:, 1], '-b')
-                ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+                    # plot target trajectory
+                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
+                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
+                    ax.plot(y_target[:, 0], y_target[:, 1], '-b')
+                    ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
 
-                print("TARGET FINAL POS: ", y_target[-1])
-                print("AGENT FINAL POS: ", y_agent[-1])
+                    print("TARGET FINAL POS: ", y_target[-1])
+                    print("AGENT FINAL POS: ", y_agent[-1])
 
-            ax.set_title("Trajectory")
-            ax.set_xlabel("x")
-            ax.set_ylabel("y")
-        else:
-            # non-optimal trajectories (dotted lines)
-            for zz in range(nagents):
+                ax.set_title("Trajectory")
+                ax.set_xlabel("x")
+                ax.set_ylabel("y")
+            else:
+                # non-optimal trajectories (dotted lines)
+                for zz in range(nagents):
 
-                # agent state over time
-                y_agent = yout[:, zz*4:(zz+1)*4]
+                    # agent state over time
+                    y_agent = yout[:, zz*dx:(zz+1)*dx]
 
-                # plot agent trajectory with text
-                ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-                ax.plot(y_agent[:, 0], y_agent[:, 1], '--r') # returns line2d object
-                ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
+                    # plot agent trajectory with text
+                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
+                    ax.plot(y_agent[:, 0], y_agent[:, 1], '--r') # returns line2d object
+                    ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
 
-                # plot location of assignment switches
-                patches = []
-                for switch_ind in assignment_switches[zz]:
-                    ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
-                    patches.append(ci)
+                    # plot location of assignment switches
+                    # patches = []
+                    for switch_ind in assignment_switches[zz]:
+                        # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
+                        # patches.append(ci)
+                        ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms')
 
-                p = PatchCollection(patches)
-                ax.add_collection(p)
+                    # p = PatchCollection(patches)
+                    # ax.add_collection(p)
 
-                # plot target trajectory
-                y_target = yout[:, (zz+nagents)*4:(zz+nagents+1)*4]
-                ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
-                ax.plot(y_target[:, 0], y_target[:, 1], '-b')
-                ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+                    # plot target trajectory
+                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
+                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
+                    ax.plot(y_target[:, 0], y_target[:, 1], '-b')
+                    ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
 
-                print("TARGET FINAL POS: ", y_target[-1])
-                print("AGENT FINAL POS: ", y_agent[-1])
+                    print("TARGET FINAL POS: ", y_target[-1])
+                    print("AGENT FINAL POS: ", y_agent[-1])
 
-            ax.set_title("Trajectory")
-            ax.set_xlabel("x")
-            ax.set_ylabel("y")
-
-
+                ax.set_title("Trajectory")
+                ax.set_xlabel("x")
+                ax.set_ylabel("y")
 
 
-def post_process_identical_2d_doubleint_TEST(sim_results):
+        if dim == 3:
+
+            # optimal trajectories (solid lines)
+            if apol.__class__.__name__ == 'AssignmentDyn':
+
+                # stationary locations
+                for zz in range(ntargets):
+                    pt = poltargets[zz]
+                    offset = pt.const
+                    ax.scatter3D(offset[0], offset[1], offset[2], color='k')
+                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz))
+
+                # agent/target trajectories
+                for zz in range(nagents):
+
+                    # agent state over time
+                    y_agent = yout[:, zz*dx:(zz+1)*dx]
+
+                    # plot agent trajectory with text
+                    ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
+                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r') # returns line2d object
+                    ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz))
+
+                    # # plot location of assignment switches
+                    # for switch_ind in assignment_switches[zz]:
+                    #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
+
+                    # plot target trajectory
+                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
+                    ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
+                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
+                    ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz))
+
+                ax.set_title("Trajectory")
+                ax.set_xlabel("x")
+                ax.set_ylabel("y")
+                ax.legend()
+            else:
+                # non-optimal trajectories (dotted lines)
+
+                # stationary locations
+                for zz in range(ntargets):
+                    pt = poltargets[zz]
+                    offset = pt.const
+                    ax.scatter3D(offset[0], offset[1], offset[2], color='k')
+                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz))
+
+                # agent/target trajectories
+                for zz in range(nagents):
+
+                    # agent state over time
+                    y_agent = yout[:, zz*dx:(zz+1)*dx]
+
+                    # plot agent trajectory with text
+                    ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
+                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '--r') # returns line2d object
+                    ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz))
+
+                    # # plot location of assignment switches
+                    # for switch_ind in assignment_switches[zz]:
+                    #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
+
+                    # plot target trajectory
+                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
+                    ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
+                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
+                    ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz))
+
+                ax.set_title("Trajectory")
+                ax.set_xlabel("x")
+                ax.set_ylabel("y")
+                ax.legend()
+
+
+
+
+
+# 2d or 3d identical agent/target double integrators
+def post_process_identical_doubleint_TEST(parameters, sim_results):
 
     df = sim_results['data']
     poltrack = sim_results['tracking_policy']
@@ -902,33 +936,16 @@ def post_process_identical_2d_doubleint_TEST(sim_results):
     opt_asst = sim_results['optimal_asst']
     asst_policy = sim_results['asst_policy']
 
-    dx = 4
-    du = 2
+    dx = parameters['dx']
+    du = parameters['du']
 
     yout = df.iloc[:, 1:].to_numpy()
     tout = df.iloc[:, 0].to_numpy()
-    # print(yout)
 
     yout = copy.deepcopy(yout)
-    assignment_switches = find_switches(tout, yout, nagents, nagents, 4, 4)
+    assignment_switches = find_switches(tout, yout, nagents, nagents, dx, dx)
 
     print("INITIAL CONDITION: ", yout[0])
-
-    # plt.figure()
-    # plt.plot(yout[:, 0], yout[:, 1], '-r')
-    # plt.plot(yout[0, 0], yout[0, 1], 'rs')
-    # plt.plot(yout[:, 4], yout[:, 5], '--g')
-    # plt.plot(yout[0, 4], yout[0, 5], 'gx')
-
-
-    # fig, axs = plt.subplots(3, 1, figsize=(10, 5))
-    # axs[0].plot(tout, yout[:, 0] - yout[:, 4])
-    # axs[0].set_ylabel('x')
-    # axs[1].plot(tout, yout[:, 1] - yout[:, 5])
-    # axs[1].set_ylabel('y')
-    # axs[2].plot(yout[:, 0], yout[:,1])
-    # axs[2].set_xlabel('x')
-    # axs[2].set_ylabel('y')
 
     # assignments = yout[:, nagents*2*4:].astype(np.int32)
     assignments = yout[:, nagents*2*dx:].astype(np.int32)
@@ -1045,6 +1062,21 @@ def post_process_identical_2d_doubleint_TEST(sim_results):
             final_cost[ii, zz] = np.trapz(stage_cost[:ii, zz], x=tout[:ii])
 
     optcost = np.sum(optimal_cost[0, :])
+
+    print("POLICY: ", poltrack.__class__.__name__)
+    print("FINAL TIME: ", tout[-1])
+    print("initial optimal cost: ", optcost)
+    print("initial incurred cost: ", final_cost[0])
+    print("final cost-to-go value: ", np.sum(xp, axis=1)[-1])
+    print("final incurred cost value: ", np.sum(final_cost, axis=1)[-1]) # last stage cost
+    print("initial optimal cost - final incurred cost value = ", optcost - np.sum(final_cost, axis=1)[-1])
+    print("INITIAL CONDITIONS")
+    print(yout[0, :])
+    print("FINAL STATE")
+    print(yout[-1, :])
+    print("OFFSET")
+    for pt in poltargets:
+        print(pt.const)
 
     return yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optcost
 

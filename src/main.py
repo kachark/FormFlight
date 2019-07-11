@@ -12,9 +12,9 @@ if __name__ == "__main__":
     # SIM SETUP
     dt = 0.01
     maxtime = 5
-    dim = 2
-    nagents = 8
-    ntargets = 8
+    dim = 3
+    nagents = 5
+    ntargets = 5
     agent_model = "Double Integrator"
     target_model = "Double Integrator"
     collisions = False
@@ -101,6 +101,8 @@ if __name__ == "__main__":
                 "agent_model": agent_model,
                 "target_model": target_model,
                 "dim": dim,
+                "dx": dx,
+                "du": du
             }
 
             sim_results = {}
@@ -112,44 +114,6 @@ if __name__ == "__main__":
 
     # post-process
     post_process_batch_simulation(batch_results)
-
-    # for sim_name, sim in batch_results.items():
-    # parameters = sim[0]
-    # results = sim[1]
-
-    # if parameters['dim'] == 2:
-    #     if parameters['agent_model'] == 'Double Integrator':
-    #         post_process_identical_2d_doubleint_TEST(sim_name, results)
-
-    #     # if parameters['agent_model'] == 'Linearized Quadcopter':
-    #     #     post_process_identical_2d_doubleint()
-
-    # if parameters['dim'] == 3:
-    #     if parameters['agent_model'] == 'Double Integrator':
-    #         post_process_identical_3d_doubleint_TEST(sim_name, results)
-
-    #     # if parameters['agent_model'] == 'Linearized Quadcopter':
-    #     #     post_process_identical_3d_doubleint()
-
-    # TODO need post-process unique to dimension and dynamic model being used
-
-    # store results
-    # results.append(yout)
-
-    # simulation comparison post-process
-    # for r in results:
-
-    #     # superimposed trajectories from emd and dyn simulations
-    #     plt.figure()
-    #     for zz in range(2):
-    #         y_agent = yout[:, zz*4:(zz+1)*4]
-    #         plt.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-    #         plt.plot(y_agent[:, 0], y_agent[:, 1], '-r')
-
-    #     for zz in range(2):
-    #         y_agent = yout_dyn[:, zz*4:(zz+1)*4]
-    #         plt.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-    #         plt.plot(y_agent[:, 0], y_agent[:, 1], '-r')
 
     plt.show()
 
