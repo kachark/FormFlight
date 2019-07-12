@@ -8,7 +8,7 @@ from linear_models_2D import *
 from linear_models_3D import *
 from run import *
 
-def setup_simulation(agent_model, target_model, control_policy, nagents, ntargets, collisions, dim=2, dt=0.01, maxtime=10):
+def setup_simulation(agent_model, target_model, agent_control_policy, target_control_policy, nagents, ntargets, collisions, dim=2, dt=0.01, maxtime=10):
 
     sim = {}
     parameters = ['agent_model', 'target_model', 'dx', 'du', 'A', 'B', 'agent_dyn', 'target_dyns', 'agent_pol', 'target_pol', 'asst_pol', 'x0']
@@ -23,7 +23,7 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
     ##### Dynamic Model #####
     if dim == 2:
 
-        if agent_model == "Double Integrator":
+        if agent_model == "Double_Integrator":
 
             A, B, C, D, dx, du = double_integrator_2D()
 
@@ -143,7 +143,7 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
 
     if dim == 3:
 
-        if agent_model == "Double Integrator":
+        if agent_model == "Double_Integrator":
 
             A, B, C, D, dx, du = double_integrator_3D()
 
@@ -176,16 +176,16 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
 
             # Target Terminal Location
             cities = np.zeros((ntargets, dx))
-            r = 100
+            # r = 100
             # cities_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
-            cities_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
-            # cities_p = np.random.uniform(-300, 300, (ntargets,dim)) # random city position spread
+            # cities_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            cities_p = np.random.uniform(-300, 300, (ntargets,dim)) # random city position spread
             for ii, tt in enumerate(cities):
                 # cities[ii] = np.array([cities_p[ii][0], 1, cities_p[ii][1], 0, 0, 0]) # circle
                 cities[ii] = np.array([cities_p[ii][0], cities_p[ii][1], cities_p[ii][2], 0, 0, 0])
 
             cities = cities.flatten()
-            cities = r*cities
+            # cities = r*cities
             cities = np.split(cities, ntargets)
 
 
@@ -262,7 +262,7 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
             ### runner
             sim_runner = run_identical_doubleint_3D
 
-        if agent_model == "Linearized Quadcopter":
+        if agent_model == "Linearized_Quadcopter":
 
             A, B, C, D, dx, du = quadcopter_3D()
             ### Initial conditions
@@ -313,13 +313,15 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
     # poltargets = [LinearFeedbackOffset(A, B, C, Q, R, c) for c in cities]
     # poltargets = [ZeroPol(du) for c in cities]
     # poltargets = [LinearFeedbackConstTracker(A, B, Q2, 2*R, c) for c in cities]
-    poltargets = [LinearFeedbackConstTracker(A, B, Q, R, c) for c in cities]
+
+    if target_control_policy == "LQR":
+        poltargets = [LinearFeedbackConstTracker(A, B, Q, R, c) for c in cities]
 
     ### target Dynamics
     dyn_target = LTIDyn(A, B)
 
     ### agent control law
-    if control_policy == "LQR":
+    if agent_control_policy == "LQR":
         # const = np.array([0, 0, 0, 0])
         # poltrack = LinearFeedbackConstTracker(A, B, Q2, R, const) # initial augmentation: agent_i tracks target_i
 
@@ -329,7 +331,7 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
         print("gcl = ", gcl)
         poltrack = LinearFeedbackAugmented(A, B, Q3, R, Acl, gcl) # initial augmentation: agent_i tracks target_i
 
-    if control_policy == "LQI":
+    if agent_control_policy == "LQI":
         A, B, Qaug, Raug = LQI_augmented_system(A, B, C) # augmented A, B
         dx = A.shape[0]
         poltrack = LinearFeedbackIntegralTracking(A, B, Qaug, Raug)
@@ -344,6 +346,8 @@ def setup_simulation(agent_model, target_model, control_policy, nagents, ntarget
     # Dyn
     apol.append(AssignmentDyn(nagents, ntargets))
 
+    sim['agent_control_policy'] = agent_control_policy
+    sim['target_control_policy'] = target_control_policy
     sim['agent_model'] = agent_model
     sim['target_model'] = target_model
     sim['collisions'] = collisions

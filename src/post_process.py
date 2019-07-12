@@ -642,7 +642,7 @@ def post_process_identical_3d_doubleint(df, poltrack, poltargets, nagents, ntarg
 def post_process_batch_simulation(batch_results):
 
     sim_names = []
-    sim_performance_metrics = {} # performance metrics
+    batch_performance_metrics = {} # performance metrics
     sim_components = {} # useful parameters and objects used within the simulation
 
     dim = 2 # default value. also uniform across batch simulations
@@ -658,36 +658,45 @@ def post_process_batch_simulation(batch_results):
         dim = parameters['dim']
         agent_model = parameters['agent_model']
         target_model = parameters['target_model']
+        agent_control_policy = parameters['agent_control_policy']
+        target_control_policy = parameters['target_control_policy']
+
         nagents = sim_results['nagents']
         ntargets = sim_results['ntargets']
         poltargets = sim_results['target_pol']
         apol = sim_results['asst_policy']
 
-        components = {'dx': dx, 'du': du, 'dim': dim, 'agent_model': agent_model, 'target_model': target_model, 'nagents': nagents, 'ntargets': ntargets, 'poltargets': poltargets, 'apol': apol}
+        components = {'dx': dx, 'du': du, 'dim': dim, 'agent_model': agent_model, 'target_model': target_model,
+                'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy, 'nagents': nagents, 'ntargets': ntargets, 'poltargets': poltargets, 'apol': apol}
 
         sim_components.update({sim_name: components})
 
-        # post-process
+        post_processed_results_df = None
+
+        # post-process each sim within batch
         if parameters['dim'] == 2:
-            if parameters['agent_model'] == 'Double Integrator':
-                yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost = post_process_identical_doubleint_TEST(parameters, sim_results)
+            if parameters['agent_model'] == 'Double_Integrator':
+                post_processed_results_df = post_process_identical_doubleint_TEST(parameters, sim_results)
 
             # if parameters['agent_model'] == 'Linearized Quadcopter':
             #     post_process_identical_2d_doubleint()
 
 
         if parameters['dim'] == 3:
-            if parameters['agent_model'] == 'Double Integrator':
-                yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost = post_process_identical_doubleint_TEST(parameters, sim_results)
+            if parameters['agent_model'] == 'Double_Integrator':
+                post_processed_results_df = post_process_identical_doubleint_TEST(parameters, sim_results)
 
             # if parameters['agent_model'] == 'Linearized Quadcopter':
             #     post_process_identical_3d_doubleint()
 
         # collect post-processed performance metrics
-        sim_performance_metrics.update({sim_name: [yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optimal_cost]})
+        batch_performance_metrics.update({sim_name: post_processed_results_df})
+
+    return batch_performance_metrics
 
 
-
+def plot_results(sim_performance_metrics, sim_components):
+    ####### PLOT RESULTS
     # TODO refactor into individual functions - cost_plots, assignment_plots, trajectory_plots depending on agent/target models
     # plot batch performance metrics
 
@@ -730,9 +739,6 @@ def post_process_batch_simulation(batch_results):
     # NOTE independent of dimension
     ### assignment plots
     for sim_name, metrics in sim_performance_metrics.items():
-        nagents = sim_components[sim_name]['nagents']
-        ntargets = sim_components[sim_name]['ntargets']
-        poltargets = sim_components[sim_name]['poltargets']
 
         tout = metrics[1]
         assignments = metrics[2]
@@ -920,8 +926,33 @@ def post_process_batch_simulation(batch_results):
                 ax.legend()
 
 
+# COMPUTE CONTROLS
+def compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents):
 
+    agent_controls = np.zeros((tout.shape[0], du*nagents))
+    for zz in range(nagents):
+        y_agent = yout[:, zz*dx:(zz+1)*dx]
 
+        agent_zz_controls = np.zeros((yout.shape[0], du))
+        for ii in range(yout.shape[0]): # compute controls
+            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
+
+            # AUGMENTED TRACKER
+            asst_ii = assignments[ii] # assignments at time ii
+            sigma_i = asst_ii[zz] # target assigned-to agent zz
+            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
+
+            # NEW
+            # Get agent policy in correct tracking state for P, Q, p at time ii
+            Acl = poltargets[sigma_i].get_closed_loop_A()
+            gcl = poltargets[sigma_i].get_closed_loop_g()
+            polagents[zz].track(ii, sigma_i, Acl, gcl)
+
+            agent_zz_controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
+
+        agent_controls[:, zz*du:(zz+1)*du] = agent_zz_controls
+
+    return agent_controls
 
 # 2d or 3d identical agent/target double integrators
 def post_process_identical_doubleint_TEST(parameters, sim_results):
@@ -936,8 +967,11 @@ def post_process_identical_doubleint_TEST(parameters, sim_results):
     opt_asst = sim_results['optimal_asst']
     asst_policy = sim_results['asst_policy']
 
+    dt = parameters['dt']
+    dim = parameters['dim']
     dx = parameters['dx']
     du = parameters['du']
+    collisions = parameters['collisions']
 
     yout = df.iloc[:, 1:].to_numpy()
     tout = df.iloc[:, 0].to_numpy()
@@ -950,6 +984,9 @@ def post_process_identical_doubleint_TEST(parameters, sim_results):
     # assignments = yout[:, nagents*2*4:].astype(np.int32)
     assignments = yout[:, nagents*2*dx:].astype(np.int32)
 
+    # TEST
+    test = compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents)
+
     # PLOT COSTS
     final_cost = np.zeros((tout.shape[0], nagents))
     stage_cost = np.zeros((tout.shape[0], nagents))
@@ -960,6 +997,8 @@ def post_process_identical_doubleint_TEST(parameters, sim_results):
     for zz in range(nagents):
         y_agent = yout[:, zz*dx:(zz+1)*dx]
 
+        # COMPUTE CONTROLS
+        # yout, assignments, nagents, dx, poltargets, polagents, 
         controls = np.zeros((yout.shape[0], du))
         for ii in range(yout.shape[0]): # compute controls
             y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
@@ -1078,7 +1117,45 @@ def post_process_identical_doubleint_TEST(parameters, sim_results):
     for pt in poltargets:
         print(pt.const)
 
-    return yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optcost
+    # final dataset = dim, dx, du, nagents, ntargets, yout, tout, final_cost, stage_cost, cost_to_go, optimal_cost, city states
+    columns = ['dim', 'dx', 'du', 'nagents', 'ntargets', 'tout', 'yout', 'city_states', 'final_cost', 'stage_cost',
+            'cost_to_go', 'optimal_cost']
+    # eng.df = [tout, yout, asst history] dataframe
+
+    #### PACK INTO SINGLE DATAFRAME
+    if collisions:
+        col_df = pd.DataFrame([1])
+    else:
+        col_df = pd.DataFrame([0])
+
+    dt_df = pd.DataFrame([dt])
+    dim_df = pd.DataFrame([dim])
+    dx_df = pd.DataFrame([dx])
+    du_df = pd.DataFrame([du])
+    nagents_df = pd.DataFrame([nagents])
+    ntargets_df = pd.DataFrame([ntargets])
+    parameters_df = pd.concat([dt_df, dim_df, col_df, dx_df, du_df, nagents_df, ntargets_df], axis=1)
+
+    fc_df = pd.DataFrame(final_cost)
+    sc_df = pd.DataFrame(stage_cost)
+    ctg_df = pd.DataFrame(xp)
+    oc_df = pd.DataFrame(optimal_cost)
+    costs_df = pd.concat([fc_df, sc_df, ctg_df, oc_df], axis=1)
+
+    cities = np.zeros((1, ntargets*dx))
+    for jj in range(ntargets):
+        cities[0, jj*dx:(jj+1)*dx] = poltargets[jj].const
+    stationary_states_df = pd.DataFrame(cities)
+
+    controls_df = pd.DataFrame(compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents))
+
+    outputs_df = pd.concat([df, stationary_states_df, controls_df], axis=1)
+
+    return_df = pd.concat([parameters_df, outputs_df, costs_df], axis=1)
+
+    return return_df
+
+    # return yout, tout, assignments, assignment_switches, final_cost, stage_cost, xp, optcost
 
 
 def find_switches(tout, yout, nagents, ntargets, agent_config_size, target_config_size):
