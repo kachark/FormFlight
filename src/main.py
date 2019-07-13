@@ -53,7 +53,7 @@ if __name__ == "__main__":
     # SIM SETUP
     dt = 0.01
     maxtime = 5
-    dim = 2
+    dim = 3
     nagents = 5
     ntargets = 5
     agent_model = "Double_Integrator"
@@ -184,13 +184,22 @@ if __name__ == "__main__":
         # directory already exists
         pass
 
+    # post-process + save
     for batch_name, batch_results in ensemble_results.items():
         batch_performance_metrics = post_process_batch_simulation(batch_results) # dict
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
 
+    # load batches and plot
+    sim_name_list = ['AssignmentEMD', 'AssignmentDyn']
+    for ii in range(nbatches):
+
+        batch_name = 'batch_{0}'.format(ii)
+        loaded_batch = load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
+
         # TODO FIX plotting
         # plot_batch_performance_metrics()
+
 
     plt.show()
 
