@@ -695,53 +695,138 @@ def post_process_batch_simulation(batch_results):
     return batch_performance_metrics
 
 
-def plot_results(sim_performance_metrics, sim_components):
+def unpack_performance_metrics(batch_performance_metrics):
+
+    unpacked_batch_metrics = {}
+
+    for sim_name, metrics_df in batch_performance_metrics.items():
+
+        ### unpack simulation metrics ###
+
+        # simulation parameters
+        parameter_cols = 7 # see stored data spec
+        parameters = metrics_df.iloc[0, 0:7].to_numpy()
+
+        dt = int(parameters[0])
+        dim = int(parameters[1])
+        collisions = int(parameters[2])
+        dx = int(parameters[3])
+        du = int(parameters[4])
+        nagents = int(parameters[5])
+        ntargets = int(parameters[6])
+
+        # simulation outputs
+        output_cols = 1 + nagents*dx + ntargets*dx + nagents + ntargets*dx + nagents*du
+        outputs = metrics_df.iloc[:, 7: parameter_cols + output_cols].to_numpy()
+
+        tout = outputs[:, 0]
+        yout_cols = 1 + nagents*dx + ntargets*dx + nagents
+        yout = outputs[:, 1: yout_cols] # good
+        ss_cols = yout_cols + ntargets*dx
+        stationary_states = outputs[0, yout_cols: ss_cols]
+        ctrl_cols = ss_cols + nagents*du
+        agent_controls = outputs[:, ss_cols: 1+ ctrl_cols]
+
+        # simulation costs
+        costs = metrics_df.iloc[:, parameter_cols + output_cols: ].to_numpy()
+
+        fc_cols = nagents
+        final_cost = costs[:, 0:fc_cols]
+        sc_cols = fc_cols + nagents
+        stage_cost = costs[:, fc_cols: sc_cols]
+        ctg_cols = sc_cols + nagents
+        cost_to_go = costs[:, sc_cols: ctg_cols]
+        optimal_cost = costs[:, ctg_cols: ]
+
+        unpacked = [dt, dim, collisions, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls,
+                final_cost, stage_cost, cost_to_go, optimal_cost]
+
+        ### end unpack ###
+
+        columns = [
+            "dt",
+            "dim",
+            "collisions",
+            "dx",
+            "du",
+            "nagents",
+            "ntargets",
+            "tout",
+            "yout",
+            "stationary_states",
+            "agent_controls",
+            "final_cost",
+            "stage_cost",
+            "cost_to_go",
+            "optimal_cost"
+        ]
+
+        metrics = {}
+        for (col, met) in zip(columns, unpacked):
+            metrics.update({col: met})
+
+        unpacked_batch_metrics.update({sim_name: metrics})
+
+    return unpacked_batch_metrics
+
+def plot_batch_performance_metrics(batch_performance_metrics):
+
+    unpacked = unpack_performance_metrics(batch_performance_metrics)
+
+    # dim is universal across a batch
+    dim = 2
+
     ####### PLOT RESULTS
     # TODO refactor into individual functions - cost_plots, assignment_plots, trajectory_plots depending on agent/target models
     # plot batch performance metrics
 
     # NOTE independent of dimension
     fig, axs = plt.subplots(1,1)
-    for sim_name, metrics in sim_performance_metrics.items():
-        yout = metrics[0]
-        tout = metrics[1]
-        final_cost = metrics[4]
-        xp = metrics[6]
-        optimal_cost = metrics[7]
+    for sim_name, metrics in unpacked.items():
 
-        apol = sim_components[sim_name]['apol']
+        tout = metrics['tout']
+        yout = metrics['yout']
+        final_cost = metrics['final_cost']
+        cost_to_go = metrics['cost_to_go']
+        optimal_cost = metrics['optimal_cost']
+
+        summed_opt_cost = np.sum(optimal_cost[0, :])
 
         ### cost plots
-        if apol.__class__.__name__ == 'AssignmentDyn':
-            axs.plot(tout, optimal_cost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching - DYN')
-            axs.plot(tout, np.sum(final_cost, axis=1), '--c', label='Cum. Stage Cost'+' '+apol.__class__.__name__)
-            axs.plot(tout, np.sum(xp, axis=1), '--r', label='Cost-to-go'+' '+apol.__class__.__name__)
+        if sim_name == 'AssignmentDyn':
+            axs.plot(tout, summed_opt_cost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching - DYN')
+            axs.plot(tout, np.sum(final_cost, axis=1), '--c', label='Cum. Stage Cost'+' '+sim_name)
+            axs.plot(tout, np.sum(cost_to_go, axis=1), '--r', label='Cost-to-go'+' '+sim_name)
         else:
-            axs.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost'+' '+apol.__class__.__name__)
-            axs.plot(tout, np.sum(xp, axis=1), '-r', label='Cost-to-go'+' '+apol.__class__.__name__)
+            axs.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost'+' '+sim_name)
+            axs.plot(tout, np.sum(cost_to_go, axis=1), '-r', label='Cost-to-go'+' '+sim_name)
 
         axs.legend()
 
     plt.figure()
-    for sim_name, metrics in sim_performance_metrics.items():
-        tout = metrics[1]
-        final_cost = metrics[4]
-        xp = metrics[6]
+    for sim_name, metrics in unpacked.items():
 
-        nagents = sim_components[sim_name]['nagents']
+        nagents = metrics['nagents']
+        tout = metrics['tout']
+        final_cost = metrics['final_cost']
+        cost_to_go = metrics['cost_to_go']
 
         for zz in range(nagents):
             plt.plot(tout, final_cost[:, zz], '-.c', label='Cum. Stage Cost ({0})'.format(zz))
-            plt.plot(tout, xp[:, zz], '-.r', label='Cost-to-go (assuming no switch) ({0})'.format(zz))
+            plt.plot(tout, cost_to_go[:, zz], '-.r', label='Cost-to-go (assuming no switch) ({0})'.format(zz))
 
         plt.legend()
 
     # NOTE independent of dimension
     ### assignment plots
-    for sim_name, metrics in sim_performance_metrics.items():
+    for sim_name, metrics in unpacked.items():
 
-        tout = metrics[1]
-        assignments = metrics[2]
+        dx = metrics['dx']
+        nagents = metrics['nagents']
+        tout = metrics['tout']
+        yout = metrics['yout']
+
+        assignments = yout[:, nagents*2*dx:].astype(np.int32)
 
         plt.figure()
         for ii in range(nagents):
@@ -749,8 +834,9 @@ def plot_results(sim_performance_metrics, sim_components):
             plt.title("Assignments")
             plt.legend()
 
-
     ### trajectory plots
+    for sim_name, metrics in unpacked.items():
+        dim = metrics['dim']
 
     # want to display all trajectories on same figure
     if dim == 2:
@@ -759,32 +845,30 @@ def plot_results(sim_performance_metrics, sim_components):
         fig = plt.figure()
         ax = plt.axes(projection='3d')
 
-    for sim_name in sim_names:
-        metrics = sim_performance_metrics[sim_name]
-        components = sim_components[sim_name]
+    # for sim_name in sim_names:
+    for sim_name, metrics in unpacked.items():
 
-        dx = components['dx']
-        du = components['du']
-        dim = components['dim']
-        nagents = components['nagents']
-        ntargets = components['ntargets']
-        poltargets = components['poltargets']
-        apol = components['apol']
+        dx = metrics['dx']
+        du = metrics['du']
+        dim = metrics['dim']
+        nagents = metrics['nagents']
+        ntargets = metrics['ntargets']
+        tout = metrics['tout']
+        yout = metrics['yout']
+        stationary_states = metrics['stationary_states']
 
-        yout = metrics[0]
-        tout = metrics[1]
+        assignment_switches = find_switches(tout, yout, nagents, ntargets, dx, dx)
 
         if dim == 2: # and agent/target models both double integrator (omit requirement for now)
             ### stationary points
             for zz in range(ntargets):
-                pt = poltargets[zz]
-                offset = pt.const
+                offset = stationary_states[zz*dx:(zz+1)*dx]
                 ax.plot(offset[0], offset[1], 'ks')
                 ax.text(offset[0], offset[1], 'C{0}'.format(zz))
 
             ### Agent / Target Trajectories
             # optimal trajectories (solid lines)
-            if apol.__class__.__name__ == 'AssignmentDyn':
+            if sim_name == 'AssignmentDyn':
                 for zz in range(nagents):
 
                     # agent state over time
@@ -816,7 +900,8 @@ def plot_results(sim_performance_metrics, sim_components):
                 ax.set_title("Trajectory")
                 ax.set_xlabel("x")
                 ax.set_ylabel("y")
-            else:
+
+            elif sim_name == 'AssignmentEMD':
                 # non-optimal trajectories (dotted lines)
                 for zz in range(nagents):
 
@@ -855,12 +940,10 @@ def plot_results(sim_performance_metrics, sim_components):
         if dim == 3:
 
             # optimal trajectories (solid lines)
-            if apol.__class__.__name__ == 'AssignmentDyn':
-
-                # stationary locations
+            if sim_name == 'AssignmentDyn':
+                ### stationary points
                 for zz in range(ntargets):
-                    pt = poltargets[zz]
-                    offset = pt.const
+                    offset = stationary_states[zz*dx:(zz+1)*dx]
                     ax.scatter3D(offset[0], offset[1], offset[2], color='k')
                     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz))
 
@@ -889,13 +972,13 @@ def plot_results(sim_performance_metrics, sim_components):
                 ax.set_xlabel("x")
                 ax.set_ylabel("y")
                 ax.legend()
-            else:
+
+            elif sim_name == 'AssignmentEMD':
                 # non-optimal trajectories (dotted lines)
 
                 # stationary locations
                 for zz in range(ntargets):
-                    pt = poltargets[zz]
-                    offset = pt.const
+                    offset = stationary_states[zz*dx:(zz+1)*dx]
                     ax.scatter3D(offset[0], offset[1], offset[2], color='k')
                     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz))
 

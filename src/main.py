@@ -8,9 +8,6 @@ from post_process import *
 from log import *
 
 
-# def save_object(obj, filename):
-#     with open(filename, 'wb') as output:  # Overwrites any existing file.
-#         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
 def get_ensemble_name(nensemble, dim, agent_model, target_model, agent_control_policy, target_control_policy):
     identical = (agent_model==target_model)
@@ -48,14 +45,14 @@ if __name__ == "__main__":
     ensemble_name = 'ensemble_0_'
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 3
+    nbatches = 1
 
     # SIM SETUP
     dt = 0.01
     maxtime = 5
-    dim = 3
-    nagents = 5
-    ntargets = 5
+    dim = 2
+    nagents = 12
+    ntargets = 12
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     collisions = False
@@ -186,9 +183,11 @@ if __name__ == "__main__":
 
     # post-process + save
     for batch_name, batch_results in ensemble_results.items():
-        batch_performance_metrics = post_process_batch_simulation(batch_results) # dict
+        batch_performance_metrics = post_process_batch_simulation(batch_results) # returns dataframe
 
-        save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
+        # save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
+
+        plot_batch_performance_metrics(batch_performance_metrics)
 
     # load batches and plot
     sim_name_list = ['AssignmentEMD', 'AssignmentDyn']
@@ -197,15 +196,16 @@ if __name__ == "__main__":
         batch_name = 'batch_{0}'.format(ii)
         loaded_batch = load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
 
-        # TODO FIX plotting
-        # plot_batch_performance_metrics()
-
+        plot_batch_performance_metrics(loaded_batch)
 
     plt.show()
 
     print("done!")
 
 
+# def save_object(obj, filename):
+#     with open(filename, 'wb') as output:  # Overwrites any existing file.
+#         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
     # TEST saving objects pre-'postprocessing'
     # save_object(ensemble_results, 'test_save_pickle.pkl')
