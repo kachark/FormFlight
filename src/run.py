@@ -25,11 +25,7 @@ def run_identical_doubleint_2D(dx, du, x0, ltidyn, dyn_target, poltrack, poltarg
 
     # post processing
     polagents = [agent.pol for agent in agents]
-    # post_process_identical_2d_doubleint(eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents, opt_asst)
 
-    # return eng.df.iloc[:, 1:].to_numpy() # yout
-
-    # TEST
     return [agents, targets, eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents, opt_asst, apol]
 
 def run_identical_doubleint_3D(dx, du, x0, ltidyn, dyn_target, poltrack, poltargets, apol, nagents, ntargets, collisions, dt=0.01, maxtime=10):
@@ -45,11 +41,7 @@ def run_identical_doubleint_3D(dx, du, x0, ltidyn, dyn_target, poltrack, poltarg
 
     # post processing
     polagents = [agent.pol for agent in agents]
-    # post_process_identical_3d_doubleint(eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents)
 
-    # return eng.df.iloc[:, 1:].to_numpy() # yout
-
-    # TEST
     return [agents, targets, eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents, opt_asst, apol]
 
 
