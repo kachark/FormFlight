@@ -149,7 +149,7 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
 
             # Agents
             x0 = np.zeros((nagents, dx))
-            x0p = np.random.uniform(-50, 50, (nagents,dim)) # position spread
+            x0p = np.random.uniform(-100, 100, (nagents,dim)) # position spread
             x0v = np.random.uniform(-50, 50, (nagents,(dx-dim))) # velocity spread
             for ii, (pos, vel) in enumerate(zip(x0p, x0v)):
                 x0[ii] = np.concatenate((pos, vel), axis=0)
@@ -158,13 +158,13 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
             # Targets
             # r = 150 # circle radius
             # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
-            x02p = np.random.uniform(-50, 50, (nagents,dim)) # position spread
+            x02p = np.random.uniform(-200, 200, (nagents,dim)) # position spread
             x02 = np.zeros((ntargets, dx))
             vel_range = 10
             for ii, tt in enumerate(x02):
                 # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 0, 0])
                 # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 1, 0])
-                x02[ii] = np.array([x02p[ii][0], 
+                x02[ii] = np.array([x02p[ii][0],
                                     x02p[ii][1],
                                     x02p[ii][2],
                                     np.random.uniform(-vel_range, vel_range, 1)[0],

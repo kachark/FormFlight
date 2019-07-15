@@ -29,7 +29,7 @@ def load_batch_metrics(ensemble_directory, batch_name, sim_name_list):
     for sim_file_name in sim_file_list:
         for sim_name in sim_name_list:
             if sim_name in sim_file_name:
-                loaded_sim = pd.read_csv(sim_file_name)
+                loaded_sim = pd.read_csv(sim_file_name, header=None)
                 batch_performance_metrics.update({sim_name: loaded_sim})
 
     return batch_performance_metrics

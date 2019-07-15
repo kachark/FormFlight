@@ -50,9 +50,9 @@ if __name__ == "__main__":
     # SIM SETUP
     dt = 0.01
     maxtime = 5
-    dim = 2
-    nagents = 12
-    ntargets = 12
+    dim = 3
+    nagents = 10
+    ntargets = 10
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     collisions = False
@@ -172,9 +172,15 @@ if __name__ == "__main__":
         # store batch results
         ensemble_results.update({batch_name: batch_results})
 
+    ### POST-PROCESS
+    # ensemble of sims -> organize into batches (dict) ->
+    # prior to post_process, create directory --> post_process by the batch (dataframe) -> store metrics as df
+    # load metrics -> unpack metrics (dataframe) into dict --> plot
+
     # post-process ensemble
     ensemble_directory = './test_results/' + ensemble_name
 
+    # TODO always creates a new directory, so if don't save, we can load empty dataframes and still plot
     try:
         os.makedirs(ensemble_directory)
     except FileExistsError:
@@ -185,18 +191,9 @@ if __name__ == "__main__":
     for batch_name, batch_results in ensemble_results.items():
         batch_performance_metrics = post_process_batch_simulation(batch_results) # returns dataframe
 
-        # save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
+        save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
 
-        plot_batch_performance_metrics(batch_performance_metrics)
-
-    # load batches and plot
-    sim_name_list = ['AssignmentEMD', 'AssignmentDyn']
-    for ii in range(nbatches):
-
-        batch_name = 'batch_{0}'.format(ii)
-        loaded_batch = load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
-
-        plot_batch_performance_metrics(loaded_batch)
+        # plot_batch_performance_metrics(batch_performance_metrics)
 
     plt.show()
 
