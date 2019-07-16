@@ -7,6 +7,19 @@ import pandas as pd
 import copy
 from controls import *
 
+# TeX fonts
+import matplotlib
+matplotlib.rcParams['mathtext.fontset'] = 'custom'
+matplotlib.rcParams['mathtext.rm'] = 'Bitstream Vera Sans'
+matplotlib.rcParams['mathtext.it'] = 'Bitstream Vera Sans:italic'
+matplotlib.rcParams['mathtext.bf'] = 'Bitstream Vera Sans:bold'
+# matplotlib.pyplot.title(r'ABC123 vs $\mathrm{ABC123}^{123}$')
+
+matplotlib.rcParams['mathtext.fontset'] = 'stix'
+matplotlib.rcParams['font.family'] = 'STIXGeneral'
+# matplotlib.pyplot.title(r'ABC123 vs $\mathrm{ABC123}^{123}$')
+
+
 def post_process_batch_simulation(batch_results):
 
     sim_names = []
@@ -343,6 +356,9 @@ def unpack_performance_metrics(batch_performance_metrics):
 def plot_costs(unpacked):
 
     fig, axs = plt.subplots(1,1)
+    axs.set_xlabel('time (s)')
+    axs.set_ylabel('Cost')
+    axs.set_title('Cost VS Time')
     for sim_name, metrics in unpacked.items():
 
         tout = metrics['tout']
@@ -391,9 +407,11 @@ def plot_assignments(unpacked):
         assignments = yout[:, nagents*2*dx:].astype(np.int32)
 
         plt.figure()
+        plt.title("Agent-Target Assignments")
+        plt.xlabel('time (s)')
+        plt.ylabel('Assigned-to Target')
         for ii in range(nagents):
             plt.plot(tout, assignments[:, ii], '-', label='A{0}'.format(ii))
-            plt.title("Assignments")
             plt.legend()
 
 def plot_trajectory(unpacked):
@@ -425,24 +443,31 @@ def plot_trajectory(unpacked):
 
         assignment_switches = find_switches(tout, yout, nagents, ntargets, dx, dx)
 
+        agent_traj_label = 'Agent Trajectory - AssignmentDyn'
+        agent_start_pt_label = 'Agent Start Position'
+        target_start_pt_label = 'Target Start Position'
+        target_traj_label = 'Target Trajectory'
+        stationary_pt_label = 'Target Terminal Positions'
+
         if dim == 2: # and agent/target models both double integrator (omit requirement for now)
-            ### stationary points
-            for zz in range(ntargets):
-                offset = stationary_states[zz*dx:(zz+1)*dx]
-                ax.plot(offset[0], offset[1], 'ks')
-                ax.text(offset[0], offset[1], 'C{0}'.format(zz))
 
             ### Agent / Target Trajectories
             # optimal trajectories (solid lines)
             if sim_name == 'AssignmentDyn':
+
                 for zz in range(nagents):
+
+                    if zz >= 1:
+                        agent_traj_label = '__nolabel__'
+                        agent_start_pt_label = '__nolabel__'
+                        target_start_pt_label = '__nolabel__'
 
                     # agent state over time
                     y_agent = yout[:, zz*dx:(zz+1)*dx]
 
                     # plot agent trajectory with text
-                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-                    ax.plot(y_agent[:, 0], y_agent[:, 1], '-r') # returns line2d object
+                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', label=agent_start_pt_label)
+                    ax.plot(y_agent[:, 0], y_agent[:, 1], '-r', label=agent_traj_label)
                     ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
 
                     # plot location of assignment switches
@@ -456,27 +481,39 @@ def plot_trajectory(unpacked):
 
                     # plot target trajectory
                     y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
-                    ax.plot(y_target[:, 0], y_target[:, 1], '-b')
+                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs', label=target_start_pt_label)
+                    ax.plot(y_target[:, 0], y_target[:, 1], '-b', label=target_traj_label)
                     ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
 
-                    print("TARGET FINAL POS: ", y_target[-1])
-                    print("AGENT FINAL POS: ", y_agent[-1])
+                ### stationary points
+                for zz in range(ntargets):
 
-                ax.set_title("Trajectory")
+                    if zz >= 1:
+                        stationary_pt_label = '__nolabel__'
+
+                    offset = stationary_states[zz*dx:(zz+1)*dx]
+                    ax.plot(offset[0], offset[1], 'ks', label=stationary_pt_label)
+                    ax.text(offset[0], offset[1], 'C{0}'.format(zz))
+
                 ax.set_xlabel("x")
                 ax.set_ylabel("y")
 
             elif sim_name == 'AssignmentEMD':
+
+                agent_traj_label = 'Agent Trajectory - AssignmentEMD'
+
                 # non-optimal trajectories (dotted lines)
                 for zz in range(nagents):
+
+                    if zz >= 1:
+                        agent_traj_label = '__nolabel__'
 
                     # agent state over time
                     y_agent = yout[:, zz*dx:(zz+1)*dx]
 
                     # plot agent trajectory with text
                     ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-                    ax.plot(y_agent[:, 0], y_agent[:, 1], '--r') # returns line2d object
+                    ax.plot(y_agent[:, 0], y_agent[:, 1], '--r', label=agent_traj_label)
                     ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
 
                     # plot location of assignment switches
@@ -495,10 +532,16 @@ def plot_trajectory(unpacked):
                     ax.plot(y_target[:, 0], y_target[:, 1], '-b')
                     ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
 
-                    print("TARGET FINAL POS: ", y_target[-1])
-                    print("AGENT FINAL POS: ", y_agent[-1])
+                ### stationary points
+                for zz in range(ntargets):
 
-                ax.set_title("Trajectory")
+                    if zz >= 1:
+                        stationary_pt_label = '__nolabel__'
+
+                    offset = stationary_states[zz*dx:(zz+1)*dx]
+                    ax.plot(offset[0], offset[1], 'ks', label=stationary_pt_label)
+                    ax.text(offset[0], offset[1], 'C{0}'.format(zz))
+
                 ax.set_xlabel("x")
                 ax.set_ylabel("y")
 
@@ -507,21 +550,67 @@ def plot_trajectory(unpacked):
 
             # optimal trajectories (solid lines)
             if sim_name == 'AssignmentDyn':
-                ### stationary points
-                for zz in range(ntargets):
-                    offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[0], offset[1], offset[2], color='k')
-                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz))
 
                 # agent/target trajectories
                 for zz in range(nagents):
+
+                    # avoid repeated legend entries
+                    if zz >= 1:
+                        agent_traj_label = '__nolabel__'
+                        agent_start_pt_label = '__nolabel__'
+                        target_start_pt_label = '__nolabel__'
+                        target_traj_label = '__nolabel__'
+
+                    # agent state over time
+                    y_agent = yout[:, zz*dx:(zz+1)*dx]
+
+                    # plot agent trajectory with text
+                    ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r', label=agent_start_pt_label)
+                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r', label=agent_traj_label)
+                    ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz))
+
+                    # # plot location of assignment switches
+                    # for switch_ind in assignment_switches[zz]:
+                    #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
+
+                    # plot target trajectory
+                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
+                    ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b', label=target_start_pt_label)
+                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b', label=target_traj_label)
+                    ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz))
+
+                ### stationary points
+                for zz in range(ntargets):
+
+                    if zz >= 1:
+                        stationary_pt_label = '__nolabel__'
+
+                    offset = stationary_states[zz*dx:(zz+1)*dx]
+                    ax.scatter3D(offset[0], offset[1], offset[2], color='k', label=stationary_pt_label)
+                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz))
+
+                ax.set_xlabel("x", fontweight='bold', fontsize=14)
+                ax.set_ylabel("y", fontweight='bold', fontsize=14)
+                ax.set_zlabel("z", fontweight='bold', fontsize=14)
+
+            elif sim_name == 'AssignmentEMD':
+                # non-optimal trajectories (dotted lines)
+
+                agent_traj_label = 'Agent Trajectory - AssignmentEMD'
+
+                # agent/target trajectories
+                for zz in range(nagents):
+
+                    # avoid repeated legend entries
+                    if zz >= 1:
+                        agent_traj_label = '__nolabel__'
 
                     # agent state over time
                     y_agent = yout[:, zz*dx:(zz+1)*dx]
 
                     # plot agent trajectory with text
                     ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
-                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r') # returns line2d object
+                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '--r', label=agent_traj_label)
                     ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz))
 
                     # # plot location of assignment switches
@@ -531,17 +620,8 @@ def plot_trajectory(unpacked):
                     # plot target trajectory
                     y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
                     ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
-                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b', label='AssignmentDyn')
+                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
                     ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz))
-
-                ax.set_title("Trajectory")
-                ax.set_xlabel("x")
-                ax.set_ylabel("y")
-                ax.set_zlabel("z")
-                # ax.legend()
-
-            elif sim_name == 'AssignmentEMD':
-                # non-optimal trajectories (dotted lines)
 
                 # stationary locations
                 for zz in range(ntargets):
@@ -549,33 +629,12 @@ def plot_trajectory(unpacked):
                     ax.scatter3D(offset[0], offset[1], offset[2], color='k')
                     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz))
 
-                # agent/target trajectories
-                for zz in range(nagents):
+                ax.set_xlabel("x", fontweight='bold', fontsize=14)
+                ax.set_ylabel("y", fontweight='bold', fontsize=14)
+                ax.set_zlabel("z", fontweight='bold', fontsize=14)
 
-                    # agent state over time
-                    y_agent = yout[:, zz*dx:(zz+1)*dx]
-
-                    # plot agent trajectory with text
-                    ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
-                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '--r') # returns line2d object
-                    ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz))
-
-                    # # plot location of assignment switches
-                    # for switch_ind in assignment_switches[zz]:
-                    #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
-
-                    # plot target trajectory
-                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
-                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b', label='AssignmentEMD')
-                    ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz))
-
-                ax.set_title("Trajectory")
-                ax.set_xlabel("x")
-                ax.set_ylabel("y")
-                ax.set_zlabel("z")
-                # ax.legend()
-
+            ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
+            ax.legend(loc='lower right')
 
 def plot_batch_performance_metrics(batch_performance_metrics):
 

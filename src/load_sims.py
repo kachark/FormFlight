@@ -21,7 +21,7 @@ if __name__ == "__main__":
     nbatches = len(batch_dirs[1:])
 
     # load batches and plot
-    sim_name_list = ['AssignmentEMD', 'AssignmentDyn']
+    sim_name_list = ['AssignmentDyn', 'AssignmentEMD']
     for ii in range(nbatches):
 
         batch_name = 'batch_{0}'.format(ii)

@@ -158,7 +158,7 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
             # Targets
             # r = 150 # circle radius
             # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
-            x02p = np.random.uniform(-200, 200, (nagents,dim)) # position spread
+            x02p = np.random.uniform(-300, 300, (nagents,dim)) # position spread
             x02 = np.zeros((ntargets, dx))
             vel_range = 10
             for ii, tt in enumerate(x02):
@@ -179,7 +179,7 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
             # r = 100
             # cities_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
             # cities_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
-            cities_p = np.random.uniform(-300, 300, (ntargets,dim)) # random city position spread
+            cities_p = np.random.uniform(-500, 500, (ntargets,dim)) # random city position spread
             for ii, tt in enumerate(cities):
                 # cities[ii] = np.array([cities_p[ii][0], 1, cities_p[ii][1], 0, 0, 0]) # circle
                 cities[ii] = np.array([cities_p[ii][0], cities_p[ii][1], cities_p[ii][2], 0, 0, 0])
@@ -342,7 +342,7 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
     ### assignment policy
     apol = []
     # EMD
-    apol.append(AssignmentEMD(nagents, ntargets)) 
+    apol.append(AssignmentEMD(nagents, ntargets))
     # Dyn
     apol.append(AssignmentDyn(nagents, ntargets))
 
