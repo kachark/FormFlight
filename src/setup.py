@@ -306,7 +306,7 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
         Q3[3,3] = 0.0
         Q3[4,4] = 0.0
         Q3[5,5] = 0.0
- 
+
     ######################
 
     ### target control law
@@ -328,7 +328,6 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
         # initialize LinearFeedbackAugmented by pre-assigning/augmenting this policy with Target 0
         Acl = poltargets[0].get_closed_loop_A()
         gcl = poltargets[0].get_closed_loop_g()
-        print("gcl = ", gcl)
         poltrack = LinearFeedbackAugmented(A, B, Q3, R, Acl, gcl) # initial augmentation: agent_i tracks target_i
 
     if agent_control_policy == "LQI":

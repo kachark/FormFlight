@@ -76,11 +76,10 @@ class OneVOne(System):
             jj = assignment[ii]
             agent.pol.track(t0, jj, self.targets[jj].pol.get_closed_loop_A(), self.targets[jj].pol.get_closed_loop_g())
 
-        # record cost-to-go
+        # record cost-to-go (# TODO is this true anymore?)
         self.costs.append(cost)
 
         if cost is not None:
-            # print(t0, cost, assignment)
             print("TIME: ", t0, "COST: ", cost, "ASST: ", assignment)
 
         def dyn(t, x):

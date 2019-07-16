@@ -13,7 +13,7 @@ if __name__ == "__main__":
     ensembles = [x[0] for x in os.walk('./test_results')]
 
     dim = 3
-    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_15_13_04_18'
+    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_16_09_03_55'
     ensemble_directory = './test_results/' + ensemble_name
 
     # get number of batches
@@ -22,12 +22,18 @@ if __name__ == "__main__":
 
     # load batches and plot
     sim_name_list = ['AssignmentDyn', 'AssignmentEMD']
-    for ii in range(nbatches):
 
-        batch_name = 'batch_{0}'.format(ii)
-        loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
+    # # load and plot every batch within ensemble
+    # for ii in range(nbatches):
+    #     batch_name = 'batch_{0}'.format(ii)
+    #     loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
+    #     post_process.plot_batch_performance_metrics(loaded_batch)
 
-        post_process.plot_batch_performance_metrics(loaded_batch)
+    # load and plot a specific batch
+    batch_num = 3
+    batch_name = 'batch_{0}'.format(batch_num)
+    loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
+    post_process.plot_batch_performance_metrics(loaded_batch)
 
     print('finished plotting!')
 

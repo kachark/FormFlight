@@ -1,4 +1,7 @@
 # import pickle
+import atexit
+from time import time, strftime, localtime
+from datetime import timedelta
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -22,8 +25,7 @@ def get_ensemble_name(nensemble, dim, agent_model, target_model, agent_control_p
 
     return ensemble_name
 
-
-if __name__ == "__main__":
+def main():
 
     ####### INFO ######
     # simulation: set of initial conditions with 1 asst pol
@@ -42,17 +44,16 @@ if __name__ == "__main__":
 
     # setup_simulation() creates i sims corresponding to i assignment policies --> creates a batch
 
-    ensemble_name = 'ensemble_0_'
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 1
+    nbatches = 5
 
     # SIM SETUP
     dt = 0.01
     maxtime = 5
     dim = 3
-    nagents = 10
-    ntargets = 10
+    nagents = 2
+    ntargets = 2
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     collisions = False
@@ -64,10 +65,21 @@ if __name__ == "__main__":
 
     ensemble_name = get_ensemble_name(0, dim, agent_model, target_model, agent_control_policy, target_control_policy)
 
+    root_directory = './test_results/'
+    ensemble_directory = root_directory + ensemble_name
+
+    # create directory to store ensemble
+    try:
+        os.makedirs(ensemble_directory)
+    except FileExistsError:
+        # directory already exists
+        pass
+
     # ENSEMBLE OF SIMULATIONS
     for batch_i in range(nbatches):
 
-        # get batch (same initial_conditions with multiple asst policies)
+        # batch simulation: collection of simulations running on the same initial conditions, but with different assignment
+        # policies
         batch = setup_simulation(
             agent_model,
             target_model,
@@ -81,8 +93,6 @@ if __name__ == "__main__":
             maxtime,
         )
 
-        # batch simulation: collection of simulations running on the same initial conditions, but with different assignment
-        # policies
         ensemble_simulation.append(batch)
 
     # RUN SIMULATION
@@ -135,7 +145,7 @@ if __name__ == "__main__":
             )
 
             # results components
-            columns = [
+            components = [
                 "agents",
                 "targets",
                 "data",
@@ -150,6 +160,8 @@ if __name__ == "__main__":
             ]
 
             sim_name = assignment_pol.__class__.__name__
+
+            # organize simulation parameters
             sim_parameters = {
                 "dt": dt,
                 "dim": dim,
@@ -162,38 +174,21 @@ if __name__ == "__main__":
                 "collisions": collisions
             }
 
+            # organize results according to components
             sim_results = {}
-            for (col, res) in zip(columns, results):
-                sim_results.update({col: res})
+            for (comp, res) in zip(components, results):
+                sim_results.update({comp: res})
 
-            # store sim results
+            # store sim results into a batch
             batch_results.update({sim_name: [sim_parameters, sim_results]})
 
-        # store batch results
-        ensemble_results.update({batch_name: batch_results})
-
-    ### POST-PROCESS
-    # ensemble of sims -> organize into batches (dict) ->
-    # prior to post_process, create directory --> post_process by the batch (dataframe) -> store metrics as df
-    # load metrics -> unpack metrics (dataframe) into dict --> plot
-
-    # post-process ensemble
-    ensemble_directory = './test_results/' + ensemble_name
-
-    # TODO always creates a new directory, so if don't save, we can load empty dataframes and still plot
-    try:
-        os.makedirs(ensemble_directory)
-    except FileExistsError:
-        # directory already exists
-        pass
-
-    # post-process + save
-    for batch_name, batch_results in ensemble_results.items():
+        # post-process and save
         batch_performance_metrics = post_process_batch_simulation(batch_results) # returns dataframe
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
 
-        # plot_batch_performance_metrics(batch_performance_metrics)
+        # store batch results (useful for saving multiple ensembles)
+        # ensemble_results.update({batch_name: batch_results})
 
     plt.show()
 
@@ -208,3 +203,41 @@ if __name__ == "__main__":
     # save_object(ensemble_results, 'test_save_pickle.pkl')
     # with open('test_save_pickle.pkl', 'rb') as input:
     #     tech_companies = pickle.load(input)
+
+
+def secondsToStr(elapsed=None):
+    if elapsed is None:
+        return strftime("%Y-%m-%d %H:%M:%S", localtime())
+    else:
+        return str(timedelta(seconds=elapsed))
+
+def log(s, elapsed=None):
+    line = "="*40
+    print(line)
+    print(secondsToStr(), '-', s)
+    if elapsed:
+        print("Elapsed time:", elapsed)
+    print(line)
+    print()
+
+def endlog():
+    end = time()
+    elapsed = end-start
+    log("End Program", secondsToStr(elapsed))
+
+
+if __name__ == "__main__":
+
+    start = time()
+    atexit.register(endlog)
+    log("Start Program")
+
+    main()
+
+    line = "="*40
+    print(line)
+    print("Start Time: ", strftime("%Y-%m-%d %H:%M:%S", localtime()))
+    print(line)
+    print()
+
+

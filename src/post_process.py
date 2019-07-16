@@ -223,20 +223,21 @@ def post_process_identical_doubleint(parameters, sim_results):
 
     optcost = np.sum(optimal_cost[0, :])
 
-    print("POLICY: ", poltrack.__class__.__name__)
-    print("FINAL TIME: ", tout[-1])
-    print("initial optimal cost: ", optcost)
-    print("initial incurred cost: ", final_cost[0])
-    print("final cost-to-go value: ", np.sum(xp, axis=1)[-1])
-    print("final incurred cost value: ", np.sum(final_cost, axis=1)[-1]) # last stage cost
-    print("initial optimal cost - final incurred cost value = ", optcost - np.sum(final_cost, axis=1)[-1])
-    print("INITIAL CONDITIONS")
-    print(yout[0, :])
-    print("FINAL STATE")
-    print(yout[-1, :])
-    print("OFFSET")
-    for pt in poltargets:
-        print(pt.const)
+    ##DEBUG
+    #print("POLICY: ", poltrack.__class__.__name__)
+    #print("FINAL TIME: ", tout[-1])
+    #print("initial optimal cost: ", optcost)
+    #print("initial incurred cost: ", final_cost[0])
+    #print("final cost-to-go value: ", np.sum(xp, axis=1)[-1])
+    #print("final incurred cost value: ", np.sum(final_cost, axis=1)[-1]) # last stage cost
+    #print("initial optimal cost - final incurred cost value = ", optcost - np.sum(final_cost, axis=1)[-1])
+    #print("INITIAL CONDITIONS")
+    #print(yout[0, :])
+    #print("FINAL STATE")
+    #print(yout[-1, :])
+    #print("OFFSET")
+    #for pt in poltargets:
+    #    print(pt.const)
 
     # final dataset = dim, dx, du, nagents, ntargets, yout, tout, final_cost, stage_cost, cost_to_go, optimal_cost, city states
     columns = ['dim', 'dx', 'du', 'nagents', 'ntargets', 'tout', 'yout', 'city_states', 'final_cost', 'stage_cost',

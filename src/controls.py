@@ -91,15 +91,16 @@ class LinearFeedbackTracking(LinearFeedback):
 class LinearFeedbackConstTracker:
     def __init__(self, A, B, Q, R, const, g=None):
 
-        print("\n\n\n\n\n")
-        print("A = ")
-        print(A)
-        print("B = ")
-        print(B)
-        print("Q = ")
-        print(Q)
-        print("R = ")
-        print(R)
+        ##DEBUG
+        #print("\n\n\n\n\n")
+        #print("A = ")
+        #print(A)
+        #print("B = ")
+        #print(B)
+        #print("Q = ")
+        #print(Q)
+        #print("R = ")
+        #print(R)
 
         self.A = A
         self.B = B
@@ -115,7 +116,7 @@ class LinearFeedbackConstTracker:
             self.g = np.dot(A, const)
         else:
             self.g = copy.deepcopy(g)
-        print("g = ", self.g)
+        # print("g = ", self.g)
 
         self.p = -np.linalg.solve(A.T - np.dot(self.P, self.BRBt), np.dot(self.P, self.g))
         self.R = copy.deepcopy(R)

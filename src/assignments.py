@@ -64,7 +64,7 @@ class AssignmentEMD(Assignment):
         M /= M.max()
 
         G0, log = ot.emd(a, b, M, log=True)
-        print("M: ", M, "GO: ", G0)
+        # print("GO: ", G0)
         cost = log['cost']
 
         # thresh = 4e-1 # 2v2 case
