@@ -38,6 +38,7 @@ class LinearFeedback: # Continuous Infinite-Horizon Linear Quadratic Regulator
     def get_R(self):
         return self.R
 
+# DEPRECATE?
 class LinearFeedbackTracking(LinearFeedback):
 
     def __init__(self, A, B, Q, R):
@@ -233,7 +234,9 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
             # steady-state optimal control
             self.uss = super(LinearFeedbackAugmented, self).evaluate(0, self.xss) # subtracts const inside this function
 
-        if self.tracking != jj: # recompute P for LQ TRACKER if assignment changes
+        # TEST
+        if time > 0 and self.tracking != jj: # recompute P for LQ TRACKER if assignment changes
+
             self.tracking = jj
             Fcl = copy.deepcopy(Fcl)
             self.nstates = self.pre_augmented_A.shape[0] + Fcl.shape[0]
@@ -245,7 +248,7 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
             self.P = care(self.A, self.B, self.Q, self.R)
 
             self.Bt = copy.deepcopy(self.B.T)
-            self.RBt = np.dot(np.linalg.inv(self.R), self.Bt)        
+            self.RBt = np.dot(np.linalg.inv(self.R), self.Bt)
             self.BRBt = np.dot(self.B, self.RBt)
             self.p = -np.linalg.solve(self.A.T - np.dot(self.P, self.BRBt), np.dot(self.P, self.g))
 
@@ -295,6 +298,7 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
 
 ##################################3
 
+# DEPRECATE?
 class LinearFeedbackOffset(LinearFeedback):
 
     def __init__(self, A, B, C, Q, R, offset):
@@ -332,6 +336,7 @@ class LinearFeedbackOffset(LinearFeedback):
         cost_to_go = np.dot(diff, np.dot(self.P, diff))
         return cost_to_go
 
+# BROKEN
 class MinimumTimeIntercept():
 
     def __init__(self, time_final, dx):
@@ -346,6 +351,7 @@ class MinimumTimeIntercept():
         y2 = state1[self.dim_position:] - state2[self.dim_position:] # relative velocity
         return  y1 + y2*(time_final-time) # miss distance
 
+# BROKEN
 class LinearFeedbackIntegralTracking(LinearFeedback):
 
     def __init__(self, A, B, Q, R):

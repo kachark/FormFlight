@@ -149,8 +149,8 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
 
             # Agents
             x0 = np.zeros((nagents, dx))
-            x0p = np.random.uniform(-100, 100, (nagents,dim)) # position spread
-            x0v = np.random.uniform(-50, 50, (nagents,(dx-dim))) # velocity spread
+            x0p = np.random.uniform(-500, 500, (nagents,dim)) # position spread
+            x0v = np.random.uniform(-1000, 1000, (nagents,(dx-dim))) # velocity spread
             for ii, (pos, vel) in enumerate(zip(x0p, x0v)):
                 x0[ii] = np.concatenate((pos, vel), axis=0)
             x0 = x0.flatten()
@@ -158,9 +158,9 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
             # Targets
             # r = 150 # circle radius
             # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
-            x02p = np.random.uniform(-300, 300, (nagents,dim)) # position spread
+            x02p = np.random.uniform(-500, 500, (nagents,dim)) # position spread
             x02 = np.zeros((ntargets, dx))
-            vel_range = 10
+            vel_range = 100
             for ii, tt in enumerate(x02):
                 # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 0, 0])
                 # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 1, 0])
@@ -179,7 +179,7 @@ def setup_simulation(agent_model, target_model, agent_control_policy, target_con
             # r = 100
             # cities_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
             # cities_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
-            cities_p = np.random.uniform(-500, 500, (ntargets,dim)) # random city position spread
+            cities_p = np.random.uniform(-1000, 1000, (ntargets,dim)) # random city position spread
             for ii, tt in enumerate(cities):
                 # cities[ii] = np.array([cities_p[ii][0], 1, cities_p[ii][1], 0, 0, 0]) # circle
                 cities[ii] = np.array([cities_p[ii][0], cities_p[ii][1], cities_p[ii][2], 0, 0, 0])

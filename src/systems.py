@@ -68,7 +68,15 @@ class OneVOne(System):
 
         # print("Warning: Assumes that Each Target is Assigned To")
         # print("Dont forget to fix this (easy fix)")
-        assignment, cost = self.compute_assignments(t0, x0, collisions)
+
+        # TEST
+        # TODO need to avoid recomputing cost-to-go for dyn every time step, because optimal at t0
+        if t0 == 0:
+            assignment, cost = self.compute_assignments(t0, x0, collisions)
+        if t0 > 0 and self.apol.__class__.__name__ != 'AssignmentDyn':
+            assignment, cost = self.compute_assignments(t0, x0, collisions)
+        else:
+            assignment = self.optimal_assignment
 
         # after assignment done
         # pre-compute tracking control policy
@@ -77,10 +85,13 @@ class OneVOne(System):
             agent.pol.track(t0, jj, self.targets[jj].pol.get_closed_loop_A(), self.targets[jj].pol.get_closed_loop_g())
 
         # record cost-to-go (# TODO is this true anymore?)
-        self.costs.append(cost)
+        # self.costs.append(cost)
 
-        if cost is not None:
-            print("TIME: ", t0, "COST: ", cost, "ASST: ", assignment)
+        # if cost is not None:
+        #     print("TIME: ", t0, "ASST TYPE: ", self.apol.__class__.__name__)
+            # print("TIME: ", t0, "COST: ", cost, "ASST: ", assignment)
+
+        print("TIME: ", t0, "ASST TYPE: ", self.apol.__class__.__name__)
 
         def dyn(t, x):
 

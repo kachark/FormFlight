@@ -46,17 +46,17 @@ def main():
 
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 5
+    nbatches = 10
 
     # SIM SETUP
     dt = 0.01
     maxtime = 5
     dim = 3
-    nagents = 2
-    ntargets = 2
+    nagents = 50
+    ntargets = 50
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
-    collisions = False
+    collisions = True
     # initial_conditions = np.loadtxt("initial_conditions_2d.txt") # agents and targets
     # initial_conditions = np.loadtxt("initial_conditions_3d.txt")
     # cities = --> some distribution
@@ -65,7 +65,7 @@ def main():
 
     ensemble_name = get_ensemble_name(0, dim, agent_model, target_model, agent_control_policy, target_control_policy)
 
-    root_directory = './test_results/'
+    root_directory = '/Users/koray/Box Sync/test_results/'
     ensemble_directory = root_directory + ensemble_name
 
     # create directory to store ensemble
@@ -215,10 +215,12 @@ def log(s, elapsed=None):
     line = "="*40
     print(line)
     print(secondsToStr(), '-', s)
+    ss = secondsToStr() + ' - ' + s
     if elapsed:
         print("Elapsed time:", elapsed)
     print(line)
     print()
+    return ss
 
 def endlog():
     end = time()
@@ -230,13 +232,14 @@ if __name__ == "__main__":
 
     start = time()
     atexit.register(endlog)
-    log("Start Program")
+    starttime = log("Start Program")
 
     main()
 
+    # display starttime at the end as well as beginning
     line = "="*40
     print(line)
-    print("Start Time: ", strftime("%Y-%m-%d %H:%M:%S", localtime()))
+    print(starttime)
     print(line)
     print()
 
