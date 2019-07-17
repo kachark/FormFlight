@@ -1,4 +1,5 @@
 
+from decimal import Decimal
 import scipy.integrate as scint
 import numpy as np
 
@@ -27,6 +28,7 @@ class OneVOne(System):
         self.ntargets = len(self.targets)
         self.apol = pol
 
+        self.assignment_epoch = 10 # every 10 ticks, perform assignment
         self.optimal_assignment = None
 
         self.costs = []
@@ -64,17 +66,20 @@ class OneVOne(System):
 
         return assignments, cost
 
-    def update(self, t0, x0, collisions, dt):
+    def update(self, t0, x0, collisions, dt, tick):
 
         # print("Warning: Assumes that Each Target is Assigned To")
         # print("Dont forget to fix this (easy fix)")
 
-        # TEST
-        # TODO need to avoid recomputing cost-to-go for dyn every time step, because optimal at t0
         if t0 == 0:
             assignment, cost = self.compute_assignments(t0, x0, collisions)
+            self.current_assignment = assignment
         if t0 > 0 and self.apol.__class__.__name__ != 'AssignmentDyn':
-            assignment, cost = self.compute_assignments(t0, x0, collisions)
+            if tick % self.assignment_epoch == 0:
+                print("------> ASSIGNMENT AT: ", t0)
+                assignment, cost = self.compute_assignments(t0, x0, collisions)
+            else:
+                assignment = self.current_assignment
         else:
             assignment = self.optimal_assignment
 

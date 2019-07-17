@@ -256,7 +256,7 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             # Targets
             # r = 150 # circle radius
             # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
-            x02p = np.random.uniform(-500, 500, (nagents,dim)) # position spread
+            x02p = np.random.uniform(-1000, 1000, (nagents,dim)) # position spread
             x02 = np.zeros((ntargets, dx))
             vel_range = 100
             for ii, tt in enumerate(x02):

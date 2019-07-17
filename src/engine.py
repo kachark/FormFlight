@@ -111,7 +111,11 @@ class Engine:
         current_state = copy.deepcopy(x0)
         running = True
         time = 0
-        while running:
+
+        for time in np.arange(0.0, self.maxtime, self.dt):
+
+            tick = time / self.dt
+
             # print("Time: {0:3.2E}".format(time))
             if self.collisions:
                 collisions = self.apriori_collisions(current_state, system.nagents, system.ntargets, time)
@@ -119,7 +123,7 @@ class Engine:
                 collisions = set()
 
             # thist, state_hist, assign_hist = system.update(time, current_state, self.dt)
-            thist, state_hist, assign_hist = system.update(time, current_state, collisions, self.dt)
+            thist, state_hist, assign_hist = system.update(time, current_state, collisions, self.dt, tick)
 
 
             newdf = pd.DataFrame(np.hstack((thist[:, np.newaxis],
@@ -128,7 +132,6 @@ class Engine:
 
             self.log(newdf)
 
-            time = time + self.dt
             if time > self.maxtime:
                 running = False
 

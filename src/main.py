@@ -51,8 +51,8 @@ def main():
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     maxtime = 5
     dim = 3
-    nagents = 20
-    ntargets = 20
+    nagents = 5
+    ntargets = 5
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     collisions = True
@@ -88,7 +88,7 @@ def main():
         sim_profiles = {}
 
         # EMD parameters
-        dt = 0.1
+        dt = 0.01
         asst = 'AssignmentEMD'
         sim_profile_name = 'emd'
         sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
