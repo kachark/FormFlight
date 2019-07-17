@@ -29,7 +29,7 @@ def main():
 
     ####### INFO ######
     # simulation: set of initial conditions with 1 asst pol
-    # batch_simulation: set of simulations with SAME initial conditions each with same/different single asst pol
+    # batch_simulation: set of simulations with SAME initial conditions
     # ensemble_simulation: set of different batch simulations
 
     # ex. ic_i = ith initial_conditions
@@ -42,22 +42,25 @@ def main():
     # ensemble_1 = [batch_1, batch_2] = [ [sim1, sim2], [sim3, sim4] ]
     #            = [ [ic_1 and EMD, ic_1 and DYN], [ic_2 and EMD, ic_2 and DYN] ]
 
-    # setup_simulation() creates i sims corresponding to i assignment policies --> creates a batch
 
     ensemble_simulation = []
     batch_simulation = []
     nbatches = 1
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
+    dt = 0.01
     maxtime = 5
     dim = 3
-    nagents = 5
-    ntargets = 5
+    nagents = 1
+    ntargets = 1
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     collisions = True
     agent_control_policy = "LQR"
     target_control_policy = "LQR"
+
+    # TODO incorporte in sim setup
+    assignment_epoch = 10 # every 10 ticks, perform assignment
 
     # Create directory for storage
     nensemble = 0
@@ -88,7 +91,7 @@ def main():
         sim_profiles = {}
 
         # EMD parameters
-        dt = 0.01
+        dt = dt
         asst = 'AssignmentEMD'
         sim_profile_name = 'emd'
         sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
@@ -97,7 +100,7 @@ def main():
             'collisions': collisions, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
 
         # DYN parameters
-        dt = 0.01
+        dt = dt
         asst = 'AssignmentDyn'
         sim_profile_name = 'dyn'
         sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
@@ -209,7 +212,16 @@ def main():
 
     plt.show()
 
+    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim, 'nagents': nagents, 'ntargets': ntargets,
+            'agent_model': agent_model, 'target_model': target_model, 'collisions': collisions,
+            'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
+            'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name, 'ensemble_directory':
+            ensemble_directory}
+
     print("done!")
+
+    return test_conditions
+
 
 
 # def save_object(obj, filename):
@@ -251,7 +263,15 @@ if __name__ == "__main__":
     atexit.register(endlog)
     starttime = log("Start Program")
 
-    main()
+    test_conditions = main()
+
+    print()
+    line = "*"*40
+    print(line)
+    for condition, value in test_conditions.items():
+        print(condition, ': ', value)
+    print(line)
+    print()
 
     # display starttime at the end as well as beginning
     line = "="*40
@@ -259,5 +279,4 @@ if __name__ == "__main__":
     print(starttime)
     print(line)
     print()
-
 
