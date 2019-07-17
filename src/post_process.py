@@ -105,8 +105,8 @@ def post_process_identical_doubleint(parameters, sim_results):
     # assignments = yout[:, nagents*2*4:].astype(np.int32)
     assignments = yout[:, nagents*2*dx:].astype(np.int32)
 
-    # TEST
-    test = compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents)
+    # # TEST
+    # test = compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents)
 
     # PLOT COSTS
     final_cost = np.zeros((tout.shape[0], nagents))
@@ -357,9 +357,9 @@ def unpack_performance_metrics(batch_performance_metrics):
 def plot_costs(unpacked):
 
     fig, axs = plt.subplots(1,1)
-    axs.set_xlabel('time (s)')
-    axs.set_ylabel('Cost')
-    axs.set_title('Cost VS Time')
+    axs.set_xlabel('time (s)', fontsize=14)
+    axs.set_ylabel('Cost', fontsize=14)
+    # axs.set_title('Cost VS Time')
     for sim_name, metrics in unpacked.items():
 
         tout = metrics['tout']
@@ -372,7 +372,7 @@ def plot_costs(unpacked):
 
         ### cost plots
         if sim_name == 'AssignmentDyn':
-            axs.plot(tout, summed_opt_cost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching - DYN')
+            axs.plot(tout, summed_opt_cost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching')
             axs.plot(tout, np.sum(final_cost, axis=1), '--c', label='Cum. Stage Cost'+' '+sim_name)
             axs.plot(tout, np.sum(cost_to_go, axis=1), '--r', label='Cost-to-go'+' '+sim_name)
         else:
@@ -407,13 +407,29 @@ def plot_assignments(unpacked):
 
         assignments = yout[:, nagents*2*dx:].astype(np.int32)
 
-        plt.figure()
-        plt.title("Agent-Target Assignments")
-        plt.xlabel('time (s)')
-        plt.ylabel('Assigned-to Target')
-        for ii in range(nagents):
-            plt.plot(tout, assignments[:, ii], '-', label='A{0}'.format(ii))
-            plt.legend()
+        # TOO BUSY
+        # plt.figure()
+        # # plt.title("Agent-Target Assignments")
+        # plt.xlabel('time (s)')
+        # plt.ylabel('Assigned-to Target')
+        # for ii in range(nagents):
+        #     plt.plot(tout, assignments[:, ii], '-', label='A{0}'.format(ii))
+        #     plt.legend()
+
+        # # TEST
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+
+        # plt.xlabel('time (s)')
+        # plt.ylabel('Assigned-to Target')
+
+        # for tt in range(tout.shape[0]):
+        #     time = tout[tt]
+        #     for ii in range(nagents): # iterate consecutively through agents
+        #         # ax.plot3D(agent_i, tout, target_j, '-r', label=agent_traj_label)
+        #         ax.scatter(ii, time, assignments[tt, ii], '-r')
+        #         # change color and marker if there's a switch
+
 
 def plot_trajectory(unpacked):
 
@@ -630,12 +646,12 @@ def plot_trajectory(unpacked):
                     ax.scatter3D(offset[0], offset[1], offset[2], color='k')
                     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz))
 
-                ax.set_xlabel("x", fontweight='bold', fontsize=14)
-                ax.set_ylabel("y", fontweight='bold', fontsize=14)
-                ax.set_zlabel("z", fontweight='bold', fontsize=14)
+                ax.set_xlabel("x", fontweight='bold', fontsize=16)
+                ax.set_ylabel("y", fontweight='bold', fontsize=16)
+                ax.set_zlabel("z", fontweight='bold', fontsize=16)
 
-            ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
-            ax.legend(loc='lower right')
+            # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
+            ax.legend(loc='lower right', fontsize=12)
 
 def plot_batch_performance_metrics(batch_performance_metrics):
 

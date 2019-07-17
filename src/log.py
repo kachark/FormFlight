@@ -4,6 +4,28 @@ import errno
 import pandas as pd
 from datetime import datetime
 
+def save_test_info_to_txt(test_name, test_conditions, test_directory, starttime, endtime, elapsedtime):
+
+    # save info to text file
+    with open(test_directory + '/' + 'sim_info.txt', 'w') as text_file:
+        print('Test Name:', file=text_file)
+        print(test_name, file=text_file)
+
+        line = "*"*40
+        print(line, file=text_file)
+        for condition, value in test_conditions.items():
+            print(condition, ': ', value, file=text_file)
+        print(line, file=text_file)
+
+        line = "="*40
+        print(file=text_file)
+        print(line, file=text_file)
+        print(starttime, file=text_file)
+        print(endtime, file=text_file)
+        print("Elapsed time:", elapsedtime, file=text_file)
+        print(line, file=text_file)
+        print(file=text_file)
+
 def save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name):
 
     cwd = os.getcwd()

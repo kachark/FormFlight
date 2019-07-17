@@ -12,15 +12,15 @@ from log import *
 
 
 
-def get_ensemble_name(nensemble, dim, agent_model, target_model, agent_control_policy, target_control_policy):
+def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy):
     identical = (agent_model==target_model)
     if identical:
-        ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + \
-                '_identical_' + agent_model + '_' + agent_control_policy + '_' +\
+        ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + '_' +\
+                str(nagents) + 'v' + str(ntargets) + '_identical_' + agent_model + '_' + agent_control_policy + '_' +\
                 target_control_policy + '_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     else:
         ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + \
-                '_' + agent_model + '_' + target_model + '_' + agent_control_policy + '_' +\
+                '_' + str(nagents) + 'v' + str(ntargets) + agent_model + '_' + target_model + '_' + agent_control_policy + '_' +\
                 target_control_policy + '_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
 
     return ensemble_name
@@ -45,14 +45,14 @@ def main():
 
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 1
+    nbatches = 10
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
     maxtime = 5
     dim = 3
-    nagents = 1
-    ntargets = 1
+    nagents = 20
+    ntargets = 20
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     collisions = True
@@ -64,7 +64,7 @@ def main():
 
     # Create directory for storage
     nensemble = 0
-    ensemble_name = get_ensemble_name(nensemble, dim, agent_model, target_model, agent_control_policy, target_control_policy)
+    ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy)
 
     root_directory = '/Users/koray/Box Sync/test_results/'
     ensemble_directory = root_directory + ensemble_name
@@ -85,6 +85,7 @@ def main():
 
         # SIM SETUP
 
+        # TODO specify agent, target, stationary_states formation/distribution
         initial_conditions = generate_initial_conditions(dim, agent_model, target_model, nagents, ntargets)
 
         ###### DEFINE SIMULATION PROFILES ######
@@ -210,8 +211,6 @@ def main():
         # store batch results (useful for saving multiple ensembles)
         # ensemble_results.update({batch_name: batch_results})
 
-    plt.show()
-
     test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim, 'nagents': nagents, 'ntargets': ntargets,
             'agent_model': agent_model, 'target_model': target_model, 'collisions': collisions,
             'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
@@ -260,11 +259,16 @@ def endlog():
 if __name__ == "__main__":
 
     start = time()
-    atexit.register(endlog)
+    # atexit.register(endlog) # print end time at program termination
     starttime = log("Start Program")
 
+    # PERFORM TEST
     test_conditions = main()
 
+    ensemble_name = test_conditions['ensemble_name']
+    ensemble_directory = test_conditions['ensemble_directory']
+
+    # PRINT TEST INFO TO TERMINAL
     print()
     line = "*"*40
     print(line)
@@ -279,4 +283,12 @@ if __name__ == "__main__":
     print(starttime)
     print(line)
     print()
+
+    end = time() # print end time at end of simulation
+    elapsed = end-start
+    elapsedstr = secondsToStr(elapsed)
+    endtime = log("End Program", elapsedstr)
+
+    save_test_info_to_txt(ensemble_name, test_conditions, ensemble_directory, starttime, endtime, elapsedstr)
+
 

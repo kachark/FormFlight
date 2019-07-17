@@ -65,7 +65,7 @@ def setup_simulation(sim_profile):
             A, B, C, D, dx, du = quadcopter_3D()
 
             ### runner
-            sim_runner = run_identical_doubleint_3D
+            sim_runner = run_identical_doubleint_3D #TODO needs to be updated
 
     Q = np.eye(dx)
     R = np.eye(du)
@@ -158,7 +158,7 @@ def setup_simulation(sim_profile):
     return sim
 
 # Formations
-def circle(r, nsamples, sample):
+def circle(radius, nsamples, sample):
     """
     r: radius of circle
     ntargets: total number of points on circle
@@ -166,15 +166,15 @@ def circle(r, nsamples, sample):
     """
 
     angle = sample*(2*np.pi)/nsamples
-    x = np.cos(angle)
-    y = np.sin(angle)
+    x = radius * np.cos(angle)
+    y = radius * np.sin(angle)
     return x,y
 
 def fibonacci_sphere(r, nsamples, sample):
     """
     http://blog.marmakoide.org/?p=1
 
-    r: radius of sphere
+    r: radius of sphere / scaling factor
     nsamples: total number of points on sphere
     sample: nth point along the sphere
     """
@@ -184,9 +184,9 @@ def fibonacci_sphere(r, nsamples, sample):
     z_i = (1 - 1/nsamples) * (1 - (2*sample)/(nsamples-1))
     radius = np.sqrt(1 - z_i * z_i)
 
-    x = radius * np.cos(theta)
-    y = radius * np.sin(theta)
-    z = z_i
+    x = r * radius * np.cos(theta)
+    y = r * radius * np.sin(theta)
+    z = r * z_i
     return x,y,z
 
 def generate_initial_conditions(dim, agent_model, target_model, nagents, ntargets):
@@ -246,19 +246,36 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             A, B, C, D, dx, du = double_integrator_3D()
 
             # Agents
+            # x0 = np.zeros((nagents, dx))
+            # x0p = np.random.uniform(-500, 500, (nagents,dim)) # position spread
+            # x0v = np.random.uniform(-5000, 5000, (nagents,(dx-dim))) # velocity spread
+            # for ii, (pos, vel) in enumerate(zip(x0p, x0v)):
+            #     x0[ii] = np.concatenate((pos, vel), axis=0)
+            # x0 = x0.flatten()
+
+            # TEST
+            # Agents
+            # r = 150 # circle radius
+            # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
+            x0p = np.random.uniform(-1000, 1000, (nagents,dim)) # position spread
             x0 = np.zeros((nagents, dx))
-            x0p = np.random.uniform(-500, 500, (nagents,dim)) # position spread
-            x0v = np.random.uniform(-1000, 1000, (nagents,(dx-dim))) # velocity spread
-            for ii, (pos, vel) in enumerate(zip(x0p, x0v)):
-                x0[ii] = np.concatenate((pos, vel), axis=0)
+            vel_range = 5000
+            for ii, tt in enumerate(x0):
+                x0[ii] = np.array([x0p[ii][0],
+                                    x0p[ii][1],
+                                    x0p[ii][2],
+                                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                                    np.random.uniform(-vel_range, vel_range, 1)[0]])
+
             x0 = x0.flatten()
 
             # Targets
             # r = 150 # circle radius
             # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
-            x02p = np.random.uniform(-1000, 1000, (nagents,dim)) # position spread
+            x02p = np.random.uniform(-1000, 1000, (ntargets,dim)) # position spread
             x02 = np.zeros((ntargets, dx))
-            vel_range = 100
+            vel_range = 1000
             for ii, tt in enumerate(x02):
                 # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 0, 0])
                 # x02[ii] = np.array([x02p[ii][0], x02p[ii][1], 1, 0])
@@ -274,17 +291,16 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
 
             # Target Terminal Location
             stationary_states = np.zeros((ntargets, dx))
-            # r = 100
-            # cities_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
-            # cities_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
-            stationary_states_p = np.random.uniform(-1000, 1000, (ntargets,dim)) # random city position spread
+            r = 2000
+            # stationary_states_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
+            stationary_states_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            # stationary_states_p = np.random.uniform(-1000, 1000, (ntargets,dim)) # random position spread
             for ii, tt in enumerate(stationary_states):
-                # cities[ii] = np.array([cities_p[ii][0], 1, cities_p[ii][1], 0, 0, 0]) # circle
+                # stationary_states[ii] = np.array([stationary_states_p[ii][0], 1000, stationary_states_p[ii][1], 0, 0, 0]) # circle
                 stationary_states[ii] = np.array([stationary_states_p[ii][0], stationary_states_p[ii][1],
-                    stationary_states_p[ii][2], 0, 0, 0])
+                    stationary_states_p[ii][2], 0, 0, 0]) # random and fibonacci_sphere
 
             stationary_states = stationary_states.flatten()
-            # cities = r*cities
             stationary_states = np.split(stationary_states, ntargets)
 
 
