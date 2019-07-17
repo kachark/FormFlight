@@ -13,7 +13,7 @@ if __name__ == "__main__":
     ensembles = [x[0] for x in os.walk('./test_results')]
 
     dim = 3
-    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_16_16_49_02'
+    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_16_22_03_45'
     root_directory = '/Users/koray/Box Sync/test_results/'
     ensemble_directory = root_directory + ensemble_name
 

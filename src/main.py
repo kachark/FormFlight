@@ -46,24 +46,22 @@ def main():
 
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 10
+    nbatches = 1
 
-    # SIM SETUP
-    dt = 0.01
+    # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     maxtime = 5
     dim = 3
-    nagents = 50
-    ntargets = 50
+    nagents = 20
+    ntargets = 20
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     collisions = True
-    # initial_conditions = np.loadtxt("initial_conditions_2d.txt") # agents and targets
-    # initial_conditions = np.loadtxt("initial_conditions_3d.txt")
-    # cities = --> some distribution
     agent_control_policy = "LQR"
     target_control_policy = "LQR"
 
-    ensemble_name = get_ensemble_name(0, dim, agent_model, target_model, agent_control_policy, target_control_policy)
+    # Create directory for storage
+    nensemble = 0
+    ensemble_name = get_ensemble_name(nensemble, dim, agent_model, target_model, agent_control_policy, target_control_policy)
 
     root_directory = '/Users/koray/Box Sync/test_results/'
     ensemble_directory = root_directory + ensemble_name
@@ -75,24 +73,46 @@ def main():
         # directory already exists
         pass
 
-    # ENSEMBLE OF SIMULATIONS
+
+    # CONSTRUCT ENSEMBLE OF SIMULATIONS
     for batch_i in range(nbatches):
 
-        # batch simulation: collection of simulations running on the same initial conditions, but with different assignment
-        # policies
-        batch = setup_simulation(
-            agent_model,
-            target_model,
-            agent_control_policy,
-            target_control_policy,
-            nagents,
-            ntargets,
-            collisions,
-            dim,
-            dt,
-            maxtime,
-        )
+        # Create a batch of simulations (ie. group of sim with same initial state conditions)
+        batch = {}
 
+        # SIM SETUP
+
+        initial_conditions = generate_initial_conditions(dim, agent_model, target_model, nagents, ntargets)
+
+        ###### DEFINE SIMULATION PROFILES ######
+        sim_profiles = {}
+
+        # EMD parameters
+        dt = 0.1
+        asst = 'AssignmentEMD'
+        sim_profile_name = 'emd'
+        sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
+            'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
+            'assignment_policy': asst, 'nagents': nagents, 'ntargets': ntargets,
+            'collisions': collisions, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
+
+        # DYN parameters
+        dt = 0.01
+        asst = 'AssignmentDyn'
+        sim_profile_name = 'dyn'
+        sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
+            'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
+            'assignment_policy': asst, 'nagents': nagents, 'ntargets': ntargets,
+            'collisions': collisions, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
+
+        ########################################
+
+        for profile_name, profile in sim_profiles.items():
+            sim = setup_simulation(profile)
+            sim_name = sim['asst_pol'].__class__.__name__
+            batch.update({sim_name: sim})
+
+        # add batch to ensemble
         ensemble_simulation.append(batch)
 
     # RUN SIMULATION
@@ -102,30 +122,29 @@ def main():
         batch_name = 'batch_{0}'.format(ii)
         batch_results = {}
 
-        # Simulation parameters shared within batch
-        collisions = batch["collisions"]
-        dt = batch["dt"]
-        maxtime = batch["maxtime"]
-        dx = batch["dx"]
-        du = batch["du"]
-        x0 = batch["x0"]
-        ltidyn = batch["agent_dyn"]
-        target_dyn = batch["target_dyns"]
-        poltrack = batch["agent_pol"]
-        poltargets = batch["target_pol"]
-        apol = batch["asst_pol"]
-        nagents = batch["nagents"]
-        ntargets = batch["ntargets"]
-        runner = batch["runner"]
+        for sim_name, sim in batch.items():
 
-        # Other simulation information
-        agent_model = batch["agent_model"]
-        target_model = batch["target_model"]
-        agent_control_policy = batch["agent_control_policy"]
-        target_control_policy = batch["target_control_policy"]
+            # Simulation data structures
+            collisions = sim["collisions"]
+            dt = sim["dt"]
+            maxtime = sim["maxtime"]
+            dx = sim["dx"]
+            du = sim["du"]
+            x0 = sim["x0"]
+            ltidyn = sim["agent_dyn"]
+            target_dyn = sim["target_dyns"]
+            poltrack = sim["agent_pol"]
+            poltargets = sim["target_pol"]
+            assignment_pol = sim["asst_pol"]
+            nagents = sim["nagents"]
+            ntargets = sim["ntargets"]
+            runner = sim["runner"]
 
-        # run different assignment policies with same conditions
-        for assignment_pol in apol:
+            # Other simulation information
+            agent_model = sim["agent_model"]
+            target_model = sim["target_model"]
+            agent_control_policy = sim["agent_control_policy"]
+            target_control_policy = sim["target_control_policy"]
 
             # run simulation
             results = runner(
@@ -158,8 +177,6 @@ def main():
                 "optimal_asst",
                 "asst_policy",
             ]
-
-            sim_name = assignment_pol.__class__.__name__
 
             # organize simulation parameters
             sim_parameters = {
