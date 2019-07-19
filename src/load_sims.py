@@ -31,17 +31,17 @@ if __name__ == "__main__":
     # load batches and plot
     sim_name_list = ['AssignmentDyn', 'AssignmentEMD']
 
-    # load and plot every batch within ensemble
-    for ii in range(nbatches):
-        batch_name = 'batch_{0}'.format(ii)
-        loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
-        post_process.plot_batch_performance_metrics(loaded_batch)
+    # # load and plot every batch within ensemble
+    # for ii in range(nbatches):
+    #     batch_name = 'batch_{0}'.format(ii)
+    #     loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
+    #     post_process.plot_batch_performance_metrics(loaded_batch)
 
-    # # load and plot a specific batch
-    # batch_num = 0
-    # batch_name = 'batch_{0}'.format(batch_num)
-    # loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
-    # post_process.plot_batch_performance_metrics(loaded_batch)
+    # load and plot a specific batch
+    batch_num = 0
+    batch_name = 'batch_{0}'.format(batch_num)
+    loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
+    post_process.plot_batch_performance_metrics(loaded_batch)
 
     print('finished plotting!')
 

@@ -45,16 +45,18 @@ def main():
 
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 10
+    nbatches = 1
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
     maxtime = 5
     dim = 3
-    nagents = 20
-    ntargets = 20
+    nagents = 2
+    ntargets = 2
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
+    # agent_model = "Linearized_Quadcopter" # STILL TESTING
+    # target_model = "Linearized_Quadcopter"
     collisions = True
     agent_control_policy = "LQR"
     target_control_policy = "LQR"
@@ -206,6 +208,9 @@ def main():
         # post-process and save
         batch_performance_metrics = post_process_batch_simulation(batch_results) # returns dataframe
 
+        # # DEBUG
+        # plot_batch_performance_metrics(batch_performance_metrics)
+
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
 
         # store batch results (useful for saving multiple ensembles)
@@ -218,6 +223,9 @@ def main():
             ensemble_directory}
 
     print("done!")
+
+    # DEBUG
+    plt.show()
 
     return test_conditions
 
