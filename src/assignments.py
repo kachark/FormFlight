@@ -41,17 +41,47 @@ class AssignmentEMD(Assignment):
         ntargets = len(target_states)
 
         dim_state = ref_states[0][0].shape[0]
-        dim_pos = int(dim_state / 2)
 
-        xs = np.zeros((nagents, dim_pos))
-        xt = np.zeros((ntargets, dim_pos))
+        # TODO fix to select correct position components for linearized quadcopter
+        # dim_pos = int(dim_state / 2)
+
+        # TODO update
+        # xs = np.zeros((nagents, dim_pos))
+        # xt = np.zeros((ntargets, dim_pos))
+        dim = ref_states[0][1].get_dim() # same for all agents/targets in the same sim
+        xs = np.zeros((nagents, dim))
+        xt = np.zeros((ntargets, dim))
+
+        # TODO fix to select correct position components for linearized quadcopter
+        # for ii, state in enumerate(ref_states):
+        #     # print(ii, state[0])
+        #     xs[ii, :] = state[0][:dim_pos]
+
+        # for jj, target in enumerate(target_states):
+        #     xt[jj, :] = target[0][:dim_pos]
 
         for ii, state in enumerate(ref_states):
             # print(ii, state[0])
-            xs[ii, :] = state[0][:dim_pos]
+            # TEST
+            # agent state components (differs per dynamic model)
+            ref_state_statespace = ref_states[ii][1].get_statespace()
+            dim_pos = ref_state_statespace['position']
+            dim_vel = ref_state_statespace['velocity']
+            xs[ii, 0] = state[0][dim_pos[0]]
+            xs[ii, 1] = state[0][dim_pos[1]]
+            if dim == 3:
+                xs[ii, 2] = state[0][dim_pos[2]]
 
         for jj, target in enumerate(target_states):
-            xt[jj, :] = target[0][:dim_pos]
+            # TEST
+            # agent state components (differs per dynamic model)
+            target_state_statespace = target_states[jj][1].get_statespace()
+            dim_pos = target_state_statespace['position']
+            dim_vel = target_state_statespace['velocity']
+            xt[jj, 0] = target[0][dim_pos[0]]
+            xt[jj, 1] = target[0][dim_pos[1]]
+            if dim == 3:
+                xt[jj, 2] = target[0][dim_pos[2]]
 
         a = np.ones((nagents,)) / nagents
         b = np.ones((ntargets,)) / ntargets

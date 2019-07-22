@@ -46,14 +46,14 @@ def setup_simulation(sim_profile):
 
         if agent_model == "Double_Integrator":
 
-            A, B, C, D, dx, du = double_integrator_2D()
+            A, B, C, D, dx, du, statespace = double_integrator_2D()
 
             ### runner
             sim_runner = run_identical_doubleint_2D
 
         # if agent_model == "Linearized_Quadcopter":
 
-        #     A, B, C, D, dx, du = quadcopter_2D()
+        #     A, B, C, D, dx, du, statespace = quadcopter_2D()
 
             ### runner
             # sim_runner = run_identical_linearized_quadcopter_2D()
@@ -62,14 +62,14 @@ def setup_simulation(sim_profile):
 
         if agent_model == "Double_Integrator":
 
-            A, B, C, D, dx, du = double_integrator_3D()
+            A, B, C, D, dx, du, statespace = double_integrator_3D()
 
             ### runner
             sim_runner = run_identical_doubleint_3D
 
         if agent_model == "Linearized_Quadcopter":
 
-            A, B, C, D, dx, du = quadcopter_3D()
+            A, B, C, D, dx, du, statespace = quadcopter_3D()
 
             ### runner
             sim_runner = run_identical_linearized_quadcopter_3D #TODO needs to be updated
@@ -152,6 +152,7 @@ def setup_simulation(sim_profile):
     sim['maxtime'] = maxtime
     sim['dx'] = dx
     sim['du'] = du
+    sim['statespace'] = statespace
     sim['x0'] = x0
     sim['agent_dyn'] = ltidyn
     sim['target_dyns'] = dyn_target
@@ -205,7 +206,7 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
 
         if agent_model == "Double_Integrator":
 
-            A, B, C, D, dx, du = double_integrator_2D()
+            A, B, C, D, dx, du, statespace = double_integrator_2D()
 
             ### Initial conditions
 
@@ -248,7 +249,7 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
 
         if agent_model == "Linearized_Quadcopter":
 
-            A, B, C, D, dx, du = quadcopter_3D()
+            A, B, C, D, dx, du, statespace = linear_models_3D() # TODO rewrite for 2D
 
             # Agents
             # r = 150 # circle radius
@@ -308,7 +309,7 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
 
         if agent_model == "Double_Integrator":
 
-            A, B, C, D, dx, du = double_integrator_3D()
+            A, B, C, D, dx, du, statespace = double_integrator_3D()
 
             # Agents
             # x0 = np.zeros((nagents, dx))
@@ -371,7 +372,7 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
 
         if agent_model == "Linearized_Quadcopter":
 
-            A, B, C, D, dx, du = quadcopter_3D()
+            A, B, C, D, dx, du, statespace = quadcopter_3D()
 
             # Agents
             # r = 150 # circle radius
@@ -412,8 +413,8 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             stationary_states = np.zeros((ntargets, dx))
             r = 2000
             # stationary_states_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
-            stationary_states_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
-            # stationary_states_p = np.random.uniform(-1000, 1000, (ntargets,dim)) # random position spread
+            # stationary_states_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            stationary_states_p = np.random.uniform(-1000, 1000, (ntargets,dim)) # random position spread
             for ii, tt in enumerate(stationary_states):
 
                 stationary_states[ii] = np.array([0, 0, 0, 0, 0, 0,

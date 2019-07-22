@@ -301,18 +301,18 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
 # DEPRECATE?
 class LinearFeedbackOffset(LinearFeedback):
 
-    def __init__(self, A, B, C, Q, R, offset):
-        super(LinearFeedbackOffset, self).__init__(A, B, C, Q, R)
-        self.offset = copy.deepcopy(offset)
-        self.dim_offset = self.offset.shape[0] # np array
+    def __init__(self, A, B, Q, R, const):
+        super(LinearFeedbackOffset, self).__init__(A, B, Q, R)
+        self.const = copy.deepcopy(const)
+        self.dim_offset = self.const.shape[0] # np array
         self.P = care(A, B, Q, R)
         self.K = -np.linalg.solve(R, np.dot(B.T, self.P))
         self.Acl = A + np.matmul(B, self.K)
         # self.r = np.matmul(B, np.matmul(-self.K, self.offset))
         RB = np.matmul(np.linalg.inv(R), B.T)
         ur = np.matmul(RB, np.linalg.inv(self.Acl.T))
-        ur = np.matmul(ur, np.matmul(self.P, np.matmul(A, offset)))
-        Kr = np.matmul(-self.K, offset)
+        ur = np.matmul(ur, np.matmul(self.P, np.matmul(A, const)))
+        Kr = np.matmul(-self.K, const)
         self.r = np.matmul(B, Kr - ur)
 
         # self.r = -np.matmul(B, ur)
@@ -324,7 +324,7 @@ class LinearFeedbackOffset(LinearFeedback):
 
         s1 = copy.deepcopy(state1)
         diff = copy.deepcopy(state1)
-        diff -= self.offset
+        diff -= self.const
         agent_pol = np.dot(self.K, diff)
         # agent_pol = np.dot(-self.K, diff) # ltidyn_cl
         return agent_pol
@@ -332,7 +332,7 @@ class LinearFeedbackOffset(LinearFeedback):
     def cost_to_go(self, time, state1):
         s1 = copy.deepcopy(state1)
         diff = copy.deepcopy(state1)
-        diff[:self.dim_offset] = s1[:self.dim_offset] - self.offset
+        diff[:self.dim_offset] = s1[:self.dim_offset] - self.const
         cost_to_go = np.dot(diff, np.dot(self.P, diff))
         return cost_to_go
 

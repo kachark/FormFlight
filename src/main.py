@@ -50,9 +50,9 @@ def main():
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
     maxtime = 5
-    dim = 3
-    nagents = 2
-    ntargets = 2
+    dim = 2
+    nagents = 20
+    ntargets = 20
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     # agent_model = "Linearized_Quadcopter" # STILL TESTING
@@ -136,6 +136,7 @@ def main():
             maxtime = sim["maxtime"]
             dx = sim["dx"]
             du = sim["du"]
+            statespace = sim["statespace"]
             x0 = sim["x0"]
             ltidyn = sim["agent_dyn"]
             target_dyn = sim["target_dyns"]
@@ -156,6 +157,7 @@ def main():
             results = runner(
                 dx,
                 du,
+                statespace,
                 x0,
                 ltidyn,
                 target_dyn,
@@ -190,6 +192,7 @@ def main():
                 "dim": dim,
                 "dx": dx,
                 "du": du,
+                "statespace": statespace,
                 "agent_model": agent_model,
                 "target_model": target_model,
                 "agent_control_policy": agent_control_policy,
@@ -210,6 +213,7 @@ def main():
 
         # # DEBUG
         # plot_batch_performance_metrics(batch_performance_metrics)
+        # plt.show()
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
 
@@ -223,9 +227,6 @@ def main():
             ensemble_directory}
 
     print("done!")
-
-    # DEBUG
-    plt.show()
 
     return test_conditions
 
