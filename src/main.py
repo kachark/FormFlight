@@ -51,8 +51,8 @@ def main():
     dt = 0.01
     maxtime = 5
     dim = 2
-    nagents = 20
-    ntargets = 20
+    nagents = 10
+    ntargets = 10
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     # agent_model = "Linearized_Quadcopter" # STILL TESTING

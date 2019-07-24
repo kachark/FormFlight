@@ -13,13 +13,14 @@ if __name__ == "__main__":
     ensembles = [x[0] for x in os.walk('./test_results')]
 
     dim = 3
+
     nagents = 20
     ntargets = 20
     ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_Double_Integrator_LQR_LQR_2019_07_22_11_53_31'
+            'identical_Double_Integrator_LQR_LQR_2019_07_17_23_06_46'
 
-    # old
-    # ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_16_16_49_02'
+    # # old
+    # ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_17_00_09_55'
 
     root_directory = '/Users/koray/Box Sync/test_results/'
     ensemble_directory = root_directory + ensemble_name
@@ -38,10 +39,18 @@ if __name__ == "__main__":
     #     post_process.plot_batch_performance_metrics(loaded_batch)
 
     # load and plot a specific batch
-    batch_num = 0
+    batch_num = 1
     batch_name = 'batch_{0}'.format(batch_num)
     loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
     post_process.plot_batch_performance_metrics(loaded_batch)
+
+    # # cost histogram
+    # ensemble_metrics = []
+    # for ii in range(nbatches):
+    #     batch_name = 'batch_{0}'.format(ii)
+    #     loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
+    #     ensemble_metrics.append(loaded_batch)
+    # post_process.plot_ensemble_histograms(ensemble_metrics)
 
     print('finished plotting!')
 

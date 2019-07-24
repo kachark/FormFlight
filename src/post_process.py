@@ -404,3 +404,65 @@ def plot_batch_performance_metrics(batch_performance_metrics):
     plot_costs(unpacked)
     plot_assignments(unpacked)
     plot_trajectory(unpacked)
+
+def plot_ensemble_histograms(ensemble_performance_metrics):
+
+    nbatches = len(ensemble_performance_metrics)
+    unpacked_ensemble_metrics_emd = np.zeros((nbatches, 4))
+    unpacked_ensemble_metrics_dyn = np.zeros((nbatches, 4))
+    for i, batch in enumerate(ensemble_performance_metrics):
+        unpacked = unpack_performance_metrics(batch)
+
+        # extract cost metrics
+
+        # TEST
+        for sim_name, metrics in unpacked.items():
+
+            tout = metrics['tout']
+            yout = metrics['yout']
+            nagents = metrics['nagents']
+            dx = metrics['dx']
+            final_cost = metrics['final_cost']
+            cost_to_go = metrics['cost_to_go']
+            optimal_cost = metrics['optimal_cost']
+
+            assignments = yout[:, nagents*2*dx:].astype(np.int32)
+            assignment_switches = find_switches(tout, yout, nagents, nagents, dx, dx)
+            # recreate assignments per switch
+            asst_switch_indices = set()
+            # asst_switch_indices.add(0) # add the origin assignment
+            for ii in range(nagents):
+               switch_indices = assignment_switches[ii]
+               for ind in switch_indices:
+                   asst_switch_indices.add(ind)
+            nswitches = len(asst_switch_indices)
+
+            summed_opt_cost = np.sum(optimal_cost[0, :])
+
+            if sim_name == 'AssignmentDyn':
+                unpacked_ensemble_metrics_dyn[i, 0] = np.sum(final_cost, axis=1)[-1]
+                unpacked_ensemble_metrics_dyn[i, 1] = np.sum(cost_to_go, axis=1)[-1]
+                unpacked_ensemble_metrics_dyn[i, 2] = summed_opt_cost
+                unpacked_ensemble_metrics_dyn[i, 3] = nswitches
+            if sim_name == 'AssignmentEMD':
+                unpacked_ensemble_metrics_emd[i, 0] = np.sum(final_cost, axis=1)[-1]
+                unpacked_ensemble_metrics_emd[i, 1] = np.sum(cost_to_go, axis=1)[-1]
+                unpacked_ensemble_metrics_emd[i, 2] = summed_opt_cost
+                unpacked_ensemble_metrics_emd[i, 3] = nswitches
+
+            # ### cost plots
+            # if sim_name == 'AssignmentDyn':
+            #     axs.plot(tout, summed_opt_cost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching')
+            #     axs.plot(tout, np.sum(final_cost, axis=1), '--c', label='Cum. Stage Cost'+' '+sim_name)
+            #     axs.plot(tout, np.sum(cost_to_go, axis=1), '--r', label='Cost-to-go'+' '+sim_name)
+            # else:
+            #     axs.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost'+' '+sim_name)
+            #     # axs.plot(tout, np.sum(cost_to_go, axis=1), '-r', label='Cost-to-go'+' '+sim_name)
+
+    # now, we have the data split by assignment policy
+    emd_finalcost_optcost = (unpacked_ensemble_metrics_emd[:, 0] - unpacked_ensemble_metrics_emd[:, 2]) # final_cost - optimal_cost
+    emd_asst_switches = unpacked_ensemble_metrics_emd[:, 3]
+
+    plot_cost_histogram(emd_finalcost_optcost)
+    plot_asst_histogram(emd_asst_switches)
+
