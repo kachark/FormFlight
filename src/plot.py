@@ -31,7 +31,6 @@ def plot_costs(unpacked):
     axs.set_xlabel('time (s)', fontsize=fontsize)
     # axs.set_ylabel('Cost', fontsize=fontsize)
 
-    # TODO normalized costs
     axs.set_ylabel('Normalized Cost', fontsize=fontsize)
     # axs.set_title('Cost VS Time')
     for sim_name, metrics in unpacked.items():
@@ -50,7 +49,7 @@ def plot_costs(unpacked):
             # axs.plot(tout, np.sum(final_cost, axis=1), '--c', label='Cum. Stage Cost'+' '+sim_name)
             # axs.plot(tout, np.sum(cost_to_go, axis=1), '--r', label='Cost-to-go'+' '+sim_name)
 
-            # TODO normalized costs
+            # normalized costs
             axs.plot(tout, np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching')
             axs.plot(tout, np.sum(final_cost, axis=1)/summed_opt_cost, '--c', label='Cum. Stage Cost'+' '+sim_name)
             axs.plot(tout, np.sum(cost_to_go, axis=1)/summed_opt_cost, '--r', label='Cost-to-go'+' '+sim_name)
@@ -58,7 +57,7 @@ def plot_costs(unpacked):
             # axs.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost'+' '+sim_name)
             ## axs.plot(tout, np.sum(cost_to_go, axis=1), '-r', label='Cost-to-go'+' '+sim_name)
 
-            # TODO normalized costs
+            # normalized costs
             axs.plot(tout, np.sum(final_cost, axis=1)/summed_opt_cost, '-c', label='Cum. Stage Cost'+' '+sim_name)
 
         axs.legend(fontsize=fontsize)

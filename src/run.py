@@ -1,4 +1,5 @@
 
+from time import time, process_time
 import pandas as pd
 
 from agents import *
@@ -39,7 +40,13 @@ def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
 
     sys = OneVOne(agents, targets, apol, assignment_epoch)
     eng = Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=1e-1)
+
+    # TODO time the simulation
+    start_run_time = process_time()
+
     eng.run(x0, sys)
+
+    elapsed_run_time = process_time() - start_run_time
 
     opt_asst = sys.optimal_assignment
 
@@ -47,7 +54,13 @@ def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
     polagents = [agent.pol for agent in agents]
 
     output = [agents, targets, eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents, opt_asst, apol]
-    diagnostics = [eng.diagnostics]
+
+    ### diagnostics
+    runtime_diagnostics = eng.diagnostics
+    runtime = pd.DataFrame([elapsed_run_time])
+    runtime_diagnostics = pd.concat([runtime_diagnostics, runtime], axis=1, ignore_index=True)
+
+    diagnostics = [runtime_diagnostics]
 
     return output, diagnostics
 

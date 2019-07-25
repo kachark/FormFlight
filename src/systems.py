@@ -110,7 +110,7 @@ class OneVOne(System):
         # print("Warning: Assumes that Each Target is Assigned To")
         # print("Dont forget to fix this (easy fix)")
 
-        # TODO measure assignment execution time
+        # measure assignment execution time
         start_assign_time = process_time()
 
         if t0 == 0:
@@ -136,7 +136,7 @@ class OneVOne(System):
                 jj = assignment[ii]
                 agent.pol.track(t0, jj, self.targets[jj].pol.get_closed_loop_A(), self.targets[jj].pol.get_closed_loop_g())
 
-        # TODO measure assignment execution time
+        # measure assignment execution time
         elapsed_assign_time = process_time() - start_assign_time
 
         # record cost-to-go (# TODO is this true anymore?)
@@ -192,21 +192,19 @@ class OneVOne(System):
 
         tspan = (t0, t0+dt)
 
-        # TODO measure dynamics execution time
+        # measure dynamics execution time
         start_dynamics_time = process_time()
 
         bunch = scint.solve_ivp(dyn, tspan, x0, method='BDF', rtol=1e-6, atol=1e-8)
 
-        # TODO measure dynamics execution time
+        # measure dynamics execution time
         elapsed_dynamics_time = process_time() - start_dynamics_time
 
         tout = bunch.t
         yout = bunch.y.T
         assign_out = np.tile(assignment, (tout.shape[0], 1))
-        # return tout, yout, assign_out
 
-        # TODO measure computation cost of assignment
-        # TODO should not repeat costs that aren't happening
+        # **** system diagnostics
         assign_comp_cost = np.tile(elapsed_assign_time, (tout.shape[0], 1))
         assign_comp_cost[1:tout.shape[0]] = 0
 
@@ -214,6 +212,7 @@ class OneVOne(System):
         dynamics_comp_cost[1:tout.shape[0]] = 0
 
         diagnostics = [assign_comp_cost, dynamics_comp_cost]
+        # **** system diagnostics
 
         return tout, yout, assign_out, diagnostics
 

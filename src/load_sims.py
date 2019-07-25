@@ -14,10 +14,10 @@ if __name__ == "__main__":
 
     dim = 3
 
-    nagents = 5
-    ntargets = 5
+    nagents = 20
+    ntargets = 20
     ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_Double_Integrator_LQR_LQR_2019_07_25_18_16_00'
+            'identical_Double_Integrator_LQR_LQR_2019_07_25_19_10_24'
 
     # # old
     # ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_17_00_09_55'

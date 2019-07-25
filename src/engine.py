@@ -23,7 +23,6 @@ class Engine:
         else:
             self.df = pd.concat([self.df, newdf.iloc[1:,:]], ignore_index=True)
 
-    # TODO collect diagnostic info
     def log_diagnostics(self, diag_df):
         if self.diagnostics is None:
             self.diagnostics = diag_df
@@ -200,7 +199,6 @@ class Engine:
 
             # thist, state_hist, assign_hist = system.update(time, current_state, collisions, self.dt, tick)
 
-            # TODO measure computation cost of assignment
             thist, state_hist, assign_hist, diagnostics = system.update(time, current_state, collisions, self.dt, tick)
 
             newdf = pd.DataFrame(np.hstack((thist[:, np.newaxis],
