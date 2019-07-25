@@ -21,6 +21,7 @@ def setup_simulation(sim_profile):
     agent_control_policy = sim_profile["agent_control_policy"]
     target_control_policy = sim_profile["target_control_policy"]
     assignment_policy = sim_profile["assignment_policy"]
+    assignment_epoch = sim_profile["assignment_epoch"]
     nagents = sim_profile["nagents"]
     ntargets = sim_profile["ntargets"]
     collisions = sim_profile["collisions"]
@@ -159,6 +160,7 @@ def setup_simulation(sim_profile):
     sim['agent_pol'] = poltrack
     sim['target_pol'] = poltargets
     sim['asst_pol'] = apol
+    sim['asst_epoch'] = assignment_epoch
     sim['nagents'] = nagents
     sim['ntargets'] = ntargets
     sim['runner'] = sim_runner

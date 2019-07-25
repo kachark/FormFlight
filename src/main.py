@@ -60,9 +60,7 @@ def main():
     collisions = True
     agent_control_policy = "LQR"
     target_control_policy = "LQR"
-
-    # TODO incorporte in sim setup
-    # every 10 ticks, perform assignment
+    # every 10 engine ticks, perform assignment
     assignment_epoch = 10
 
     # Create directory for storage
@@ -100,7 +98,7 @@ def main():
         sim_profile_name = 'emd'
         sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
             'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
-            'assignment_policy': asst, 'nagents': nagents, 'ntargets': ntargets,
+            'assignment_policy': asst, 'assignment_epoch': assignment_epoch, 'nagents': nagents, 'ntargets': ntargets,
             'collisions': collisions, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
 
         # DYN parameters
@@ -109,7 +107,7 @@ def main():
         sim_profile_name = 'dyn'
         sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
             'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
-            'assignment_policy': asst, 'nagents': nagents, 'ntargets': ntargets,
+            'assignment_policy': asst, 'assignment_epoch': assignment_epoch, 'nagents': nagents, 'ntargets': ntargets,
             'collisions': collisions, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
 
         ########################################
@@ -147,6 +145,7 @@ def main():
             poltrack = sim["agent_pol"]
             poltargets = sim["target_pol"]
             assignment_pol = sim["asst_pol"]
+            assignment_epoch = sim["asst_epoch"]
             nagents = sim["nagents"]
             ntargets = sim["ntargets"]
             runner = sim["runner"]
@@ -168,6 +167,7 @@ def main():
                 poltrack,
                 poltargets,
                 assignment_pol,
+                assignment_epoch,
                 nagents,
                 ntargets,
                 collisions,
@@ -206,7 +206,8 @@ def main():
                 "target_model": target_model,
                 "agent_control_policy": agent_control_policy,
                 "target_control_policy": target_control_policy,
-                "collisions": collisions
+                "collisions": collisions,
+                "assignment_epoch": assignment_epoch
             }
 
             # organize results according to components
@@ -232,7 +233,6 @@ def main():
         # TODO collect diagnostics
         packed_batch_diagnostics = post_process_batch_diagnostics(batch_diagnostics) # returns dict
 
-        # # import ipdb; ipdb.set_trace()
         # # DEBUG
         # plot_batch_performance_metrics(batch_performance_metrics)
         # # plot_batch_diagnostics(packed_batch_diagnostics)

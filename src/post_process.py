@@ -26,6 +26,7 @@ def post_process_batch_simulation(batch_results):
         target_model = parameters['target_model']
         agent_control_policy = parameters['agent_control_policy']
         target_control_policy = parameters['target_control_policy']
+        assignment_epoch = parameters['assignment_epoch']
 
         nagents = sim_results['nagents']
         ntargets = sim_results['ntargets']
@@ -108,6 +109,7 @@ def post_process_identical_doubleint(parameters, sim_results):
     dx = parameters['dx']
     du = parameters['du']
     collisions = parameters['collisions']
+    assignment_epoch = parameters['assignment_epoch']
 
     yout = df.iloc[:, 1:].to_numpy()
     tout = df.iloc[:, 0].to_numpy()
@@ -269,9 +271,10 @@ def post_process_identical_doubleint(parameters, sim_results):
     dim_df = pd.DataFrame([dim])
     dx_df = pd.DataFrame([dx])
     du_df = pd.DataFrame([du])
+    assignment_epoch_df = pd.DataFrame([assignment_epoch])
     nagents_df = pd.DataFrame([nagents])
     ntargets_df = pd.DataFrame([ntargets])
-    parameters_df = pd.concat([dt_df, dim_df, col_df, dx_df, du_df, nagents_df, ntargets_df], axis=1)
+    parameters_df = pd.concat([dt_df, dim_df, col_df, assignment_epoch_df, dx_df, du_df, nagents_df, ntargets_df], axis=1)
 
     fc_df = pd.DataFrame(final_cost)
     sc_df = pd.DataFrame(stage_cost)
@@ -304,20 +307,21 @@ def unpack_performance_metrics(batch_performance_metrics):
         ### unpack simulation metrics ###
 
         # simulation parameters
-        parameter_cols = 7 # see stored data spec
-        parameters = metrics_df.iloc[0, 0:7].to_numpy()
+        parameter_cols = 8 # see stored data spec
+        parameters = metrics_df.iloc[0, 0:parameter_cols].to_numpy()
 
-        dt = int(parameters[0])
+        dt = float(parameters[0])
         dim = int(parameters[1])
         collisions = int(parameters[2])
-        dx = int(parameters[3])
-        du = int(parameters[4])
-        nagents = int(parameters[5])
-        ntargets = int(parameters[6])
+        assignment_epoch = int(parameters[3])
+        dx = int(parameters[4])
+        du = int(parameters[5])
+        nagents = int(parameters[6])
+        ntargets = int(parameters[7])
 
         # simulation outputs
         output_cols = 1 + nagents*dx + ntargets*dx + nagents + ntargets*dx + nagents*du
-        outputs = metrics_df.iloc[:, 7: parameter_cols + output_cols].to_numpy()
+        outputs = metrics_df.iloc[:, parameter_cols: parameter_cols + output_cols].to_numpy()
 
         tout = outputs[:, 0]
         yout_cols = 1 + nagents*dx + ntargets*dx + nagents
@@ -338,7 +342,7 @@ def unpack_performance_metrics(batch_performance_metrics):
         cost_to_go = costs[:, sc_cols: ctg_cols]
         optimal_cost = costs[:, ctg_cols: ]
 
-        unpacked = [dt, dim, collisions, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls,
+        unpacked = [dt, dim, assignment_epoch, collisions, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls,
                 final_cost, stage_cost, cost_to_go, optimal_cost]
 
         ### end unpack ###
@@ -346,6 +350,7 @@ def unpack_performance_metrics(batch_performance_metrics):
         columns = [
             "dt",
             "dim",
+            "assignment_epoch",
             "collisions",
             "dx",
             "du",

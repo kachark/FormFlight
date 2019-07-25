@@ -21,7 +21,7 @@ class System:
 
 class OneVOne(System):
 
-    def __init__(self, agents, targets, pol):
+    def __init__(self, agents, targets, pol, assignment_epoch):
         super(OneVOne, self).__init__(agents)
         self.targets = targets
         self.tsizes = np.array([a.state_size() for a in self.agents])
@@ -30,7 +30,7 @@ class OneVOne(System):
         self.apol = pol
 
         # every 10 ticks, perform assignment
-        self.assignment_epoch = 10
+        self.assignment_epoch = assignment_epoch
         self.optimal_assignment = None
 
         self.costs = []

@@ -30,14 +30,14 @@ def run_identical_doubleint_2D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
 
     return [agents, targets, eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents, opt_asst, apol]
 
-def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltrack, poltargets, apol, nagents, ntargets, collisions, dt=0.01, maxtime=10):
+def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltrack, poltargets, apol, assignment_epoch, nagents, ntargets, collisions, dt=0.01, maxtime=10):
 
     dim = 3
 
     agents = [TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
     targets = [Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
-    sys = OneVOne(agents, targets, apol)
+    sys = OneVOne(agents, targets, apol, assignment_epoch)
     eng = Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=1e-1)
     eng.run(x0, sys)
 
