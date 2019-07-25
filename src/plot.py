@@ -656,4 +656,20 @@ def plot_trajectory_qc(fig, ax, fontsize, fontweight, labelsize, sim_name, dx, d
         # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
         ax.legend(loc='lower right', fontsize=13)
 
+def plot_assignment_comp_time(unpacked):
+
+    for sim_name, sim_diagnostics in unpacked.items():
+
+        runtime_diagnostics = sim_diagnostics['runtime_diagnostics']
+
+        tout = runtime_diagnostics.iloc[:, 0].to_numpy()
+        assign_comp_cost = runtime_diagnostics.iloc[:, 1].to_numpy()
+        dynamics_comp_cost = runtime_diagnostics.iloc[:, 2].to_numpy()
+
+        fig, axs = plt.subplots(1,1)
+        axs.plot(tout, np.cumsum(assign_comp_cost))
+        axs.set_xlabel('time (s)')
+        axs.set_ylabel('assignment cumulative computational cost (s)')
+        axs.set_title(sim_name)
+
 

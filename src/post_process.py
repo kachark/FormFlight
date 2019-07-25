@@ -60,6 +60,36 @@ def post_process_batch_simulation(batch_results):
 
     return batch_performance_metrics
 
+def post_process_batch_diagnostics(batch_diagnostics):
+
+    sim_names = []
+    packed_batch_diagnostics = {} # performance metrics
+
+    # dim = 2 # default value. also uniform across batch simulations
+
+    # for every simulation within a batch, post-process results
+    for sim_name, sim_diagnostics in batch_diagnostics.items():
+        sim_names.append(sim_name)
+        parameters = sim_diagnostics[0]
+        diagnostics = sim_diagnostics[1]
+
+        dx = parameters['dx']
+        du = parameters['du']
+        dim = parameters['dim']
+        agent_model = parameters['agent_model']
+        target_model = parameters['target_model']
+        agent_control_policy = parameters['agent_control_policy']
+        target_control_policy = parameters['target_control_policy']
+
+        runtime_diagnostics = diagnostics['runtime_diagnostics'] # runtime_diagnostics are a df from engine.py
+
+        # TODO diagnostics packaging : finish this
+        # pack
+        diagnostics_df = runtime_diagnostics
+        packed_batch_diagnostics.update({sim_name: diagnostics_df})
+
+    return packed_batch_diagnostics
+
 # 2d or 3d identical agent/target double integrators
 def post_process_identical_doubleint(parameters, sim_results):
 
@@ -339,6 +369,37 @@ def unpack_performance_metrics(batch_performance_metrics):
 
     return unpacked_batch_metrics
 
+def unpack_batch_diagnostics(batch_diagnostics):
+
+    """
+    unpacks pandas DataFrame into a python standard dictionary
+    """
+
+    unpacked_batch_metrics = {}
+
+    for sim_name, sim_diagnostics in batch_diagnostics.items():
+
+        ### unpack simulation diagnostics ###
+
+        # runtime diagnostics
+        runtime_diagnostics = sim_diagnostics # the entire pandas df contains runtime diagnostics
+
+        unpacked = [runtime_diagnostics]
+
+        ### end unpack ###
+
+        columns = [
+            "runtime_diagnostics"
+        ]
+
+        diagnostics = {}
+        for (col, diag) in zip(columns, unpacked):
+            diagnostics.update({col: diag})
+
+        unpacked_batch_metrics.update({sim_name: diagnostics})
+
+    return unpacked_batch_metrics
+
 # COMPUTE CONTROLS
 def compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents):
 
@@ -465,4 +526,44 @@ def plot_ensemble_histograms(ensemble_performance_metrics):
 
     plot_cost_histogram(emd_finalcost_optcost)
     plot_asst_histogram(emd_asst_switches)
+
+def plot_batch_diagnostics(batch_diagnostics):
+
+    unpacked = unpack_batch_diagnostics(batch_diagnostics)
+
+    plot_assignment_comp_time(unpacked)
+
+def plot_ensemble_diagnostics(ensemble_diagnostics):
+
+    nbatches = len(ensemble_diagnostics)
+    unpacked_ensemble_diagnostics_emd = np.zeros((nbatches, 2))
+    unpacked_ensemble_diagnostics_dyn = np.zeros((nbatches, 2))
+
+    for i, batch_diagnostics in enumerate(ensemble_diagnostics):
+        unpacked = unpack_batch_diagnostics(batch_diagnostics)
+
+        # extract cost metrics
+
+        for sim_name, sim_diagnostics in unpacked.items():
+
+            runtime_diagnostics = sim_diagnostics['runtime_diagnostics']
+
+            tout = runtime_diagnostics.iloc[:, 0].to_numpy()
+            assign_comp_cost = runtime_diagnostics.iloc[:, 1].to_numpy()
+            dynamics_comp_cost = runtime_diagnostics.iloc[:, 2].to_numpy()
+
+            if sim_name == 'AssignmentDyn':
+                unpacked_ensemble_diagnostics_dyn[i, 0] = assign_comp_cost[0] # time to perform initial assignment
+                unpacked_ensemble_diagnostics_dyn[i, 1] = np.sum(dynamics_comp_cost)/dynamics_comp_cost.shape[0]
+            if sim_name == 'AssignmentEMD':
+                unpacked_ensemble_diagnostics_emd[i, 0] = assign_comp_cost[0]
+                unpacked_ensemble_diagnostics_emd[i, 1] = np.sum(dynamics_comp_cost)/dynamics_comp_cost.shape[0]
+
+
+    # now, we have the data split by assignment policy
+    # emd_finalcost_optcost = (unpacked_ensemble_metrics_emd[:, 0] - unpacked_ensemble_metrics_emd[:, 2]) # final_cost - optimal_cost
+    # emd_asst_switches = unpacked_ensemble_metrics_emd[:, 3]
+
+    # plot_asst_histogram(emd_asst_switches)
+
 

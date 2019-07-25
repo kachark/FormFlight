@@ -13,6 +13,7 @@ class Engine:
         self.dt = dt
         self.maxtime = maxtime
         self.df = None
+        self.diagnostics = None
         self.collisions = collisions
         self.collision_tol = collision_tol
 
@@ -21,6 +22,16 @@ class Engine:
             self.df = newdf
         else:
             self.df = pd.concat([self.df, newdf.iloc[1:,:]], ignore_index=True)
+
+    # TODO collect diagnostic info
+    def log_diagnostics(self, diag_df):
+        if self.diagnostics is None:
+            self.diagnostics = diag_df
+        else:
+            # self.diagnostics = pd.concat([self.diagnostics, diag_df.iloc[1:,:]], ignore_index=True)
+            # replace last element of self.diagnostics with new value
+            self.diagnostics.iloc[-1, :] = diag_df.iloc[0, :]
+            self.diagnostics = pd.concat([self.diagnostics, diag_df.iloc[1:,:]], ignore_index=True)
 
     # TODO UPDATE TO HANDLE LINEARIZED QC - DIM_POS
     # Physics
@@ -167,6 +178,11 @@ class Engine:
         running = True
         time = 0
 
+        # SYSTEM PREPROCESSOR
+        collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
+        system.pre_process(time, current_state, collisions)
+
+        # RUN THE SYSTEM
         for time in np.arange(0.0, self.maxtime, self.dt):
 
             tick = time / self.dt
@@ -182,15 +198,23 @@ class Engine:
             else:
                 collisions = set()
 
-            # thist, state_hist, assign_hist = system.update(time, current_state, self.dt)
-            thist, state_hist, assign_hist = system.update(time, current_state, collisions, self.dt, tick)
+            # thist, state_hist, assign_hist = system.update(time, current_state, collisions, self.dt, tick)
 
+            # TODO measure computation cost of assignment
+            thist, state_hist, assign_hist, diagnostics = system.update(time, current_state, collisions, self.dt, tick)
 
             newdf = pd.DataFrame(np.hstack((thist[:, np.newaxis],
                                             state_hist,
                                             assign_hist)))
 
+            assign_comp_cost = diagnostics[0]
+            dynamics_comp_cost = diagnostics[1]
+            diag_df = pd.DataFrame(np.hstack((thist[:, np.newaxis],
+                assign_comp_cost,
+                dynamics_comp_cost)))
+
             self.log(newdf)
+            self.log_diagnostics(diag_df)
 
             if time > self.maxtime:
                 running = False

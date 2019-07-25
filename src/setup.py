@@ -359,8 +359,8 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             stationary_states = np.zeros((ntargets, dx))
             r = 2000
             # stationary_states_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
-            stationary_states_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
-            # stationary_states_p = np.random.uniform(-1000, 1000, (ntargets,dim)) # random position spread
+            # stationary_states_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            stationary_states_p = np.random.uniform(-1000, 1000, (ntargets,dim)) # random position spread
             for ii, tt in enumerate(stationary_states):
                 # stationary_states[ii] = np.array([stationary_states_p[ii][0], 1000, stationary_states_p[ii][1], 0, 0, 0]) # circle
                 stationary_states[ii] = np.array([stationary_states_p[ii][0], stationary_states_p[ii][1],

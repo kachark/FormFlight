@@ -50,9 +50,9 @@ def main():
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
     maxtime = 5
-    dim = 2
-    nagents = 10
-    ntargets = 10
+    dim = 3
+    nagents = 5
+    ntargets = 5
     agent_model = "Double_Integrator"
     target_model = "Double_Integrator"
     # agent_model = "Linearized_Quadcopter" # STILL TESTING
@@ -62,7 +62,8 @@ def main():
     target_control_policy = "LQR"
 
     # TODO incorporte in sim setup
-    assignment_epoch = 10 # every 10 ticks, perform assignment
+    # every 10 ticks, perform assignment
+    assignment_epoch = 10
 
     # Create directory for storage
     nensemble = 0
@@ -128,6 +129,9 @@ def main():
         batch_name = 'batch_{0}'.format(ii)
         batch_results = {}
 
+        # TODO collect diagnostitcs
+        batch_diagnostics = {}
+
         for sim_name, sim in batch.items():
 
             # Simulation data structures
@@ -154,7 +158,7 @@ def main():
             target_control_policy = sim["target_control_policy"]
 
             # run simulation
-            results = runner(
+            results, diagnostics = runner(
                 dx,
                 du,
                 statespace,
@@ -186,6 +190,11 @@ def main():
                 "asst_policy",
             ]
 
+            # diagnostics components
+            diag_components = [
+                    "runtime_diagnostics"
+                    ]
+
             # organize simulation parameters
             sim_parameters = {
                 "dt": dt,
@@ -205,17 +214,33 @@ def main():
             for (comp, res) in zip(components, results):
                 sim_results.update({comp: res})
 
+            # TODO collect diagnostics
+            # organize diagnostics
+            sim_diagnostics = {}
+            for (diag_comp, diag) in zip(diag_components, diagnostics):
+                sim_diagnostics.update({diag_comp: diag})
+
             # store sim results into a batch
-            batch_results.update({sim_name: [sim_parameters, sim_results]})
+            batch_results.update({sim_name: [sim_parameters, sim_results]}) # dict
+
+            # TODO collect diagnostics
+            # store sim diagnostics into a batch
+            batch_diagnostics.update({sim_name: [sim_parameters, sim_diagnostics]}) # dict
 
         # post-process and save
-        batch_performance_metrics = post_process_batch_simulation(batch_results) # returns dataframe
+        batch_performance_metrics = post_process_batch_simulation(batch_results) # returns dict
+        # TODO collect diagnostics
+        packed_batch_diagnostics = post_process_batch_diagnostics(batch_diagnostics) # returns dict
 
+        # # import ipdb; ipdb.set_trace()
         # # DEBUG
         # plot_batch_performance_metrics(batch_performance_metrics)
+        # # plot_batch_diagnostics(packed_batch_diagnostics)
         # plt.show()
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
+        # TODO collect diagnostics
+        save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, batch_name)
 
         # store batch results (useful for saving multiple ensembles)
         # ensemble_results.update({batch_name: batch_results})

@@ -46,7 +46,10 @@ def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
     # post processing
     polagents = [agent.pol for agent in agents]
 
-    return [agents, targets, eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents, opt_asst, apol]
+    output = [agents, targets, eng.df, poltrack, poltargets, nagents, ntargets, sys.costs, polagents, opt_asst, apol]
+    diagnostics = [eng.diagnostics]
+
+    return output, diagnostics
 
 def run_identical_linearized_quadcopter_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltrack, poltargets, apol, nagents, ntargets, collisions, dt=0.01, maxtime=10):
 
