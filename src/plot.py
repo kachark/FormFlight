@@ -671,4 +671,11 @@ def plot_assignment_comp_time(unpacked):
         axs.set_ylabel('assignment cumulative computational cost (s)')
         axs.set_title(sim_name)
 
+def plot_runtime_histogram(unpacked_ensemble_diagnostic):
+
+    fig, axs = plt.subplots(1,1)
+    axs.set_xlabel('EMD runtime - Dyn runtime (s)', fontsize=14)
+    axs.set_ylabel('Frequency', fontsize=14)
+
+    axs.hist(unpacked_ensemble_diagnostic)
 

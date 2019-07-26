@@ -541,8 +541,8 @@ def plot_batch_diagnostics(batch_diagnostics):
 def plot_ensemble_diagnostics(ensemble_diagnostics):
 
     nbatches = len(ensemble_diagnostics)
-    unpacked_ensemble_diagnostics_emd = np.zeros((nbatches, 2))
-    unpacked_ensemble_diagnostics_dyn = np.zeros((nbatches, 2))
+    unpacked_ensemble_diagnostics_emd = np.zeros((nbatches, 3))
+    unpacked_ensemble_diagnostics_dyn = np.zeros((nbatches, 3))
 
     for i, batch_diagnostics in enumerate(ensemble_diagnostics):
         unpacked = unpack_batch_diagnostics(batch_diagnostics)
@@ -556,19 +556,21 @@ def plot_ensemble_diagnostics(ensemble_diagnostics):
             tout = runtime_diagnostics.iloc[:, 0].to_numpy()
             assign_comp_cost = runtime_diagnostics.iloc[:, 1].to_numpy()
             dynamics_comp_cost = runtime_diagnostics.iloc[:, 2].to_numpy()
+            runtime = runtime_diagnostics.iloc[0, 3]
 
             if sim_name == 'AssignmentDyn':
                 unpacked_ensemble_diagnostics_dyn[i, 0] = assign_comp_cost[0] # time to perform initial assignment
                 unpacked_ensemble_diagnostics_dyn[i, 1] = np.sum(dynamics_comp_cost)/dynamics_comp_cost.shape[0]
+                unpacked_ensemble_diagnostics_dyn[i, 2] = runtime
             if sim_name == 'AssignmentEMD':
                 unpacked_ensemble_diagnostics_emd[i, 0] = assign_comp_cost[0]
                 unpacked_ensemble_diagnostics_emd[i, 1] = np.sum(dynamics_comp_cost)/dynamics_comp_cost.shape[0]
+                unpacked_ensemble_diagnostics_emd[i, 2] = runtime
 
-
-    # now, we have the data split by assignment policy
-    # emd_finalcost_optcost = (unpacked_ensemble_metrics_emd[:, 0] - unpacked_ensemble_metrics_emd[:, 2]) # final_cost - optimal_cost
+    # now, we have the data listed per batch
+    runtime_diff = (unpacked_ensemble_diagnostics_emd[:, 2] - unpacked_ensemble_diagnostics_dyn[:, 2]) # dyn runtime - emd runtime
     # emd_asst_switches = unpacked_ensemble_metrics_emd[:, 3]
 
-    # plot_asst_histogram(emd_asst_switches)
+    plot_runtime_histogram(runtime_diff)
 
 

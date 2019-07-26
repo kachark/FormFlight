@@ -17,7 +17,7 @@ if __name__ == "__main__":
     nagents = 20
     ntargets = 20
     ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_Double_Integrator_LQR_LQR_2019_07_25_19_10_24'
+            'identical_Double_Integrator_LQR_LQR_2019_07_25_19_41_49'
 
     # # old
     # ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_17_00_09_55'
@@ -59,13 +59,13 @@ if __name__ == "__main__":
     loaded_batch_diagnostics = log.load_batch_diagnostics(ensemble_directory, batch_name, sim_name_list)
     post_process.plot_batch_diagnostics(loaded_batch_diagnostics)
 
-    # # diagnostics
-    # ensemble_diagnostics = []
-    # for ii in range(nbatches):
-    #     batch_name = 'batch_{0}'.format(ii)
-    #     loaded_batch_diagnostics = log.load_batch_diagnostics(ensemble_directory, batch_name, sim_name_list)
-    #     ensemble_diagnostics.append(loaded_batch_diagnostics)
-    # post_process.plot_ensemble_diagnostics(ensemble_diagnostics)
+    # diagnostics
+    ensemble_diagnostics = []
+    for ii in range(nbatches):
+        batch_name = 'batch_{0}'.format(ii)
+        loaded_batch_diagnostics = log.load_batch_diagnostics(ensemble_directory, batch_name, sim_name_list)
+        ensemble_diagnostics.append(loaded_batch_diagnostics)
+    post_process.plot_ensemble_diagnostics(ensemble_diagnostics)
 
     print('finished plotting!')
 
