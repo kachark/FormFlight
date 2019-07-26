@@ -438,7 +438,7 @@ def plot_trajectory(unpacked):
                     # TODO 2d slice
                     ax2.plot(y_target[0, 0], y_target[0, 1], 'bs', label=target_start_pt_label)
                     ax2.plot(y_target[:, 0], y_target[:, 1], '-b', label=target_traj_label)
-                    ax2.text(y_target[0, 0], y_agent[0, 1], 'T{0}'.format(zz))
+                    ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
 
                 ### stationary points
                 for zz in range(ntargets):
@@ -502,7 +502,7 @@ def plot_trajectory(unpacked):
                     # TODO 2d slice
                     ax2.plot(y_target[0, 0], y_target[0, 1], 'bs')
                     ax2.plot(y_target[:, 0], y_target[:, 1], '-b')
-                    ax2.text(y_target[0, 0], y_agent[0, 1], 'T{0}'.format(zz))
+                    ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
 
                 # stationary locations
                 for zz in range(ntargets):
@@ -677,5 +677,5 @@ def plot_runtime_histogram(unpacked_ensemble_diagnostic):
     axs.set_xlabel('EMD runtime - Dyn runtime (s)', fontsize=14)
     axs.set_ylabel('Frequency', fontsize=14)
 
-    axs.hist(unpacked_ensemble_diagnostic)
+    axs.hist(unpacked_ensemble_diagnostic, bins=50)
 
