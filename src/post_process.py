@@ -529,7 +529,8 @@ def plot_ensemble_histograms(ensemble_performance_metrics):
     emd_finalcost_optcost = (unpacked_ensemble_metrics_emd[:, 0] - unpacked_ensemble_metrics_emd[:, 2]) # final_cost - optimal_cost
     emd_asst_switches = unpacked_ensemble_metrics_emd[:, 3]
 
-    plot_cost_histogram(emd_finalcost_optcost)
+    # plot_cost_histogram(emd_finalcost_optcost)
+    plot_cost_histogram([unpacked_ensemble_metrics_dyn[:, 0], unpacked_ensemble_metrics_emd[:, 0]])
     plot_asst_histogram(emd_asst_switches)
 
 def plot_batch_diagnostics(batch_diagnostics):
@@ -571,6 +572,9 @@ def plot_ensemble_diagnostics(ensemble_diagnostics):
     runtime_diff = (unpacked_ensemble_diagnostics_emd[:, 2] - unpacked_ensemble_diagnostics_dyn[:, 2]) # dyn runtime - emd runtime
     # emd_asst_switches = unpacked_ensemble_metrics_emd[:, 3]
 
-    plot_runtime_histogram(runtime_diff)
+    # plot_runtime_histogram(runtime_diff)
+    runtimes = [unpacked_ensemble_diagnostics_dyn[:, 2], unpacked_ensemble_diagnostics_emd[:,2]]
+    plot_runtime_histogram(runtimes)
+    plot_runtimes(runtimes)
 
 

@@ -78,19 +78,27 @@ def plot_costs(unpacked):
 
 def plot_cost_histogram(unpacked_ensemble_metric):
 
-    fig, axs = plt.subplots(1,1)
-    axs.set_xlabel('Final Cost - Optimal Cost', fontsize=14)
-    axs.set_ylabel('Frequency', fontsize=14)
+    fontsize = 16
 
-    axs.hist(unpacked_ensemble_metric)
+    labels = ['Dyn', 'EMD']
+
+    fig, axs = plt.subplots(1,1)
+    axs.set_xlabel('Control Expenditure', fontsize=fontsize)
+    axs.set_ylabel('Frequency', fontsize=fontsize)
+
+    axs.hist(unpacked_ensemble_metric, histtype='bar', stacked=True, bins=10, label=labels)
+
+    axs.legend(fontsize=fontsize)
 
 def plot_asst_histogram(unpacked_ensemble_metric):
 
-    fig, axs = plt.subplots(1,1)
-    axs.set_xlabel('Assignment Switches', fontsize=14)
-    axs.set_ylabel('Frequency', fontsize=14)
+    fontsize = 16
 
-    axs.hist(unpacked_ensemble_metric)
+    fig, axs = plt.subplots(1,1)
+    axs.set_xlabel('Assignment Switches', fontsize=fontsize)
+    axs.set_ylabel('Frequency', fontsize=fontsize)
+
+    axs.hist(unpacked_ensemble_metric, color='darkorange', bins=10)
 
 def plot_assignments(unpacked):
 
@@ -273,18 +281,18 @@ def plot_trajectory(unpacked):
 
         assignment_switches = post_process.find_switches(tout, yout, nagents, ntargets, dx, dx)
 
-        agent_traj_label = 'Agent Trajectory - AssignmentDyn'
-        agent_start_pt_label = 'Agent Start Position'
-        target_start_pt_label = 'Target Start Position'
-        target_traj_label = 'Target Trajectory'
-        stationary_pt_label = 'Target Terminal Positions'
+        agent_traj_label = 'Agent Path (Dyn)'
+        agent_start_pt_label = 'Agent Start'
+        target_start_pt_label = 'Target Start'
+        target_traj_label = 'Target Path'
+        stationary_pt_label = 'Terminal State'
 
         # TEST # TODO REMOVE EVENTUALLY
         if dx == 12:
             agent_model = 'Linearized_Quadcopter'
             target_model = 'Linearized_Quadcopter'
             labels = [agent_traj_label, agent_start_pt_label, target_start_pt_label, target_traj_label, stationary_pt_label]
-            plot_trajectory_qc(fig, ax, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states,
+            plot_trajectory_qc(fig, ax, fontsize, fontweight, labelsize, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states,
                     assignment_switches, labels)
             continue
         if dx == 6:
@@ -343,7 +351,7 @@ def plot_trajectory(unpacked):
 
             elif sim_name == 'AssignmentEMD':
 
-                agent_traj_label = 'Agent Trajectory - AssignmentEMD'
+                agent_traj_label = 'Agent Path (EMD)'
 
                 # non-optimal trajectories (dotted lines)
                 for zz in range(nagents):
@@ -418,12 +426,6 @@ def plot_trajectory(unpacked):
                     ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r', label=agent_traj_label)
                     ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz))
 
-                    # TEST
-                    # TODO 2d slice
-                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'rs', label=agent_start_pt_label)
-                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '-r', label=agent_traj_label)
-                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
-
                     # # plot location of assignment switches
                     # for switch_ind in assignment_switches[zz]:
                     #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
@@ -436,8 +438,16 @@ def plot_trajectory(unpacked):
 
                     # TEST
                     # TODO 2d slice
-                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bs', label=target_start_pt_label)
+                    # trajectories
+                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '-r', label=agent_traj_label)
                     ax2.plot(y_target[:, 0], y_target[:, 1], '-b', label=target_traj_label)
+
+                    # points
+                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', label=agent_start_pt_label)
+                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', label=target_start_pt_label)
+
+                    # text
+                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
                     ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
 
                 ### stationary points
@@ -452,7 +462,7 @@ def plot_trajectory(unpacked):
 
                     # TEST
                     # TODO 2d slice
-                    ax2.plot(offset[0], offset[1], 'ks', label=stationary_pt_label)
+                    ax2.plot(offset[0], offset[1], 'ko', label=stationary_pt_label)
                     ax2.text(offset[0], offset[1], 'C{0}'.format(zz))
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
@@ -465,7 +475,7 @@ def plot_trajectory(unpacked):
             elif sim_name == 'AssignmentEMD':
                 # non-optimal trajectories (dotted lines)
 
-                agent_traj_label = 'Agent Trajectory - AssignmentEMD'
+                agent_traj_label = 'Agent Path (EMD)'
 
                 # agent/target trajectories
                 for zz in range(nagents):
@@ -482,12 +492,6 @@ def plot_trajectory(unpacked):
                     ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '--r', label=agent_traj_label)
                     ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz))
 
-                    # TEST
-                    # TODO 2d slice
-                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '--r', label=agent_traj_label)
-                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
-
                     # # plot location of assignment switches
                     # for switch_ind in assignment_switches[zz]:
                     #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
@@ -500,8 +504,16 @@ def plot_trajectory(unpacked):
 
                     # TEST
                     # TODO 2d slice
-                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bs')
+                    # trajectories
+                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '--r', label=agent_traj_label)
                     ax2.plot(y_target[:, 0], y_target[:, 1], '-b')
+
+                    # points
+                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro')
+                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bo')
+
+                    # text
+                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
                     ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
 
                 # stationary locations
@@ -512,7 +524,7 @@ def plot_trajectory(unpacked):
 
                     # TEST
                     # TODO 2d slice
-                    ax2.plot(offset[0], offset[1], 'ks')
+                    ax2.plot(offset[0], offset[1], 'ko')
                     ax2.text(offset[0], offset[1], 'C{0}'.format(zz))
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize+4)
@@ -549,8 +561,10 @@ def plot_trajectory(unpacked):
         # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
         # ax.legend(loc='lower right', fontsize=fontsize)
         ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize+4)
-        # ax2.legend(loc='lower right', fontsize=fontsize)
-        ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize+4)
+
+        if dim == 3:
+            # ax2.legend(loc='lower right', fontsize=fontsize-4)
+            ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize+4)
 
 # ************ TEST LINEARIZED QC ***************
 def plot_trajectory_qc(fig, ax, fontsize, fontweight, labelsize, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states,
@@ -673,9 +687,31 @@ def plot_assignment_comp_time(unpacked):
 
 def plot_runtime_histogram(unpacked_ensemble_diagnostic):
 
-    fig, axs = plt.subplots(1,1)
-    axs.set_xlabel('EMD runtime - Dyn runtime (s)', fontsize=14)
-    axs.set_ylabel('Frequency', fontsize=14)
+    fontsize = 16
 
-    axs.hist(unpacked_ensemble_diagnostic, bins=50)
+    labels = ['Dyn', 'EMD']
+
+    fig, axs = plt.subplots(1,1)
+    axs.set_xlabel('Simulation runtime (s)', fontsize=fontsize)
+    axs.set_ylabel('Frequency', fontsize=fontsize)
+
+    axs.hist(unpacked_ensemble_diagnostic, histtype='bar', stacked=True, bins=10, label=labels)
+
+    axs.legend(fontsize=fontsize)
+
+def plot_runtimes(unpacked_ensemble_diagnostic):
+
+    fontsize = 16
+
+    labels = ['Dyn', 'EMD']
+
+    fig, axs = plt.subplots(1,1)
+    axs.set_xlabel('Simulation', fontsize=fontsize)
+    axs.set_ylabel('Runtime (s)', fontsize=fontsize)
+
+    # NOTE make sure that label is matching up with diagnostics
+    axs.plot(unpacked_ensemble_diagnostic[0], marker='.', label=labels[0])
+    axs.plot(unpacked_ensemble_diagnostic[1], marker='.', label=labels[1])
+
+    axs.legend(fontsize=fontsize)
 
