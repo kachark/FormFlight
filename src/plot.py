@@ -1,4 +1,5 @@
 
+import re
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ from matplotlib.patches import Circle
 from mpl_toolkits import mplot3d
 from matplotlib.collections import PatchCollection
 import matplotlib.ticker as ticker
+import scipy.stats as sts
 
 import post_process
 
@@ -22,13 +24,14 @@ matplotlib.rcParams['font.family'] = 'STIXGeneral'
 # matplotlib.pyplot.title(r'ABC123 vs $\mathrm{ABC123}^{123}$')
 
 
-# TODO move plotting functions to plot.py
-
 def plot_costs(unpacked):
 
-    fontsize = 14
+    linewidth = 4
+
+    labelsize = 32
+    fontsize = 32
     fig, axs = plt.subplots(1,1)
-    axs.set_xlabel('time (s)', fontsize=fontsize)
+    axs.set_xlabel('Time (s)', fontsize=fontsize)
     # axs.set_ylabel('Cost', fontsize=fontsize)
 
     axs.set_ylabel('Normalized Cost', fontsize=fontsize)
@@ -50,55 +53,109 @@ def plot_costs(unpacked):
             # axs.plot(tout, np.sum(cost_to_go, axis=1), '--r', label='Cost-to-go'+' '+sim_name)
 
             # normalized costs
-            axs.plot(tout, np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching')
-            axs.plot(tout, np.sum(final_cost, axis=1)/summed_opt_cost, '--c', label='Cum. Stage Cost'+' '+sim_name)
-            axs.plot(tout, np.sum(cost_to_go, axis=1)/summed_opt_cost, '--r', label='Cost-to-go'+' '+sim_name)
+            axs.plot(tout, np.ones((yout.shape[0])), '--k', linewidth=linewidth, label='Optimal cost with no switching')
+            axs.plot(tout, np.sum(final_cost, axis=1)/summed_opt_cost, '--c', linewidth=linewidth, label='Cum. Stage Cost'+' '+sim_name)
+            axs.plot(tout, np.sum(cost_to_go, axis=1)/summed_opt_cost, '--r', linewidth=linewidth, label='Cost-to-go'+' '+sim_name)
         else:
             # axs.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost'+' '+sim_name)
             ## axs.plot(tout, np.sum(cost_to_go, axis=1), '-r', label='Cost-to-go'+' '+sim_name)
 
             # normalized costs
-            axs.plot(tout, np.sum(final_cost, axis=1)/summed_opt_cost, '-c', label='Cum. Stage Cost'+' '+sim_name)
+            axs.plot(tout, np.sum(final_cost, axis=1)/summed_opt_cost, '-c', linewidth=linewidth, label='Cum. Stage Cost'+' '+sim_name)
 
-        axs.legend(fontsize=fontsize)
+    axs.xaxis.set_tick_params(labelsize=labelsize)
+    axs.yaxis.set_tick_params(labelsize=labelsize)
 
-    plt.figure()
-    for sim_name, metrics in unpacked.items():
+    # reorder the legend terms
+    handles, labels = axs.get_legend_handles_labels()
+    labels = [labels[1], labels[0], labels[2], labels[3]]
+    handles = [handles[1], handles[0], handles[2], handles[3]]
 
-        nagents = metrics['nagents']
-        tout = metrics['tout']
-        final_cost = metrics['final_cost']
-        cost_to_go = metrics['cost_to_go']
+    axs.legend(handles, labels, loc='center right', bbox_to_anchor=(0.9, 0.4), fontsize=fontsize)
 
-        for zz in range(nagents):
-            plt.plot(tout, final_cost[:, zz], '-.c', label='Cum. Stage Cost ({0})'.format(zz))
-            plt.plot(tout, cost_to_go[:, zz], '-.r', label='Cost-to-go (assuming no switch) ({0})'.format(zz))
 
-        plt.legend()
+    # Agent-by-agent cost plots on 1 figure
+    # plt.figure()
+    # for sim_name, metrics in unpacked.items():
+
+    #     nagents = metrics['nagents']
+    #     tout = metrics['tout']
+    #     final_cost = metrics['final_cost']
+    #     cost_to_go = metrics['cost_to_go']
+
+    #     for zz in range(nagents):
+    #         plt.plot(tout, final_cost[:, zz], '-.c', label='Cum. Stage Cost ({0})'.format(zz))
+    #         plt.plot(tout, cost_to_go[:, zz], '-.r', label='Cost-to-go (assuming no switch) ({0})'.format(zz))
+
+    #     plt.legend()
 
 def plot_cost_histogram(unpacked_ensemble_metric):
 
-    fontsize = 16
+    fontsize = 32
+    labelsize = 32
 
     labels = ['Dyn', 'EMD']
 
     fig, axs = plt.subplots(1,1)
-    axs.set_xlabel('Control Expenditure', fontsize=fontsize)
+    axs.set_xlabel('Control Expenditure Difference (EMD - Dyn)/Dyn', fontsize=fontsize)
     axs.set_ylabel('Frequency', fontsize=fontsize)
 
-    axs.hist(unpacked_ensemble_metric, histtype='bar', stacked=True, bins=10, label=labels)
+    axs.hist(unpacked_ensemble_metric, histtype='bar', stacked=True, bins=10, align='left', label=labels)
+
+    axs.xaxis.set_tick_params(labelsize=labelsize)
+    axs.yaxis.set_tick_params(labelsize=labelsize)
+
+    axs.xaxis.offsetText.set_fontsize(fontsize)
 
     axs.legend(fontsize=fontsize)
 
-def plot_asst_histogram(unpacked_ensemble_metric):
+# TODO move to a different file
+def atoi(text):
+    return int(text) if text.isdigit() else text
 
-    fontsize = 16
+# TODO move to a different file
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
+
+def plot_ensemble_cost_histogram(metrics_to_compare):
+
+    fontsize = 32
+    labelsize = 32
 
     fig, axs = plt.subplots(1,1)
-    axs.set_xlabel('Assignment Switches', fontsize=fontsize)
+    axs.set_xlabel('Control Expenditure Difference (EMD - Dyn)/Dyn', fontsize=fontsize)
     axs.set_ylabel('Frequency', fontsize=fontsize)
 
-    axs.hist(unpacked_ensemble_metric, color='darkorange', bins=10)
+    # Using DataFrames
+    labels = []
+    for ensemble_name in metrics_to_compare.keys():
+        labels.append(re.search('\d+v\d+', ensemble_name).group())
+
+    metrics_df = pd.DataFrame.from_dict(metrics_to_compare)
+    metrics_df.columns = labels
+
+    # order data by number of agents
+    labels.sort(key=natural_keys)
+    metrics_df = metrics_df[labels]
+
+    for i, (label, data) in enumerate(metrics_df.iteritems()):
+        nbins = int(len(data)/4)
+        data.hist(ax=axs, bins=nbins, align='left', edgecolor='k', alpha=0.5, label=label)
+        # data.plot.kde(ax=axs)
+
+    axs.grid(False)
+
+    axs.xaxis.set_tick_params(labelsize=labelsize)
+    axs.yaxis.set_tick_params(labelsize=labelsize)
+
+    axs.xaxis.offsetText.set_fontsize(fontsize)
+
+    axs.legend(fontsize=fontsize)
 
 def plot_assignments(unpacked):
 
@@ -196,50 +253,19 @@ def plot_assignments(unpacked):
         ax.xaxis.set_ticks(np.arange(nagents))
         ax.zaxis.set_ticks(np.arange(ntargets))
 
+def plot_asst_histogram(unpacked_ensemble_metric):
 
+    fontsize = 32
+    labelsize = 32
 
-        # import ipdb; ipdb.set_trace()
-        # asst_density_grid = np.sum(asst_array, axis=1) # sum over time
-        # ax.imshow(asst_density_grid, cmap='hot')
+    fig, axs = plt.subplots(1,1)
+    axs.set_xlabel('Assignment Switches', fontsize=fontsize)
+    axs.set_ylabel('Frequency', fontsize=fontsize)
+    axs.xaxis.set_tick_params(labelsize=labelsize)
+    axs.yaxis.set_tick_params(labelsize=labelsize)
 
-        # for tt in range(tout.shape[0]):
-        #     ax.imshow(asst_array[:, tt, :])
-
-
-        # agents = np.arange(nagents)
-        # assigned_to_targets = assignments[:, agents]
-        # # X, Y = np.meshgrid(agents, tout)
-        # # ax.contour(X, Y, assigned_to_targets)
-        # X, Y = np.meshgrid(tout, agents)
-        # ax.contour(X, Y, assigned_to_targets.T)
-        # ax.set_xlabel('time (s)')
-        # ax.set_ylabel('agent')
-
-
-        # agents = np.arange(nagents)
-        # assigned_to_targets = assignments[:, agents]
-        # X, Y = np.meshgrid(agents, assigned_to_targets)
-        # U, V = np.meshgrid(assigned_to_targets, tout)
-        # # import ipdb; ipdb.set_trace()
-        # ax.contour(X, Y, V)
-
-        # agents = np.arange(nagents)
-        # assigned_to_targets = assignments[:, agents]
-        # X, Y = np.meshgrid(tout, agents)
-        # ax.contourf3D(X, Y, assigned_to_targets.T)
-        # ax.plot_surface(X, Y, assigned_to_targets.T)
-        # ax.set_xlabel('time (s)')
-        # ax.set_ylabel('agent')
-        # ax.set_zlabel('assigned-to target')
-
-        # import ipdb; ipdb.set_trace()
-
-        # for ii in range(nagents):
-        #     jj = assignments[:, ii]
-        #     ax.scatter(ii, tout, jj)
-
-        # import ipdb; ipdb.set_trace()
-
+    # axs.hist(unpacked_ensemble_metric, color='darkorange', bins=10, align='left')
+    axs.hist(unpacked_ensemble_metric, bins=10, align='left')
 
 def plot_trajectory(unpacked):
 
@@ -250,9 +276,16 @@ def plot_trajectory(unpacked):
         dim = metrics['dim']
 
     # want to display all trajectories on same figure
-    fontsize = 26
+    linewidth = 4
+    markersize = 8
+    textsize = 14
+
+    fontsize = 32
     fontweight = 'bold'
-    labelsize = 26
+    labelsize = 32
+
+    axispad = 18
+    labelpad = 35
 
     if dim == 2:
         fig, ax = plt.subplots()
@@ -267,7 +300,6 @@ def plot_trajectory(unpacked):
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(111)
 
-    # for sim_name in sim_names:
     for sim_name, metrics in unpacked.items():
 
         dx = metrics['dx']
@@ -439,16 +471,16 @@ def plot_trajectory(unpacked):
                     # TEST
                     # TODO 2d slice
                     # trajectories
-                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '-r', label=agent_traj_label)
-                    ax2.plot(y_target[:, 0], y_target[:, 1], '-b', label=target_traj_label)
+                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '-r', linewidth=linewidth, label=agent_traj_label)
+                    ax2.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth, label=target_traj_label)
 
                     # points
-                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', label=agent_start_pt_label)
-                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', label=target_start_pt_label)
+                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', markersize=markersize, label=agent_start_pt_label)
+                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', markersize=markersize, label=target_start_pt_label)
 
                     # text
-                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
-                    ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
+                    ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
                 ### stationary points
                 for zz in range(ntargets):
@@ -462,8 +494,8 @@ def plot_trajectory(unpacked):
 
                     # TEST
                     # TODO 2d slice
-                    ax2.plot(offset[0], offset[1], 'ko', label=stationary_pt_label)
-                    ax2.text(offset[0], offset[1], 'C{0}'.format(zz))
+                    ax2.plot(offset[0], offset[1], 'ko', markersize=markersize, label=stationary_pt_label)
+                    ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -505,16 +537,16 @@ def plot_trajectory(unpacked):
                     # TEST
                     # TODO 2d slice
                     # trajectories
-                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '--r', label=agent_traj_label)
-                    ax2.plot(y_target[:, 0], y_target[:, 1], '-b')
+                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '--r', linewidth=linewidth, label=agent_traj_label)
+                    ax2.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth)
 
                     # points
-                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro')
-                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bo')
+                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', markersize=markersize)
+                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', markersize=markersize)
 
                     # text
-                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
-                    ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
+                    ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
                 # stationary locations
                 for zz in range(ntargets):
@@ -524,15 +556,15 @@ def plot_trajectory(unpacked):
 
                     # TEST
                     # TODO 2d slice
-                    ax2.plot(offset[0], offset[1], 'ko')
-                    ax2.text(offset[0], offset[1], 'C{0}'.format(zz))
+                    ax2.plot(offset[0], offset[1], 'ko', markersize=markersize)
+                    ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
-                ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize+4)
-                ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize+4)
-                ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize+4)
+                ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+                ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+                ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
 
-                ax2.set_xlabel("x", fontweight=fontweight, fontsize=fontsize+4)
-                ax2.set_ylabel("y", fontweight=fontweight, fontsize=fontsize+4)
+                ax2.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+                ax2.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
 
             # dim = 3
 
@@ -541,17 +573,17 @@ def plot_trajectory(unpacked):
             ax.yaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
             ax.zaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
 
-            ax.xaxis.set_tick_params(labelsize=labelsize+4)
-            ax.yaxis.set_tick_params(labelsize=labelsize+4)
-            ax.zaxis.set_tick_params(labelsize=labelsize+4)
+            ax.xaxis.set_tick_params(labelsize=labelsize)
+            ax.yaxis.set_tick_params(labelsize=labelsize)
+            ax.zaxis.set_tick_params(labelsize=labelsize)
 
-            ax.tick_params(axis='x', which='major', pad=15)
-            ax.tick_params(axis='y', which='major', pad=15)
-            ax.tick_params(axis='z', which='major', pad=15)
+            ax.tick_params(axis='x', which='major', pad=axispad)
+            ax.tick_params(axis='y', which='major', pad=axispad)
+            ax.tick_params(axis='z', which='major', pad=axispad)
 
-            ax.xaxis.labelpad = 25
-            ax.yaxis.labelpad = 25
-            ax.zaxis.labelpad = 25
+            ax.xaxis.labelpad = labelpad
+            ax.yaxis.labelpad = labelpad
+            ax.zaxis.labelpad = labelpad
 
             # TEST
             # TODO 2d slice
@@ -560,11 +592,12 @@ def plot_trajectory(unpacked):
 
         # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
         # ax.legend(loc='lower right', fontsize=fontsize)
-        ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize+4)
+        legend = ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
+        legend.remove()
 
         if dim == 3:
             # ax2.legend(loc='lower right', fontsize=fontsize-4)
-            ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize+4)
+            ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
 
 # ************ TEST LINEARIZED QC ***************
 def plot_trajectory_qc(fig, ax, fontsize, fontweight, labelsize, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states,
@@ -687,21 +720,30 @@ def plot_assignment_comp_time(unpacked):
 
 def plot_runtime_histogram(unpacked_ensemble_diagnostic):
 
-    fontsize = 16
+    fontsize = 32
+    labelsize = 32
 
-    labels = ['Dyn', 'EMD']
+    # fig, axs = plt.subplots(1,1)
+    # axs.set_xlabel('Simulation runtime (s)', fontsize=fontsize)
+    # axs.set_ylabel('Frequency', fontsize=fontsize)
+    # labels = ['Dyn', 'EMD']
+    # axs.hist(unpacked_ensemble_diagnostic, histtype='bar', stacked=True, bins=10, align='left', label=labels)
+    # axs.legend(fontsize=fontsize)
 
     fig, axs = plt.subplots(1,1)
-    axs.set_xlabel('Simulation runtime (s)', fontsize=fontsize)
+    axs.xaxis.set_tick_params(labelsize=labelsize)
+    axs.yaxis.set_tick_params(labelsize=labelsize)
+
+    labels = 'EMD Runtime - Dyn Runtime'
+    axs.set_xlabel('Runtime Difference (EMD - Dyn)', fontsize=fontsize)
     axs.set_ylabel('Frequency', fontsize=fontsize)
+    axs.hist(unpacked_ensemble_diagnostic, histtype='bar', stacked=True, bins=10, align='left')
+    # axs.legend(fontsize=fontsize)
 
-    axs.hist(unpacked_ensemble_diagnostic, histtype='bar', stacked=True, bins=10, label=labels)
-
-    axs.legend(fontsize=fontsize)
 
 def plot_runtimes(unpacked_ensemble_diagnostic):
 
-    fontsize = 16
+    fontsize = 32
 
     labels = ['Dyn', 'EMD']
 

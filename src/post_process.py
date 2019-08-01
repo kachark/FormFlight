@@ -3,6 +3,7 @@ import pandas as pd
 import copy
 from controls import *
 from plot import *
+import os
 
 
 def post_process_batch_simulation(batch_results):
@@ -319,6 +320,20 @@ def unpack_performance_metrics(batch_performance_metrics):
         nagents = int(parameters[6])
         ntargets = int(parameters[7])
 
+        # #### OLD DATA (earlier than 7/25) ####
+        # # simulation parameters
+        # parameter_cols = 7 # see stored data spec
+        # parameters = metrics_df.iloc[0, 0:parameter_cols].to_numpy()
+
+        # dt = float(parameters[0])
+        # dim = int(parameters[1])
+        # collisions = int(parameters[2])
+        # dx = int(parameters[3])
+        # du = int(parameters[4])
+        # nagents = int(parameters[5])
+        # ntargets = int(parameters[6])
+
+
         # simulation outputs
         output_cols = 1 + nagents*dx + ntargets*dx + nagents + ntargets*dx + nagents*du
         outputs = metrics_df.iloc[:, parameter_cols: parameter_cols + output_cols].to_numpy()
@@ -345,12 +360,122 @@ def unpack_performance_metrics(batch_performance_metrics):
         unpacked = [dt, dim, assignment_epoch, collisions, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls,
                 final_cost, stage_cost, cost_to_go, optimal_cost]
 
+        columns = [
+            "dt",
+            "dim",
+            "assignment_epoch",
+            "collisions",
+            "dx",
+            "du",
+            "nagents",
+            "ntargets",
+            "tout",
+            "yout",
+            "stationary_states",
+            "agent_controls",
+            "final_cost",
+            "stage_cost",
+            "cost_to_go",
+            "optimal_cost"
+        ]
+
+        metrics = {}
+        for (col, met) in zip(columns, unpacked):
+            metrics.update({col: met})
+
+        unpacked_batch_metrics.update({sim_name: metrics})
+
+    return unpacked_batch_metrics
+
+        # #### OLD DATA (earlier than 7/25) ####
+        # unpacked = [dt, dim, collisions, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls,
+        #         final_cost, stage_cost, cost_to_go, optimal_cost]
+
+        # ### end unpack ###
+
+        # columns = [
+        #     "dt",
+        #     "dim",
+        #     "collisions",
+        #     "dx",
+        #     "du",
+        #     "nagents",
+        #     "ntargets",
+        #     "tout",
+        #     "yout",
+        #     "stationary_states",
+        #     "agent_controls",
+        #     "final_cost",
+        #     "stage_cost",
+        #     "cost_to_go",
+        #     "optimal_cost"
+        # ]
+
+        # metrics = {}
+        # for (col, met) in zip(columns, unpacked):
+        #     metrics.update({col: met})
+
+        # unpacked_batch_metrics.update({sim_name: metrics})
+
+    # return unpacked_batch_metrics
+
+def unpack_performance_metrics_OLD(batch_performance_metrics):
+    """
+    unpacks pandas DataFrame into a python standard dictionary
+    """
+
+    unpacked_batch_metrics = {}
+
+    for sim_name, metrics_df in batch_performance_metrics.items():
+
+        ### unpack simulation metrics ###
+
+        #### OLD DATA (earlier than 7/25) ####
+        # simulation parameters
+        parameter_cols = 7 # see stored data spec
+        parameters = metrics_df.iloc[0, 0:parameter_cols].to_numpy()
+
+        dt = float(parameters[0])
+        dim = int(parameters[1])
+        collisions = int(parameters[2])
+        dx = int(parameters[3])
+        du = int(parameters[4])
+        nagents = int(parameters[5])
+        ntargets = int(parameters[6])
+
+
+        # simulation outputs
+        output_cols = 1 + nagents*dx + ntargets*dx + nagents + ntargets*dx + nagents*du
+        outputs = metrics_df.iloc[:, parameter_cols: parameter_cols + output_cols].to_numpy()
+
+        tout = outputs[:, 0]
+        yout_cols = 1 + nagents*dx + ntargets*dx + nagents
+        yout = outputs[:, 1: yout_cols] # good
+        ss_cols = yout_cols + ntargets*dx
+        stationary_states = outputs[0, yout_cols: ss_cols]
+        ctrl_cols = ss_cols + nagents*du
+        agent_controls = outputs[:, ss_cols: 1+ ctrl_cols]
+
+        # simulation costs
+        costs = metrics_df.iloc[:, parameter_cols + output_cols: ].to_numpy()
+
+        fc_cols = nagents
+        final_cost = costs[:, 0:fc_cols]
+        sc_cols = fc_cols + nagents
+        stage_cost = costs[:, fc_cols: sc_cols]
+        ctg_cols = sc_cols + nagents
+        cost_to_go = costs[:, sc_cols: ctg_cols]
+        optimal_cost = costs[:, ctg_cols: ]
+
+        #### OLD DATA (earlier than 7/25) ####
+        unpacked = [dt, dim, collisions, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls,
+                final_cost, stage_cost, cost_to_go, optimal_cost]
+
         ### end unpack ###
 
         columns = [
             "dt",
             "dim",
-            "assignment_epoch",
             "collisions",
             "dx",
             "du",
@@ -462,6 +587,14 @@ def index_at_time(tout, time):
 
     return (np.abs(tout-time)).argmin()
 
+def collision_time(tout, yout):
+
+    """
+    input: time history, trajectories, assignments
+    output: time for all agents to be collided
+    """
+    pass
+
 
 def plot_batch_performance_metrics(batch_performance_metrics):
 
@@ -470,6 +603,9 @@ def plot_batch_performance_metrics(batch_performance_metrics):
     plot_costs(unpacked)
     plot_assignments(unpacked)
     plot_trajectory(unpacked)
+
+    # TODO trajectory movie
+    # plot_animated_trajectory(unpacked)
 
 def plot_ensemble_histograms(ensemble_performance_metrics):
 
@@ -574,7 +710,145 @@ def plot_ensemble_diagnostics(ensemble_diagnostics):
 
     # plot_runtime_histogram(runtime_diff)
     runtimes = [unpacked_ensemble_diagnostics_dyn[:, 2], unpacked_ensemble_diagnostics_emd[:,2]]
-    plot_runtime_histogram(runtimes)
+    # plot_runtime_histogram(runtimes)
+    plot_runtime_histogram(runtime_diff)
     plot_runtimes(runtimes)
 
+
+# TODO MOVE TO log.py
+def save_ensemble_metrics(ensemble_performance_metrics, ensemble_name):
+
+    nbatches = len(ensemble_performance_metrics)
+    unpacked_ensemble_metrics_emd = np.zeros((nbatches, 4))
+    unpacked_ensemble_metrics_dyn = np.zeros((nbatches, 4))
+
+    # final_cost dyn, final_cost emd, assignments (emd)
+    unpacked_ensemble_fc_asst = np.zeros((nbatches, 3))
+
+    for i, batch in enumerate(ensemble_performance_metrics):
+        unpacked = unpack_performance_metrics(batch)
+
+        # extract cost metrics
+
+        # TEST
+        for sim_name, metrics in unpacked.items():
+
+            tout = metrics['tout']
+            yout = metrics['yout']
+            nagents = metrics['nagents']
+            dx = metrics['dx']
+            final_cost = metrics['final_cost']
+            cost_to_go = metrics['cost_to_go']
+            optimal_cost = metrics['optimal_cost']
+
+            assignments = yout[:, nagents*2*dx:].astype(np.int32)
+            assignment_switches = find_switches(tout, yout, nagents, nagents, dx, dx)
+            # recreate assignments per switch
+            asst_switch_indices = set()
+            # asst_switch_indices.add(0) # add the origin assignment
+            for ii in range(nagents):
+               switch_indices = assignment_switches[ii]
+               for ind in switch_indices:
+                   asst_switch_indices.add(ind)
+            nswitches = len(asst_switch_indices)
+
+            summed_opt_cost = np.sum(optimal_cost[0, :])
+
+            if sim_name == 'AssignmentDyn':
+                unpacked_ensemble_metrics_dyn[i, 0] = np.sum(final_cost, axis=1)[-1]
+                unpacked_ensemble_metrics_dyn[i, 1] = np.sum(cost_to_go, axis=1)[-1]
+                unpacked_ensemble_metrics_dyn[i, 2] = summed_opt_cost
+                unpacked_ensemble_metrics_dyn[i, 3] = nswitches
+
+                unpacked_ensemble_fc_asst[i, 0] = np.sum(final_cost, axis=1)[-1]
+            if sim_name == 'AssignmentEMD':
+                unpacked_ensemble_metrics_emd[i, 0] = np.sum(final_cost, axis=1)[-1]
+                unpacked_ensemble_metrics_emd[i, 1] = np.sum(cost_to_go, axis=1)[-1]
+                unpacked_ensemble_metrics_emd[i, 2] = summed_opt_cost
+                unpacked_ensemble_metrics_emd[i, 3] = nswitches
+
+                unpacked_ensemble_fc_asst[i, 1] = np.sum(final_cost, axis=1)[-1]
+                unpacked_ensemble_fc_asst[i, 2] = nswitches
+
+            # ### cost plots
+            # if sim_name == 'AssignmentDyn':
+            #     axs.plot(tout, summed_opt_cost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching')
+            #     axs.plot(tout, np.sum(final_cost, axis=1), '--c', label='Cum. Stage Cost'+' '+sim_name)
+            #     axs.plot(tout, np.sum(cost_to_go, axis=1), '--r', label='Cost-to-go'+' '+sim_name)
+            # else:
+            #     axs.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost'+' '+sim_name)
+            #     # axs.plot(tout, np.sum(cost_to_go, axis=1), '-r', label='Cost-to-go'+' '+sim_name)
+
+    df = pd.DataFrame(unpacked_ensemble_fc_asst)
+
+    root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/final_costs_assignments/'
+    directory = root_directory + ensemble_name
+
+    try:
+        os.makedirs(directory)
+    except FileExistsError:
+        # directory already exists
+        pass
+
+    path = directory + '/' + 'final_costs_assignments.csv'
+
+    df.to_csv(path, index=False, header=False)
+
+def plot_ensemble_metric_comparisons(ensemble_performance_metrics):
+
+    metrics_to_compare = {}
+    for ensemble_name, ensemble_metrics in ensemble_performance_metrics.items():
+        nbatches = len(ensemble_metrics)
+        unpacked_ensemble_metrics_emd = np.zeros((nbatches, 4))
+        unpacked_ensemble_metrics_dyn = np.zeros((nbatches, 4))
+        for i, batch in enumerate(ensemble_metrics):
+
+            if '20v20' in ensemble_name:
+                unpacked = unpack_performance_metrics_OLD(batch)
+            else:
+                unpacked = unpack_performance_metrics(batch)
+
+            # extract cost metrics
+
+            # TEST
+            for sim_name, metrics in unpacked.items():
+
+                tout = metrics['tout']
+                yout = metrics['yout']
+                nagents = metrics['nagents']
+                dx = metrics['dx']
+                final_cost = metrics['final_cost']
+                cost_to_go = metrics['cost_to_go']
+                optimal_cost = metrics['optimal_cost']
+
+                assignments = yout[:, nagents*2*dx:].astype(np.int32)
+                assignment_switches = find_switches(tout, yout, nagents, nagents, dx, dx)
+                # recreate assignments per switch
+                asst_switch_indices = set()
+                # asst_switch_indices.add(0) # add the origin assignment
+                for ii in range(nagents):
+                   switch_indices = assignment_switches[ii]
+                   for ind in switch_indices:
+                       asst_switch_indices.add(ind)
+                nswitches = len(asst_switch_indices)
+
+                summed_opt_cost = np.sum(optimal_cost[0, :])
+
+                if sim_name == 'AssignmentDyn':
+                    unpacked_ensemble_metrics_dyn[i, 0] = np.sum(final_cost, axis=1)[-1]
+                    unpacked_ensemble_metrics_dyn[i, 1] = np.sum(cost_to_go, axis=1)[-1]
+                    unpacked_ensemble_metrics_dyn[i, 2] = summed_opt_cost
+                    unpacked_ensemble_metrics_dyn[i, 3] = nswitches
+                if sim_name == 'AssignmentEMD':
+                    unpacked_ensemble_metrics_emd[i, 0] = np.sum(final_cost, axis=1)[-1]
+                    unpacked_ensemble_metrics_emd[i, 1] = np.sum(cost_to_go, axis=1)[-1]
+                    unpacked_ensemble_metrics_emd[i, 2] = summed_opt_cost
+                    unpacked_ensemble_metrics_emd[i, 3] = nswitches
+
+        control_expenditure_diff = (unpacked_ensemble_metrics_emd[:, 0] - unpacked_ensemble_metrics_dyn[:, 0])\
+                / unpacked_ensemble_metrics_dyn[:, 0] # final_cost - optimal_cost
+
+        metrics_to_compare.update({ensemble_name: control_expenditure_diff})
+
+    plot_ensemble_cost_histogram(metrics_to_compare)
 
