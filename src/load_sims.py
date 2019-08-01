@@ -16,20 +16,21 @@ if __name__ == "__main__":
 
     nagents = 5
     ntargets = 5
-    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_Double_Integrator_LQR_LQR_2019_07_30_10_15_08'
-
-    # # FOR QUICK TESTING
-    # nagents = 5
-    # ntargets = 5
+    # agent_model = 'Double_Integrator'
+    # target_model = 'Double_Integrator'
     # ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-    #         'identical_Double_Integrator_LQR_LQR_2019_07_29_17_34_35'
+    #         'identical_'+agent_model+'_LQR_LQR_2019_07_30_10_15_08'
 
-    # # # old
-    # root_directory = '/Users/koray/Box Sync/test_results/'
+    agent_model = 'Linearized_Quadcopter'
+    target_model = 'Linearized_Quadcopter'
+    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
+            'identical_'+agent_model+'_LQR_LQR_2019_08_01_11_25_30'
+
+    # # old
+    root_directory = '/Users/koray/Box Sync/test_results/'
     # ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_17_00_09_55'
 
-    root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/'
+    # root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/'
     ensemble_directory = root_directory + ensemble_name
 
     # get number of batches
@@ -39,17 +40,17 @@ if __name__ == "__main__":
     # load batches and plot
     sim_name_list = ['AssignmentDyn', 'AssignmentEMD']
 
-    # # load and plot every batch within ensemble
-    # for ii in range(nbatches):
-    #     batch_name = 'batch_{0}'.format(ii)
-    #     loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
-    #     post_process.plot_batch_performance_metrics(loaded_batch)
+    # load and plot every batch within ensemble
+    for ii in range(nbatches):
+        batch_name = 'batch_{0}'.format(ii)
+        loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
+        post_process.plot_batch_performance_metrics(loaded_batch)
 
-    # load and plot a specific batch
-    batch_num = 2
-    batch_name = 'batch_{0}'.format(batch_num)
-    loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
-    post_process.plot_batch_performance_metrics(loaded_batch)
+    # # load and plot a specific batch
+    # batch_num = 2
+    # batch_name = 'batch_{0}'.format(batch_num)
+    # loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
+    # post_process.plot_batch_performance_metrics(loaded_batch)
 
     # # cost histogram
     # ensemble_metrics = []
@@ -69,11 +70,11 @@ if __name__ == "__main__":
 
     ##### LOAD DIAGNOSTICS
 
-    # # load and plot a specific batch
-    # batch_num = 0
-    # batch_name = 'batch_{0}'.format(batch_num)
-    # loaded_batch_diagnostics = log.load_batch_diagnostics(ensemble_directory, batch_name, sim_name_list)
-    # post_process.plot_batch_diagnostics(loaded_batch_diagnostics)
+    # load and plot a specific batch
+    batch_num = 0
+    batch_name = 'batch_{0}'.format(batch_num)
+    loaded_batch_diagnostics = log.load_batch_diagnostics(ensemble_directory, batch_name, sim_name_list)
+    post_process.plot_batch_diagnostics(loaded_batch_diagnostics)
 
     # diagnostics
     ensemble_diagnostics = []

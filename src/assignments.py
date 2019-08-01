@@ -88,9 +88,6 @@ class AssignmentEMD(Assignment):
 
         M = ot.dist(xs, xt)
 
-        # if t >= 0.45:
-        #     import ipdb; ipdb.set_trace()
-
         M /= M.max()
 
         G0, log = ot.emd(a, b, M, log=True)

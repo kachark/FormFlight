@@ -324,7 +324,9 @@ def plot_trajectory(unpacked):
             agent_model = 'Linearized_Quadcopter'
             target_model = 'Linearized_Quadcopter'
             labels = [agent_traj_label, agent_start_pt_label, target_start_pt_label, target_traj_label, stationary_pt_label]
-            plot_trajectory_qc(fig, ax, fontsize, fontweight, labelsize, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states,
+            plot_params = [linewidth, markersize, textsize, fontsize, fontweight, labelsize, axispad, labelpad]
+            figures = [(fig, ax), (fig2, ax2)]
+            plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states,
                     assignment_switches, labels)
             continue
         if dx == 6:
@@ -600,14 +602,29 @@ def plot_trajectory(unpacked):
             ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
 
 # ************ TEST LINEARIZED QC ***************
-def plot_trajectory_qc(fig, ax, fontsize, fontweight, labelsize, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states,
-        assignment_switches, labels):
+def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states, assignment_switches, labels):
+
+    # plot parameters
+    fig = figures[0][0]
+    ax = figures[0][1]
+    fig2 = figures[1][0]
+    ax2 = figures[1][1]
+
+    linewidth = plot_params[0]
+    markersize = plot_params[1]
+    textsize = plot_params[2]
+    fontsize = plot_params[3]
+    fontweight = plot_params[4]
+    labelsize = plot_params[5]
+    axispad = plot_params[6]
+    labelpad = plot_params[7]
 
     agent_traj_label = labels[0]
     agent_start_pt_label = labels[1]
     target_start_pt_label = labels[2]
     target_traj_label = labels[3]
     stationary_pt_label = labels[4]
+
 
     if dim == 3:
 
@@ -642,6 +659,20 @@ def plot_trajectory_qc(fig, ax, fontsize, fontweight, labelsize, sim_name, dx, d
                 ax.plot3D(y_target[:, 9], y_target[:, 10], y_target[:, 11], '-b', label=target_traj_label)
                 ax.text(y_target[0, 9], y_target[0, 10], y_target[0, 11], 'T{0}'.format(zz))
 
+                # TEST
+                # TODO 2d slice
+                # trajectories
+                ax2.plot(y_agent[:, 9], y_agent[:, 10], '-r', linewidth=linewidth, label=agent_traj_label)
+                ax2.plot(y_target[:, 9], y_target[:, 10], '-b', linewidth=linewidth, label=target_traj_label)
+
+                # points
+                ax2.plot(y_agent[0, 9], y_agent[0, 10], 'ro', markersize=markersize, label=agent_start_pt_label)
+                ax2.plot(y_target[0, 9], y_target[0, 10], 'bo', markersize=markersize, label=target_start_pt_label)
+
+                # text
+                ax2.text(y_agent[0, 9], y_agent[0, 10], 'A{0}'.format(zz), fontsize=textsize)
+                ax2.text(y_target[0, 9], y_target[0, 10], 'T{0}'.format(zz), fontsize=textsize)
+
             ### stationary points
             for zz in range(ntargets):
 
@@ -652,14 +683,22 @@ def plot_trajectory_qc(fig, ax, fontsize, fontweight, labelsize, sim_name, dx, d
                 ax.scatter3D(offset[9], offset[10], offset[11], color='k', label=stationary_pt_label)
                 ax.text(offset[9], offset[10], offset[11], 'C{0}'.format(zz))
 
+                # TEST
+                # TODO 2d slice
+                ax2.plot(offset[9], offset[10], 'ko', markersize=markersize, label=stationary_pt_label)
+                ax2.text(offset[9], offset[10], 'C{0}'.format(zz), fontsize=textsize)
+
             ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
             ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
             ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
 
+            ax2.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+            ax2.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+
         elif sim_name == 'AssignmentEMD':
             # non-optimal trajectories (dotted lines)
 
-            agent_traj_label = 'Agent Trajectory - AssignmentEMD'
+            agent_traj_label = 'Agent Path (EMD)'
 
             # agent/target trajectories
             for zz in range(nagents):
@@ -686,21 +725,70 @@ def plot_trajectory_qc(fig, ax, fontsize, fontweight, labelsize, sim_name, dx, d
                 ax.plot3D(y_target[:, 9], y_target[:, 10], y_target[:, 11], '-b')
                 ax.text(y_target[0, 9], y_target[0, 10], y_target[0, 11], 'T{0}'.format(zz))
 
+                # TEST
+                # TODO 2d slice
+                # trajectories
+                ax2.plot(y_agent[:, 9], y_agent[:, 10], '--r', linewidth=linewidth, label=agent_traj_label)
+                ax2.plot(y_target[:, 9], y_target[:, 10], '-b', linewidth=linewidth)
+
+                # points
+                ax2.plot(y_agent[0, 9], y_agent[0, 10], 'ro', markersize=markersize)
+                ax2.plot(y_target[0, 9], y_target[0, 10], 'bo', markersize=markersize)
+
+                # text
+                ax2.text(y_agent[0, 9], y_agent[0, 10], 'A{0}'.format(zz), fontsize=textsize)
+                ax2.text(y_target[0, 9], y_target[0, 10], 'T{0}'.format(zz), fontsize=textsize)
+
             # stationary locations
             for zz in range(ntargets):
                 offset = stationary_states[zz*dx:(zz+1)*dx]
                 ax.scatter3D(offset[9], offset[10], offset[11], color='k')
                 ax.text(offset[9], offset[10], offset[11], 'C{0}'.format(zz))
 
+                # TEST
+                # TODO 2d slice
+                ax2.plot(offset[9], offset[10], 'ko', markersize=markersize)
+                ax2.text(offset[9], offset[10], 'C{0}'.format(zz), fontsize=textsize)
+
             ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
             ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
             ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
-            ax.xaxis.set_tick_params(labelsize=labelsize)
-            ax.yaxis.set_tick_params(labelsize=labelsize)
-            ax.zaxis.set_tick_params(labelsize=labelsize)
 
-        # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
-        ax.legend(loc='lower right', fontsize=13)
+            ax2.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+            ax2.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+
+        # dim = 3
+
+        tick_spacing = 1000
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+        ax.yaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+        ax.zaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+
+        ax.xaxis.set_tick_params(labelsize=labelsize)
+        ax.yaxis.set_tick_params(labelsize=labelsize)
+        ax.zaxis.set_tick_params(labelsize=labelsize)
+
+        ax.tick_params(axis='x', which='major', pad=axispad)
+        ax.tick_params(axis='y', which='major', pad=axispad)
+        ax.tick_params(axis='z', which='major', pad=axispad)
+
+        ax.xaxis.labelpad = labelpad
+        ax.yaxis.labelpad = labelpad
+        ax.zaxis.labelpad = labelpad
+
+        # TEST
+        # TODO 2d slice
+        ax2.xaxis.set_tick_params(labelsize=labelsize)
+        ax2.yaxis.set_tick_params(labelsize=labelsize)
+
+    # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
+    # ax.legend(loc='lower right', fontsize=fontsize)
+    legend = ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
+    legend.remove()
+
+    if dim == 3:
+        # ax2.legend(loc='lower right', fontsize=fontsize-4)
+        ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
 
 def plot_assignment_comp_time(unpacked):
 

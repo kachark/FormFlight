@@ -1,4 +1,4 @@
-# import pickle
+
 import atexit
 from time import time, strftime, localtime
 from datetime import timedelta
@@ -49,22 +49,24 @@ def main():
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
-    maxtime = 5
+    maxtime = 10
     dim = 3
-    nagents = 3
-    ntargets = 3
-    agent_model = "Double_Integrator"
-    target_model = "Double_Integrator"
-    # agent_model = "Linearized_Quadcopter" # STILL TESTING. 3d only
-    # target_model = "Linearized_Quadcopter"
+    nagents = 5
+    ntargets = 5
+    # agent_model = "Double_Integrator"
+    # target_model = "Double_Integrator"
+    agent_model = "Linearized_Quadcopter" # STILL TESTING. 3d only
+    target_model = "Linearized_Quadcopter"
     collisions = True
     agent_control_policy = "LQR"
     target_control_policy = "LQR"
     # every x engine ticks, perform assignment
-    assignment_epoch = 5
+    assignment_epoch = 10
 
     # Create directory for storage
     nensemble = 0
+
+    # TODO ensemble should not default to 'identical'
     ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy)
 
     root_directory = '/Users/koray/Box Sync/test_results/'
@@ -120,6 +122,7 @@ def main():
         # add batch to ensemble
         ensemble_simulation.append(batch)
 
+    # TODO separate functions?
     # RUN SIMULATION
     ensemble_results = {}
     for ii, batch in enumerate(ensemble_simulation):
@@ -130,6 +133,7 @@ def main():
 
         for sim_name, sim in batch.items():
 
+            # TODO not the same order for heterogeneous and non-identical
             # Simulation data structures
             collisions = sim["collisions"]
             dt = sim["dt"]
@@ -229,9 +233,10 @@ def main():
         # collect diagnostics
         packed_batch_diagnostics = post_process_batch_diagnostics(batch_diagnostics) # returns dict
 
+        # # import ipdb; ipdb.set_trace()
         # # DEBUG
         # plot_batch_performance_metrics(batch_performance_metrics)
-        # # plot_batch_diagnostics(packed_batch_diagnostics)
+        # plot_batch_diagnostics(packed_batch_diagnostics)
         # plt.show()
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
@@ -249,17 +254,6 @@ def main():
     print("done!")
 
     return test_conditions
-
-
-
-# def save_object(obj, filename):
-#     with open(filename, 'wb') as output:  # Overwrites any existing file.
-#         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
-
-    # TEST saving objects pre-'postprocessing'
-    # save_object(ensemble_results, 'test_save_pickle.pkl')
-    # with open('test_save_pickle.pkl', 'rb') as input:
-    #     tech_companies = pickle.load(input)
 
 
 def secondsToStr(elapsed=None):
