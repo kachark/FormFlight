@@ -739,14 +739,63 @@ def collision_time(tout, yout):
     """
     pass
 
+def agent_agent_collisions(unpacked):
+    """
+    input: time history, trajectories, assignments, agent statesize
+    output: agents that collided with eachother
+    """
+    # assignment_switch_ind = np.where(y_agent_assignments[:-1] != y_agent_assignments[1:])[0]
+
+    # NOTE assumes homogeneous agents
+    agent_collisions = {}
+    for sim_name, metrics in unpacked.items():
+
+        nagents = metrics['nagents']
+        dx = metrics['dx']
+        tout = metrics['tout']
+        yout = metrics['yout']
+
+        agent_states = []
+        for zz in range(nagents):
+            agent_states.append(np.zeros((tout.shape[0], 3)))
+
+        for zz in range(nagents):
+            y_agent = yout[:, zz*dx:(zz+1)*dx]
+
+            # get positions
+            if dx == 12:
+                agent_pos = np.array(y_agent[:, 9:12])
+            if dx == 6:
+                agent_pos = np.array(y_agent[:, 0:3])
+
+            agent_states[zz] = agent_pos
+
+        # compare agent positions
+        collisions = []
+        for zz in range(nagents):
+            for other_agent in range(nagents):
+                if zz == other_agent:
+                    continue
+
+                agent_zz = agent_states[zz]
+                agent_other = agent_states[other_agent]
+                if np.allclose(agent_zz, agent_other, rtol=1e-1, atol=1e-1):
+                    collisions.append( (zz, other_agent) )
+
+        agent_collisions.update({sim_name: collisions})
+
+    return agent_collisions
 
 def plot_batch_performance_metrics(batch_performance_metrics):
 
     unpacked = unpack_performance_metrics(batch_performance_metrics)
+    # unpacked = unpack_performance_metrics_OLD(batch_performance_metrics)
 
     plot_costs(unpacked)
     plot_assignments(unpacked)
     plot_trajectory(unpacked)
+
+    agent_agent_collisions(unpacked)
 
     # TODO trajectory movie
     # plot_animated_trajectory(unpacked)
@@ -940,7 +989,9 @@ def save_ensemble_metrics(ensemble_performance_metrics, ensemble_name):
 
 def plot_ensemble_metric_comparisons(ensemble_performance_metrics):
 
-    metrics_to_compare = {}
+    control_exp_metrics = {}
+    switch_metrics = {}
+    avg_switch_metrics = {}
     for ensemble_name, ensemble_metrics in ensemble_performance_metrics.items():
         nbatches = len(ensemble_metrics)
         unpacked_ensemble_metrics_emd = np.zeros((nbatches, 4))
@@ -991,8 +1042,60 @@ def plot_ensemble_metric_comparisons(ensemble_performance_metrics):
 
         control_expenditure_diff = (unpacked_ensemble_metrics_emd[:, 0] - unpacked_ensemble_metrics_dyn[:, 0])\
                 / unpacked_ensemble_metrics_dyn[:, 0] # final_cost - optimal_cost
+        ensemble_switches = unpacked_ensemble_metrics_emd[:, 3]
 
-        metrics_to_compare.update({ensemble_name: control_expenditure_diff})
+        control_exp_metrics.update({ensemble_name: control_expenditure_diff})
+        switch_metrics.update({ensemble_name: ensemble_switches})
+        avg_switch_metrics.update({ensemble_name: np.sum(ensemble_switches, axis=0)/ensemble_switches.shape[0]})
 
-    plot_ensemble_cost_histogram(metrics_to_compare)
+    plot_ensemble_cost_histogram(control_exp_metrics)
+    plot_ensemble_switch_histogram(switch_metrics)
+    plot_ensemble_avg_switch(avg_switch_metrics)
 
+def plot_ensemble_diagnostic_comparison(ensemble_diagnostics):
+
+    avg_runtime_diagnostic = {}
+    runtime_diagnostic = {}
+    for ensemble_name, ensemble_diag in ensemble_diagnostics.items():
+        nbatches = len(ensemble_diag)
+        unpacked_ensemble_diagnostics_emd = np.zeros((nbatches, 4))
+        unpacked_ensemble_diagnostics_dyn = np.zeros((nbatches, 4))
+
+        for i, batch_diagnostics in enumerate(ensemble_diag):
+            unpacked = unpack_batch_diagnostics(batch_diagnostics)
+
+            # extract cost metrics
+
+            for sim_name, sim_diagnostics in unpacked.items():
+
+                runtime_diagnostics = sim_diagnostics['runtime_diagnostics']
+
+                tout = runtime_diagnostics.iloc[:, 0].to_numpy()
+                assign_comp_cost = runtime_diagnostics.iloc[:, 1].to_numpy()
+                dynamics_comp_cost = runtime_diagnostics.iloc[:, 2].to_numpy()
+                runtime = runtime_diagnostics.iloc[0, 3]
+
+                if sim_name == 'AssignmentDyn':
+                    unpacked_ensemble_diagnostics_dyn[i, 0] = assign_comp_cost[0] # time to perform initial assignment
+                    unpacked_ensemble_diagnostics_dyn[i, 1] = np.sum(dynamics_comp_cost)/dynamics_comp_cost.shape[0]
+                    unpacked_ensemble_diagnostics_dyn[i, 2] = runtime
+                if sim_name == 'AssignmentEMD':
+                    unpacked_ensemble_diagnostics_emd[i, 0] = assign_comp_cost[0]
+                    unpacked_ensemble_diagnostics_emd[i, 1] = np.sum(dynamics_comp_cost)/dynamics_comp_cost.shape[0]
+                    unpacked_ensemble_diagnostics_emd[i, 2] = runtime
+
+        # now, we have the data listed per batch
+        runtime_diff = (unpacked_ensemble_diagnostics_emd[:, 2] - unpacked_ensemble_diagnostics_dyn[:, 2]) # dyn runtime - emd runtime
+        # emd_asst_switches = unpacked_ensemble_metrics_emd[:, 3]
+
+        # plot_runtime_histogram(runtime_diff)
+        runtimes = [unpacked_ensemble_diagnostics_dyn[:, 2], unpacked_ensemble_diagnostics_emd[:,2]]
+
+        avg_runtime_emd = np.sum(unpacked_ensemble_diagnostics_emd[:, 2])/nbatches
+        avg_runtime_dyn = np.sum(unpacked_ensemble_diagnostics_dyn[:, 2])/nbatches
+
+        avg_runtime_diagnostic.update({ensemble_name: [avg_runtime_emd, avg_runtime_dyn]})
+        runtime_diagnostic.update({ensemble_name: [runtimes[1], runtimes[0]]})
+
+    plot_ensemble_avg_runtime(avg_runtime_diagnostic)
+    # plot_ensemble_avg_runtime(runtime_diagnostic)

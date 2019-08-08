@@ -4,7 +4,7 @@ import copy
 
 ################################
 ## LINEAR Agent Dynamics
-###############################    
+################################
 class LTIDyn:
 
     def __init__(self, A, B):

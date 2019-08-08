@@ -15,12 +15,13 @@ if __name__ == "__main__":
     dirs = next(os.walk(root_directory))[1]
     ensembles = []
     for d in dirs:
-        if 'ensemble' in d:
+        if 'ensemble_0' in d:
             ensembles.append(d)
 
     dim = 3
 
     desired_conditions = ['5v5', '10v10', '20v20']
+    # desired_conditions = ['5v5', '10v10']
 
     ensembles_to_load = []
     for ensemble in ensembles:

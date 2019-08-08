@@ -87,7 +87,7 @@ def run_identical_linearized_quadcopter_3D(dx, du, statespace, x0, ltidyn, dyn_t
 
     # sys = OneVOne(agents, targets, apol)
     sys = OneVOne(agents, targets, apol, assignment_epoch)
-    eng = Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=1e-1)
+    eng = Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=1e-2)
 
     # TODO time the simulation
     start_run_time = process_time()

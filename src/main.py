@@ -45,19 +45,20 @@ def main():
 
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 1
+    nbatches = 10
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
-    maxtime = 10
+    maxtime = 5
     dim = 3
     nagents = 5
     ntargets = 5
     # agent_model = "Double_Integrator"
     # target_model = "Double_Integrator"
-    agent_model = "Linearized_Quadcopter" # STILL TESTING. 3d only
+    agent_model = "Linearized_Quadcopter" # 3d only!
     target_model = "Linearized_Quadcopter"
     collisions = True
+    # TODO collision_tol = 1e-1
     agent_control_policy = "LQR"
     target_control_policy = "LQR"
     # every x engine ticks, perform assignment

@@ -32,7 +32,6 @@ class Engine:
             self.diagnostics.iloc[-1, :] = diag_df.iloc[0, :]
             self.diagnostics = pd.concat([self.diagnostics, diag_df.iloc[1:,:]], ignore_index=True)
 
-    # TODO UPDATE TO HANDLE LINEARIZED QC - DIM_POS
     # Physics
     # 2d and 3d
     # def apriori_collisions(self, current_state, nagents, ntargets, time):
@@ -73,7 +72,6 @@ class Engine:
 
             y_agent = updated_state[i*dx:(i+1)*dx] # time history of agent i
 
-            # TODO UPDATE TO HANDLE LINEARIZED QC - DIM_POS, DIM_VEL
             if dim == 2:
                 # y_agent_final = y_agent[:dim] + np.array([y_agent[2], y_agent[3]])*self.dt
                 x = agent_dim_pos[0]
