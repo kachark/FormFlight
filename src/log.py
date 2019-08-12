@@ -1,3 +1,7 @@
+
+""" @file log.py
+"""
+
 import glob
 import os
 import errno
@@ -5,6 +9,9 @@ import pandas as pd
 from datetime import datetime
 
 def save_test_info_to_txt(test_name, test_conditions, test_directory, starttime, endtime, elapsedtime):
+
+    """ Saves text info to .txt
+    """
 
     # save info to text file
     with open(test_directory + '/' + 'sim_info.txt', 'w') as text_file:
@@ -28,6 +35,20 @@ def save_test_info_to_txt(test_name, test_conditions, test_directory, starttime,
 
 def save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name):
 
+    """ Saves DataFrames representing batch of simulations metrics to .csv
+
+    Creates directory for each batch within the ensemble
+    Saves each simulation within a batch to .csv
+
+    Input:
+    - batch_performance_metrics:    python dict containing pandas DataFrames of individual simulation metrics
+    - ensemble_directory:           directory containing ensemble of batch simulations
+    - batch_name:                   name of batch
+
+    Output:
+
+    """
+
     cwd = os.getcwd()
     directory = ensemble_directory + '/' + batch_name
 
@@ -44,6 +65,20 @@ def save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, bat
 
 def save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, batch_name):
 
+    """ Saves DataFrames representing batch of simulations metrics to .csv
+
+    Creates directory for each batch within the ensemble
+    Saves each simulation within a batch to .csv
+
+    Input:
+    - packed_batch_diagnostics:     python dict containing pandas DataFrames of individual simulation diagnostics
+    - ensemble_directory:           directory containing ensemble of batch simulations
+    - batch_name:                   name of batch
+
+    Output:
+
+    """
+
     cwd = os.getcwd()
     directory = ensemble_directory + '/' + batch_name
 
@@ -59,6 +94,20 @@ def save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, 
         post_processed_diag_df.to_csv(path, index=False, header=False)
 
 def load_batch_metrics(ensemble_directory, batch_name, sim_name_list):
+
+    """ Loads DataFrames representing batch of simulations metrics to .csv
+
+    Creates directory for each batch within the ensemble
+    Saves each simulation within a batch to .csv
+
+    Input:
+    - ensemble_directory:           directory containing ensemble of batch simulations
+    - batch_name:                   name of batch
+    - sim_name_list:                list of strings to identify simulations metrics to load
+
+    Output:
+
+    """
 
     directory = ensemble_directory + '/' + batch_name
 
@@ -79,6 +128,20 @@ def load_batch_metrics(ensemble_directory, batch_name, sim_name_list):
     return batch_performance_metrics
 
 def load_batch_diagnostics(ensemble_directory, batch_name, sim_name_list):
+
+    """ Loads DataFrames representing batch of simulations metrics to .csv
+
+    Creates directory for each batch within the ensemble
+    Saves each simulation within a batch to .csv
+
+    Input:
+    - ensemble_directory:           directory containing ensemble of batch simulations
+    - batch_name:                   name of batch
+    - sim_name_list:                list of strings to identify simulations diagnostics to load
+
+    Output:
+
+    """
 
     directory = ensemble_directory + '/' + batch_name
 

@@ -1,3 +1,7 @@
+
+""" @file post_process.py
+"""
+
 import numpy as np
 import pandas as pd
 import copy
@@ -755,6 +759,10 @@ def agent_agent_collisions(unpacked):
         tout = metrics['tout']
         yout = metrics['yout']
 
+        # TODO add collision_tol
+        # collision_tol = metrics['collision_tol']
+        collision_tol = 1e-1
+
         agent_states = []
         for zz in range(nagents):
             agent_states.append(np.zeros((tout.shape[0], 3)))
@@ -771,7 +779,7 @@ def agent_agent_collisions(unpacked):
             agent_states[zz] = agent_pos
 
         # compare agent positions
-        collisions = []
+        collisions_list = []
         for zz in range(nagents):
             for other_agent in range(nagents):
                 if zz == other_agent:
@@ -779,10 +787,17 @@ def agent_agent_collisions(unpacked):
 
                 agent_zz = agent_states[zz]
                 agent_other = agent_states[other_agent]
-                if np.allclose(agent_zz, agent_other, rtol=1e-1, atol=1e-1):
-                    collisions.append( (zz, other_agent) )
+                check_collisions = np.abs(agent_zz - agent_other) <= collision_tol
+                for collision_at_time in check_collisions:
+                    if collision_at_time.all():
+                        collisions_list.append( (zz, other_agent) )
 
-        agent_collisions.update({sim_name: collisions})
+                # check_collisions = np.isclose(agent_zz, agent_other, rtol=1e-2, atol=1e-5)
+                # for c in check_collisions:
+                #     if c.all():
+                #         collisions.append( (zz, other_agent) )
+
+        agent_collisions.update({sim_name: collisions_list})
 
     return agent_collisions
 
@@ -795,7 +810,7 @@ def plot_batch_performance_metrics(batch_performance_metrics):
     plot_assignments(unpacked)
     plot_trajectory(unpacked)
 
-    agent_agent_collisions(unpacked)
+    collisions = agent_agent_collisions(unpacked)
 
     # TODO trajectory movie
     # plot_animated_trajectory(unpacked)

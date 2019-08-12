@@ -1,4 +1,7 @@
 
+""" @file setup.py
+"""
+
 import numpy as np
 from assignments import *
 from controls import *
@@ -8,10 +11,14 @@ from linear_models_2D import *
 from linear_models_3D import *
 from run import *
 
-# def setup_simulation(agent_model, target_model, agent_control_policy, target_control_policy, assignment_policy, nagents, ntargets, collisions, dim=2, dt=0.01, maxtime=10):
-# def setup_simulation(agent_model, target_model, agent_control_policy, target_control_policy, assignment_policy, nagents,
-#         ntargets, collisions, dim=2, dt=0.01, maxtime=10, initial_conditions=None):
 def setup_simulation(sim_profile):
+
+    """ Returns dictionary of controls, dynamics, decision-making policy, and initial state parameters
+
+    Input: Standard python dict containing descriptors outlining simulation requirements
+    Output: Standard python dict containing controls, dynamics, assignment, etc. data structures
+
+    """
 
     x0 = None
     stationary_states = None
@@ -186,7 +193,7 @@ def setup_simulation(sim_profile):
 
 # Formations
 def circle(radius, nsamples, sample):
-    """
+    """ Computes the x,y,z position on a circle for a given number of points
     r: radius of circle
     ntargets: total number of points on circle
     target: nth point along the circle
@@ -198,7 +205,7 @@ def circle(radius, nsamples, sample):
     return x,y
 
 def fibonacci_sphere(r, nsamples, sample):
-    """
+    """ Computes the x,y,z positions on a sphere for a given number of points
     http://blog.marmakoide.org/?p=1
 
     r: radius of sphere / scaling factor
@@ -217,6 +224,10 @@ def fibonacci_sphere(r, nsamples, sample):
     return x,y,z
 
 def generate_initial_conditions(dim, agent_model, target_model, nagents, ntargets):
+
+    """ Returns initial states for agents, targets, and target terminal locations
+
+    """
 
     x0 = None
     cities = None

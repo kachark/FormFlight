@@ -1,4 +1,7 @@
 
+""" @file run.py
+"""
+
 from time import time, process_time
 import pandas as pd
 
@@ -11,6 +14,29 @@ from post_process import *
 
 
 def run_identical_doubleint_2D(dx, du, statespace, x0, ltidyn, dyn_target, poltrack, poltargets, apol, assignment_epoch, nagents, ntargets, collisions, dt=0.01, maxtime=10):
+
+    """ Setup the engine and simulation scenario
+
+    Input:
+        - dx:           agent statesize
+        - du:           agent control input size
+        - statespace:   dict describing agent position, velocity etc. components
+        - x0:           initial agent, target, target terminal states
+        - ltidyn:       agent dynamics model (homogeneous across agent swarm)
+        - dyn_target:   list of target dynamic models
+        - poltrack:     agent control policy (homogeneous across agent swarm)
+        - poltargets:   list of target control policies
+        - apol:         assignment policy
+        - assignment_epoch: number of ticks at which to perform assignment
+        - nagents:      number of agents
+        - ntarges:      number of targets
+        - collisions:   collisions on/off
+        - dt:           engine tick size
+        - maxtime:      simulation time
+
+    Output: Returns simulation results and diagnostics
+
+    """
 
     dim = 2
 
@@ -46,6 +72,29 @@ def run_identical_doubleint_2D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
 
 def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltrack, poltargets, apol, assignment_epoch, nagents, ntargets, collisions, dt=0.01, maxtime=10):
 
+    """ Setup the engine and simulation scenario
+
+    Input:
+        - dx:           agent statesize
+        - du:           agent control input size
+        - statespace:   dict describing agent position, velocity etc. components
+        - x0:           initial agent, target, target terminal states
+        - ltidyn:       agent dynamics model (homogeneous across agent swarm)
+        - dyn_target:   list of target dynamic models
+        - poltrack:     agent control policy (homogeneous across agent swarm)
+        - poltargets:   list of target control policies
+        - apol:         assignment policy
+        - assignment_epoch: number of ticks at which to perform assignment
+        - nagents:      number of agents
+        - ntarges:      number of targets
+        - collisions:   collisions on/off
+        - dt:           engine tick size
+        - maxtime:      simulation time
+
+    Output: Returns simulation results and diagnostics
+
+    """
+
     dim = 3
 
     agents = [TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
@@ -79,6 +128,29 @@ def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
 
 def run_identical_linearized_quadcopter_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltrack, poltargets, apol,
         assignment_epoch, nagents, ntargets, collisions, dt=0.01, maxtime=10):
+
+    """ Setup the engine and simulation scenario
+
+    Input:
+        - dx:           agent statesize
+        - du:           agent control input size
+        - statespace:   dict describing agent position, velocity etc. components
+        - x0:           initial agent, target, target terminal states
+        - ltidyn:       agent dynamics model (homogeneous across agent swarm)
+        - dyn_target:   list of target dynamic models
+        - poltrack:     agent control policy (homogeneous across agent swarm)
+        - poltargets:   list of target control policies
+        - apol:         assignment policy
+        - assignment_epoch: number of ticks at which to perform assignment
+        - nagents:      number of agents
+        - ntarges:      number of targets
+        - collisions:   collisions on/off
+        - dt:           engine tick size
+        - maxtime:      simulation time
+
+    Output: Returns simulation results and diagnostics
+
+    """
 
     dim = 3
 

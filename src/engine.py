@@ -1,4 +1,7 @@
 
+""" @file engine.py
+"""
+
 import pandas as pd
 import numpy as np
 import copy
@@ -9,6 +12,20 @@ import copy
 class Engine:
 
     def __init__(self, dim, dt=0.1, maxtime=10, collisions=False, collision_tol=0.25):
+
+        """ Engine constructor
+
+        Input:
+        - dim:          simulation dimension (2D/3D)
+        - dt:           engine tick size
+        - maxtime:      simulation time
+        - collisions:   collisions on/off
+        - collision_tol:collitions tolerance
+
+        Output:
+
+        """
+
         self.dim = dim
         self.dt = dt
         self.maxtime = maxtime
@@ -18,12 +35,20 @@ class Engine:
         self.collision_tol = collision_tol
 
     def log(self, newdf):
+
+        """ logs simulation updates after each tick
+        """
+
         if self.df is None:
             self.df = newdf
         else:
             self.df = pd.concat([self.df, newdf.iloc[1:,:]], ignore_index=True)
 
     def log_diagnostics(self, diag_df):
+
+        """ logs simulation diagnostic updates after each tick
+        """
+
         if self.diagnostics is None:
             self.diagnostics = diag_df
         else:
@@ -36,6 +61,9 @@ class Engine:
     # 2d and 3d
     # def apriori_collisions(self, current_state, nagents, ntargets, time):
     def apriori_collisions(self, current_state, agents, targets, time):
+
+        """ computes apriori collisions between agents and targets
+        """
 
         nagents = len(agents)
         ntargets = len(targets)
@@ -170,6 +198,14 @@ class Engine:
         return collided
 
     def run(self, x0, system):
+
+        """ Main simulation loop
+
+        Input:
+        - x0:           initial agent, target, target terminal states
+        - system:       System which encapsulates the agent-target engagement
+
+        """
 
         current_state = copy.deepcopy(x0)
         running = True

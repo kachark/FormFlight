@@ -1,4 +1,7 @@
 
+""" @file linear_models_3D.py
+"""
+
 import numpy as np
 
 def quadcopter_3D():

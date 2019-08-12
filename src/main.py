@@ -13,6 +13,11 @@ from log import *
 
 
 def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy):
+
+    """ Returns ensemble name
+
+    """
+
     identical = (agent_model==target_model)
     if identical:
         ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + '_' +\
@@ -26,6 +31,12 @@ def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_mod
     return ensemble_name
 
 def main():
+
+    """ main function
+
+    Setup ensemble, batch, and individual simulation parameters
+    Create new directory to store ensemble, batch, and individual simulation results
+    Call functions to perform simulations, pack results and diagnostics, and save to .csv
 
     ####### INFO ######
     # simulation: set of initial conditions with 1 asst pol
@@ -42,6 +53,7 @@ def main():
     # ensemble_1 = [batch_1, batch_2] = [ [sim1, sim2], [sim3, sim4] ]
     #            = [ [ic_1 and EMD, ic_1 and DYN], [ic_2 and EMD, ic_2 and DYN] ]
 
+    """
 
     ensemble_simulation = []
     batch_simulation = []
@@ -258,12 +270,22 @@ def main():
 
 
 def secondsToStr(elapsed=None):
+
+    """ Converts seconds to strings
+
+    """
+
     if elapsed is None:
         return strftime("%Y-%m-%d %H:%M:%S", localtime())
     else:
         return str(timedelta(seconds=elapsed))
 
 def log(s, elapsed=None):
+
+    """ start logging of elapsed time
+
+    """
+
     line = "="*40
     print(line)
     print(secondsToStr(), '-', s)
@@ -275,6 +297,11 @@ def log(s, elapsed=None):
     return ss
 
 def endlog():
+
+    """ end log of elapsed time
+
+    """
+
     end = time()
     elapsed = end-start
     log("End Program", secondsToStr(elapsed))

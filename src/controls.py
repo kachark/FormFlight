@@ -1,4 +1,7 @@
 
+""" @file controls.py
+"""
+
 from scipy.linalg import solve_continuous_are as care
 import numpy as np
 import copy
@@ -90,7 +93,23 @@ class LinearFeedbackTracking(LinearFeedback):
 ##################################3
 # NEW
 class LinearFeedbackConstTracker:
+
+    """ Class for linear quadratic tracker for constant state tracking
+    """
+
     def __init__(self, A, B, Q, R, const, g=None):
+
+        """ LinearFeedbackConstTracker constructor
+
+        Input:
+        - A:            linear time-invariant state matrix
+        - B:            linear time-invariant input matrix
+        - Q:            control weighting matrix for state
+        - R:            control weighting matrix for control inputs
+        - const:        constant state to track
+        - g:            state to track in error dynamics system
+
+        """
 
         ##DEBUG
         #print("\n\n\n\n\n")
@@ -134,7 +153,7 @@ class LinearFeedbackConstTracker:
         # steady-state
         self.xss = np.dot(self.BRBt, self.p) - self.g
         self.xss = np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), self.xss)
-        self.xss = self.xss - self.const
+        # self.xss = self.xss - self.const
 
         # steady-state optimal control
         # self.uss = self.evaluate(0, self.xss)
@@ -153,7 +172,7 @@ class LinearFeedbackConstTracker:
 
     def get_closed_loop_g(self):
         return self.g_cl
-    
+
     def get_P(self):
         return self.P
 
@@ -172,10 +191,25 @@ class LinearFeedbackConstTracker:
 
     def get_xss(self):
         return self.xss
-    
+
 class LinearFeedbackAugmented(LinearFeedbackConstTracker):
 
+    """ Class representing the linear quadtratic tracker for tracking non-constant states
+    """
+
     def __init__(self, A, B, Q, R, Fcl, g):
+
+        """ LinearFeedbackConstTracker constructor
+
+        Input:
+        - A:            linear time-invariant state matrix of the agent/target doing the tracking
+        - B:            linear time-invariant input matrix of the agent/target doing the tracking
+        - Q:            control weighting matrix for state
+        - R:            control weighting matrix for control inputs
+        - Fcl:          closed-loop state matrix of system being tracked
+        - g:            state to track in error dynamics system
+
+        """
 
         # Top
         self.pre_augmented_A = A
@@ -190,6 +224,10 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
         super(LinearFeedbackAugmented, self).__init__(Aconcat, Bconcat, Qconcat, R, const, g=gconcat)
 
     def augment(self, A, B, Q, R, Fcl, g):
+
+        """ Computes augmented matrices
+        """
+
         # compute augmented matrices
         nstates = A.shape[0] + Fcl.shape[0]
         Aconcat = np.zeros((nstates, nstates))
@@ -213,6 +251,9 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
 
     # Recreate the augmented matrices for new tracking assignments
     def track(self, time, jj, Fcl, g): # systems.py line 64: precompute AUG LQ Tracker Policy
+
+        """ Checks if tracker needs to be updated due to assignment change
+        """
 
         if time == 0: # initial assignment
             self.tracking = jj
@@ -263,6 +304,10 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
             return
 
     def evaluate(self, time, state1, state2, feedforward=0):
+
+        """ Computes control input
+        """
+
         # print("state = ", state)
 
         aug_state = np.hstack((copy.deepcopy(state1), copy.deepcopy(state2)))
@@ -272,6 +317,10 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
     # for the aug system, cost-to-go is coupled with state2 and it's dynamics
     # thus, must re-compute P and p
     def aug_cost_to_go(self, time, state1, state2, Fcl, g):
+
+        """ Computes cost_to_go for a agent/target to track a single agent/target
+        """
+
         aug_state = np.hstack((copy.deepcopy(state1), copy.deepcopy(state2)))
 
         Aconcat, Bconcat, Qconcat, gconcat = self.augment(self.pre_augmented_A, self.pre_augmented_B,
@@ -337,36 +386,52 @@ class LinearFeedbackOffset(LinearFeedback):
         return cost_to_go
 
 # BROKEN
-class MinimumTimeIntercept():
+class MinimumTimeIntercept(): # augmented proportional navigation - min time intercept with target accel
+
+    """
+    see bryson and ho (1975) 288 ch.9 eqn. 9.4.30
+    """
+
+    self.cp = 1
+    self.ce = 3
 
     def __init__(self, time_final, dx):
         self.time_final = time_final
         self.dim_position = dx
 
-    def evaluate(self, time, state1, state2):
+    def get_final_time(self, state2):
         pass
 
-    def cost_to_go(self, time, state1, state2):
-        y1 = state1[:self.dim_position] - state2[:self.dim_position] # relative position
-        y2 = state1[self.dim_position:] - state2[self.dim_position:] # relative velocity
-        return  y1 + y2*(time_final-time) # miss distance
-
-# BROKEN
-class LinearFeedbackIntegralTracking(LinearFeedback):
-
-    def __init__(self, A, B, Q, R):
-        super(LinearFeedbackIntegralTracking, self).__init__(A, B, Q, R)
+    def track(self):
+        pass
 
     def evaluate(self, time, state1, state2, feedforward=0):
-        s1 = copy.deepcopy(state1)
-        s2 = copy.deepcopy(state2)
-        diff = s1[:4] - s2
-        agent_pol = np.dot(self.K, diff) + feedforward
-        return agent_pol
 
-    def cost_to_go(self, time, state1):
-        s1 = copy.deepcopy(state1)
-        diff = copy.deepcopy(state1)
-        diff[:self.dim_offset] = s1[:self.dim_offset] - self.offset
-        cost_to_go = np.dot(diff, np.dot(self.P, diff))
-        return cost_to_go    
+        t = time
+        tf = self.time_final
+
+        ce = self.ce
+        cp = self.cp
+
+        # pursuer position
+        rp = state1[:3]
+        # pursuer velocity
+        vp = state1[3:6]
+
+        # evader position
+        re = state2[:3]
+        # evader velocity
+        ve = state2[3:6]
+
+        # proportional navigation guidance law
+        u = -3/((1-ce/cp)*(tf-t)**2) * (rp-re + (vp-ve)*(tf-t) )
+
+        return u
+
+    def cost_to_go(self, time, state1, state2):
+        # y1 = state1[:self.dim_position] - state2[:self.dim_position] # relative position
+        # y2 = state1[self.dim_position:] - state2[self.dim_position:] # relative velocity
+        # return  y1 + y2*(time_final-time) # miss distance
+        time_to_go = self.time_final - time
+
+

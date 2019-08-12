@@ -1,4 +1,7 @@
 
+""" @file system.py
+"""
+
 from decimal import Decimal
 import scipy.integrate as scint
 import numpy as np
@@ -12,7 +15,13 @@ from assignments import *
 ################################
 class System:
 
+    """ System parent class
+    """
+
     def __init__(self, agents):
+
+        """ System constructor
+        """
 
         self.agents = agents
         self.nagents = len(agents)
@@ -21,7 +30,14 @@ class System:
 
 class OneVOne(System):
 
+    """ System representing scenario consisting of one agent to one target engagements
+    """
+
     def __init__(self, agents, targets, pol, assignment_epoch):
+
+        """ Constructor for OneVOne System
+        """
+
         super(OneVOne, self).__init__(agents)
         self.targets = targets
         self.tsizes = np.array([a.state_size() for a in self.agents])
@@ -38,6 +54,12 @@ class OneVOne(System):
         self.current_assignment = None #(tuple of assignment, cost)
 
     def compute_assignments(self, t, x0, collisions):
+
+        """ Compute assignments between agent and target swarms
+
+        Does not perfrom assignments for agents that are collided with targets
+
+        """
 
         agents = [None] * self.nagents
         ind = 0
@@ -70,9 +92,13 @@ class OneVOne(System):
 
         return assignments, cost
 
-    # TODO at t=0 we don't want to have 2 assignments skewing diagnostics
-    # TEST
     def compute_optimal_assignments(self, t, x0, collisions):
+
+        """ Compute optimal assignments (DYN) between agent and target swarms
+
+        Does not perfrom assignments for agents that are collided with targets
+
+        """
 
         # Get dyn assignment at initial conditions (optimal asst that we use to compare against)
         if t == 0:
@@ -102,10 +128,32 @@ class OneVOne(System):
 
     # TODO at t=0 we don't want to have 2 assignments skewing diagnostics
     def pre_process(self, t0, x0, collisions):
+
+        """ System pre-processor
+
+        Perform functions prior to starting engine loop
+        """
+
         # compute optimal assignment
         self.compute_optimal_assignments(t0, x0, collisions)
 
     def update(self, t0, x0, collisions, dt, tick):
+
+        """ Computes assignments at assignment epoch and advances dynamics per engine tick
+
+        Input:
+        - t0:           start time of integration
+        - x0:           agent, target, target terminal states at start time of integration
+        - dt:           engine time step size
+
+        Output:
+        return tout, yout, assign_out, diagnostics
+        - tout:         time integrated over between [t0, t0+dt]
+        - yout:         agent states, target states between [t0, t0+dt]
+        - assign_out:   index assignments between agent_i and target_j
+        - diagnostics:  diagnostics recorded between [t0, t0+dt]
+
+        """
 
         # print("Warning: Assumes that Each Target is Assigned To")
         # print("Dont forget to fix this (easy fix)")
