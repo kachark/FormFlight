@@ -1,4 +1,7 @@
 
+""" @file agents.py
+"""
+
 import copy
 
 #################################
@@ -6,7 +9,24 @@ import copy
 ################################
 class Agent:
 
+    """ Class representing a member of agent or target swarm
+    """
+
     def __init__(self, dx, statespace, dim, dyn, pol):
+
+        """ Agent class constructor
+
+        Input:
+        - dx:                   state size
+        - statespace:           dict containing descriptions of the components of an agent/target state
+        - dim:                  int representing the dimension the Agent acts within (2D/3D)
+        - dyn:                  dynamics model
+        - pol:                  control policy
+
+        Output:
+
+        """
+
         self.dx = dx
         self.statespace = statespace
         self.dim = dim

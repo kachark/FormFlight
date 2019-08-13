@@ -1,4 +1,7 @@
 
+""" @file ploy.py
+"""
+
 import re
 import pandas as pd
 import numpy as np
@@ -32,6 +35,9 @@ rc('font', family='serif')
 
 
 def plot_costs(unpacked):
+
+    """ Plots costs
+    """
 
     linewidth = 4
 
@@ -100,6 +106,9 @@ def plot_costs(unpacked):
 
 def plot_cost_histogram(unpacked_ensemble_metric):
 
+    """ Plots histogram of costs
+    """
+
     fontsize = 32
     labelsize = 32
 
@@ -132,6 +141,9 @@ def natural_keys(text):
     return [ atoi(c) for c in re.split(r'(\d+)', text) ]
 
 def plot_ensemble_cost_histogram(metrics_to_compare):
+
+    """ Plots histogram of agent swarm LQ costs for multiple ensembles
+    """
 
     fontsize = 40
     labelsize = 40
@@ -167,6 +179,9 @@ def plot_ensemble_cost_histogram(metrics_to_compare):
     axs.legend(fontsize=fontsize)
 
 def plot_assignments(unpacked):
+
+    """ Plots assignments
+    """
 
     for sim_name, metrics in unpacked.items():
 
@@ -264,6 +279,9 @@ def plot_assignments(unpacked):
 
 def plot_ensemble_switch_histogram(metrics_to_compare):
 
+    """ Plots histogram of assignment switches for multiple ensembles
+    """
+
     fontsize = 40
     labelsize = 40
 
@@ -301,6 +319,9 @@ def plot_ensemble_switch_histogram(metrics_to_compare):
     axs.legend(fontsize=fontsize)
 
 def plot_ensemble_avg_switch(metrics_to_compare):
+
+    """ Plots average number of assignment switches over time for multiple ensembles
+    """
 
     fontsize = 40
     labelsize = 40
@@ -345,6 +366,9 @@ def plot_ensemble_avg_switch(metrics_to_compare):
     # axs.legend(fontsize=fontsize)
 
 def plot_trajectory(unpacked):
+
+    """ Plots trajectory in 2D or 3D for homogeneous identical double integrator and linearized quadcopters
+    """
 
     dim = 2 # default value
 
@@ -689,6 +713,9 @@ def plot_trajectory(unpacked):
 # ************ TEST LINEARIZED QC ***************
 def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states, assignment_switches, labels):
 
+    """ Plots trajectory in 2D/3D for homogeneous identical linearized quadcopter
+    """
+
     # plot parameters
     fig = figures[0][0]
     ax = figures[0][1]
@@ -880,6 +907,9 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
 
 def plot_assignment_comp_time(unpacked):
 
+    """ Plots assignment computational cost over time
+    """
+
     linewidth = 4
 
     fontsize = 40
@@ -906,6 +936,9 @@ def plot_assignment_comp_time(unpacked):
 
 def plot_runtime_histogram(unpacked_ensemble_diagnostic):
 
+    """ Plots histogram of simulation runtime over ensemble of batch simulations
+    """
+
     fontsize = 32
     labelsize = 32
 
@@ -929,6 +962,9 @@ def plot_runtime_histogram(unpacked_ensemble_diagnostic):
 
 def plot_runtimes(unpacked_ensemble_diagnostic):
 
+    """ Plots runtime
+    """
+
     fontsize = 32
     labelsize = 32
 
@@ -947,6 +983,9 @@ def plot_runtimes(unpacked_ensemble_diagnostic):
     axs.legend(fontsize=fontsize)
 
 def plot_ensemble_avg_runtime(ensemble_diagnostic):
+
+    """ Plots average runtimes for multiple ensembles
+    """
 
     fontsize = 40
     labelsize = 40

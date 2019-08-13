@@ -12,6 +12,17 @@ import os
 
 def post_process_batch_simulation(batch_results):
 
+    """ Calls utilities to parse results and package into pandas DataFrame
+
+    Input:
+    - batch_results:            dict of simulation parameters and results (np.array)
+
+    Output:
+    - batch_performance_metrics:dict containing DataFrames simulation parameters, results, costs per simulation within
+    batch
+
+    """
+
     sim_names = []
     batch_performance_metrics = {} # performance metrics
     sim_components = {} # useful parameters and objects used within the simulation
@@ -49,6 +60,16 @@ def post_process_batch_simulation(batch_results):
 
 def post_process_batch_diagnostics(batch_diagnostics):
 
+    """ Calls utilities to parse diagnostics and package into pandas DataFrame
+
+    Input:
+    - batch_diagnostics:            dict of simulation parameters and results (np.array)
+
+    Output:
+    - packed_batch_diagnostics:     dict containing DataFrames simulation runtime diagnostics per simulation in batch
+
+    """
+
     sim_names = []
     packed_batch_diagnostics = {} # performance metrics
 
@@ -71,6 +92,19 @@ def post_process_batch_diagnostics(batch_diagnostics):
 
 # TODO rename: post_process_homogeneous_identical(parameters, sim_results):
 def post_process_homogeneous_identical(parameters, sim_results):
+
+    """ Post-process and package simulation parameters, results, and post-processed data (costs)
+
+    Post-process and packing function for homogeneous identical agent/target swarms
+
+    Input:
+    - parameters:           dict containing simulation parameters
+    - sim_results:          dict containing simulaton results
+
+    Output:
+    - return_df:            pandas Dataframe with simulation parameters, results, costs
+
+    """
 
     df = sim_results['data']
     poltrack = sim_results['tracking_policy']
@@ -275,6 +309,21 @@ def post_process_homogeneous_identical(parameters, sim_results):
 
 def post_process_homogeneous_nonidentical(parameters, sim_results):
 
+    """ Post-process and package simulation parameters, results, and post-processed data (costs)
+
+    Post-process and packing function for homogeneous non-identical agent and target swarms
+    Homogeneous Non-identical implies that the agent and targets have different dynamic models, but are uniform
+    within their respective swarms
+
+    Input:
+    - parameters:           dict containing simulation parameters
+    - sim_results:          dict containing simulaton results
+
+    Output:
+    - return_df:            pandas Dataframe with simulation parameters, results, costs
+
+    """
+
     df = sim_results['data']
     poltrack = sim_results['tracking_policy']
     poltargets = sim_results['target_pol']
@@ -477,6 +526,21 @@ def post_process_homogeneous_nonidentical(parameters, sim_results):
     return return_df
 
 def post_process_heterogeneous(parameters, sim_results):
+
+    """ Post-process and package simulation parameters, results, and post-processed data (costs)
+
+    Post-process and packing function for homogeneous non-identical agent and target swarms
+    Heterogeneous implies that the agent and targets have different dynamic models and each member may have different dynamic models
+
+    Input:
+    - parameters:           dict containing simulation parameters
+    - sim_results:          dict containing simulaton results
+
+    Output:
+    - return_df:            pandas Dataframe with simulation parameters, results, costs
+
+    """
+
     pass
 
 # TODO
@@ -491,8 +555,14 @@ def post_process_heterogeneous(parameters, sim_results):
 
 # TODO rename to unpack_homogeneous_identical(batch_performance_metrics):
 def unpack_performance_metrics(batch_performance_metrics):
-    """
-    unpacks pandas DataFrame into a python standard dictionary
+    """ Unpacks batch performance metrics DataFrame into a python standard dictionary
+
+    Input:
+    - batch_performance_metrics:           pandas DataFrame
+
+    Output:
+    - unpacked_batch_metrics:              dict containing simulation parameters, results, post-processed results (costs)
+
     """
 
     unpacked_batch_metrics = {}
@@ -568,9 +638,19 @@ def unpack_performance_metrics(batch_performance_metrics):
     return unpacked_batch_metrics
 
 def unpack_performance_metrics_OLD(batch_performance_metrics):
+
+    """ Unpacks batch performance metrics DataFrame into a python standard dictionary
+
+    Targets old data storage schematic
+
+    Input:
+    - batch_performance_metrics:           pandas DataFrame
+
+    Output:
+    - unpacked_batch_metrics:              dict containing simulation parameters, results, post-processed results (costs)
+
     """
-    unpacks pandas DataFrame into a python standard dictionary
-    """
+
 
     unpacked_batch_metrics = {}
 
@@ -649,11 +729,19 @@ def unpack_performance_metrics_OLD(batch_performance_metrics):
 
 def unpack_batch_diagnostics(batch_diagnostics):
 
-    """
-    unpacks pandas DataFrame into a python standard dictionary
+    """ Unpacks batch diagnostics DataFrame into a python standard dictionary
+
+    Targets old data storage schematic
+
+    Input:
+    - batch_diagnostics:                    pandas DataFrame
+
+    Output:
+    - unpack_batch_diagnostics:             dict containing simulation runtime diagnostics
+
     """
 
-    unpacked_batch_metrics = {}
+    unpack_batch_diagnostics = {}
 
     for sim_name, sim_diagnostics in batch_diagnostics.items():
 
@@ -674,12 +762,16 @@ def unpack_batch_diagnostics(batch_diagnostics):
         for (col, diag) in zip(columns, unpacked):
             diagnostics.update({col: diag})
 
-        unpacked_batch_metrics.update({sim_name: diagnostics})
+        unpack_batch_diagnostics.update({sim_name: diagnostics})
 
-    return unpacked_batch_metrics
+    return unpack_batch_diagnostics
 
 # COMPUTE CONTROLS
 def compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents):
+
+    """ Recreate the agent swarm member control inputs
+
+    """
 
     agent_controls = np.zeros((tout.shape[0], du*nagents))
     for zz in range(nagents):
@@ -708,6 +800,10 @@ def compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polag
 
 def find_switches(tout, yout, nagents, ntargets, agent_config_size, target_config_size):
 
+    """ Returns time indices at which there is an assignment switch
+
+    """
+
     # Output:
     # assignment switch indices per agent
 
@@ -728,25 +824,32 @@ def find_switches(tout, yout, nagents, ntargets, agent_config_size, target_confi
 
 def index_at_time(tout, time):
 
-    """
-    input: time history, time point
-    output: index in data of time point
+    """ Returns the index in data at a time point
+
+    Input: time history, time point
+    Output: index in data of time point
+
     """
 
     return (np.abs(tout-time)).argmin()
 
 def collision_time(tout, yout):
 
-    """
-    input: time history, trajectories, assignments
-    output: time for all agents to be collided
+    """ Returns the time at which all agents have collided
+
+    Input: time history, trajectories, assignments
+    Output: time for all agents to be collided
+
     """
     pass
 
 def agent_agent_collisions(unpacked):
-    """
-    input: time history, trajectories, assignments, agent statesize
-    output: agents that collided with eachother
+
+    """ Returns a list of agent indices corresponding to agent-agent collisions
+
+    Input: time history, trajectories, assignments, agent statesize
+    Output: agents that collided with eachother
+
     """
     # assignment_switch_ind = np.where(y_agent_assignments[:-1] != y_agent_assignments[1:])[0]
 
@@ -803,6 +906,9 @@ def agent_agent_collisions(unpacked):
 
 def plot_batch_performance_metrics(batch_performance_metrics):
 
+    """ Function which unpacks batch metrics and calls relevant plotting utilities
+    """
+
     unpacked = unpack_performance_metrics(batch_performance_metrics)
     # unpacked = unpack_performance_metrics_OLD(batch_performance_metrics)
 
@@ -816,6 +922,9 @@ def plot_batch_performance_metrics(batch_performance_metrics):
     # plot_animated_trajectory(unpacked)
 
 def plot_ensemble_histograms(ensemble_performance_metrics):
+
+    """ Function which unpacks ensemble of batch simulations metrics and calls relevant plotting utilities
+    """
 
     nbatches = len(ensemble_performance_metrics)
     unpacked_ensemble_metrics_emd = np.zeros((nbatches, 4))
@@ -879,11 +988,17 @@ def plot_ensemble_histograms(ensemble_performance_metrics):
 
 def plot_batch_diagnostics(batch_diagnostics):
 
+    """ Function which unpacks batch diagnostics and calls relevant plotting utilities
+    """
+
     unpacked = unpack_batch_diagnostics(batch_diagnostics)
 
     plot_assignment_comp_time(unpacked)
 
 def plot_ensemble_diagnostics(ensemble_diagnostics):
+
+    """ Function which unpacks ensemble of batch simulations diagnostics and calls relevant plotting utilities
+    """
 
     nbatches = len(ensemble_diagnostics)
     unpacked_ensemble_diagnostics_emd = np.zeros((nbatches, 3))
@@ -925,6 +1040,9 @@ def plot_ensemble_diagnostics(ensemble_diagnostics):
 
 # TODO MOVE TO log.py
 def save_ensemble_metrics(ensemble_performance_metrics, ensemble_name):
+
+    """ Function to parse and repack ensemble of batch simulation metrics and save
+    """
 
     nbatches = len(ensemble_performance_metrics)
     unpacked_ensemble_metrics_emd = np.zeros((nbatches, 4))
@@ -1004,6 +1122,9 @@ def save_ensemble_metrics(ensemble_performance_metrics, ensemble_name):
 
 def plot_ensemble_metric_comparisons(ensemble_performance_metrics):
 
+    """ Function to parse ensemble of batch simulation metrics and call relevant plotting utilities
+    """
+
     control_exp_metrics = {}
     switch_metrics = {}
     avg_switch_metrics = {}
@@ -1068,6 +1189,9 @@ def plot_ensemble_metric_comparisons(ensemble_performance_metrics):
     plot_ensemble_avg_switch(avg_switch_metrics)
 
 def plot_ensemble_diagnostic_comparison(ensemble_diagnostics):
+
+    """ Function to parse ensemble of batch simulation diagnostics and call relevant plotting utilities
+    """
 
     avg_runtime_diagnostic = {}
     runtime_diagnostic = {}

@@ -8,7 +8,18 @@ import ot
 ###############################
 class Assignment:
 
+    """ Assignment parent class
+    """
+
     def __init__(self, nref, ntarget):
+
+        """ Assignmnent constructor
+
+        Input:
+        Output:
+
+        """
+
         self.nref = nref
         self.ntarget = ntarget
 
@@ -17,21 +28,43 @@ class Assignment:
 
 class AssignmentLexical(Assignment):
 
+    """ Assignment class representing lexical assignment policy
+    """
+
     def assignment(self, t, ref_states, target_states):
+
+        """ Returns assignment list based on indices of targets
+        """
+
         inds_out = np.array(range(len(target_states)))
         return inds_out, None
 
 class AssignmentEMD(Assignment):
 
+    """ Class representing Earth-Movers Distance (EMD) assignment policy
+    """
+
     def assignment(self, t, ref_states, target_states):
-        """
+
+        """ Returns EMD assignment list
+
         ref_states and target_states are lists of tuples
-        each tuple is (state, Agent).
+        each tuple is (state <np.array>, agent/target <Agent>).
 
         For the nearest neighbor EMD assignment, the information
         about the Agent is unnecessary. However, for other distances
         or other costs, this information should be extracted
         from the agents.
+
+        Input:
+        - t:                    time
+        - ref_states:           list of tuples constructed as (state at time <np.array>, agent <Agent class>)
+        - target_states:        list of tuples constructed as (state at time <np.array>, target <Agent class>
+
+        Output:
+        - assignment:           numpy array which maps each column (agent index) to an integer representing target index
+        - cost:                 discrete optimal transport cost
+
         """
 
         n = len(ref_states) +  len(target_states)
@@ -108,15 +141,29 @@ class AssignmentEMD(Assignment):
 
 class AssignmentDyn(Assignment):
 
+    """ Class representing dynamics-based assignment policy
+    """
+
     def assignment(self, t, ref_states, target_states):
+
         """
         ref_states and target_states are lists of tuples
-        each tuple is (state, Agent).
+        each tuple is (state <np.array>, agent/target <Agent>).
 
         For the nearest neighbor EMD assignment, the information
         about the Agent is unnecessary. However, for other distances
         or other costs, this information should be extracted
         from the agents.
+
+        Input:
+        - t:                    time
+        - ref_states:           list of tuples constructed as (state at time <np.array>, agent <Agent class>)
+        - target_states:        list of tuples constructed as (state at time <np.array>, target <Agent class>
+
+        Output:
+        - assignment:           numpy array which maps each column (agent index) to an integer representing target index
+        - cost:                 discrete optimal transport cost
+
         """
 
         ref_states = copy.deepcopy(ref_states)
