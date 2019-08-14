@@ -25,7 +25,7 @@ if __name__ == "__main__":
     agent_model = 'Linearized_Quadcopter'
     target_model = 'Linearized_Quadcopter'
     ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_'+agent_model+'_LQR_LQR_2019_08_07_16_10_26'
+            'identical_'+agent_model+'_LQR_LQR_2019_08_14_11_02_16'
 
     # # # old data - 100v100 ensemble PRIOR TO JULY 25, 2019
     # root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/100v100_ensemble/'
@@ -33,6 +33,7 @@ if __name__ == "__main__":
 
     # root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/'
     root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/5v5_quadcopter_ensemble/'
+    root_directory = '/Users/koray/Box Sync/test_results/'
     ensemble_directory = root_directory + ensemble_name
 
     # get number of batches

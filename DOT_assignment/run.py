@@ -5,12 +5,12 @@
 from time import time, process_time
 import pandas as pd
 
-from agents import *
-from controls import *
-from dynamics import *
-from engine import *
-from systems import *
-from post_process import *
+import agents as ag
+import controls
+import dynamics
+import engine
+import systems
+import post_process
 
 
 def run_identical_doubleint_2D(dx, du, statespace, x0, ltidyn, dyn_target, poltrack, poltargets, apol, assignment_epoch, nagents, ntargets, collisions, collision_tol, dt=0.01, maxtime=10):
@@ -41,14 +41,14 @@ def run_identical_doubleint_2D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
 
     dim = 2
 
-    agents = [TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)] # give each trackingagent a tracking policy pre-assigned to Target 0
-    targets = [Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
+    agents = [ag.TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)] # give each trackingagent a tracking policy pre-assigned to Target 0
+    targets = [ag.Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
     # agents, targets, interactions
-    sys = OneVOne(agents, targets, apol, assignment_epoch)
+    sys = system.OneVOne(agents, targets, apol, assignment_epoch)
 
     # tells system to update, collisions
-    eng = Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
+    eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
 
     # TODO time the simulation
     start_run_time = process_time()
@@ -99,11 +99,11 @@ def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
 
     dim = 3
 
-    agents = [TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
-    targets = [Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
+    agents = [ag.TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
+    targets = [ag.Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
-    sys = OneVOne(agents, targets, apol, assignment_epoch)
-    eng = Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
+    sys = systems.OneVOne(agents, targets, apol, assignment_epoch)
+    eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
 
     # TODO time the simulation
     start_run_time = process_time()
@@ -157,12 +157,12 @@ def run_identical_linearized_quadcopter_3D(dx, du, statespace, x0, ltidyn, dyn_t
 
     dim = 3
 
-    agents = [TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
-    targets = [Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
+    agents = [ag.TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
+    targets = [ag.Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
     # sys = OneVOne(agents, targets, apol)
-    sys = OneVOne(agents, targets, apol, assignment_epoch)
-    eng = Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
+    sys = systems.OneVOne(agents, targets, apol, assignment_epoch)
+    eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
 
     # TODO time the simulation
     start_run_time = process_time()

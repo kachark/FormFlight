@@ -7,8 +7,7 @@ import scipy.integrate as scint
 import numpy as np
 from time import time, process_time
 
-from dynamics import *
-from assignments import *
+import assignments
 
 ################################
 ## Big Systems
@@ -121,7 +120,7 @@ class OneVOne(System):
                 targets[ii] = (x0[ind:self.tsize_inds[ii]], self.targets[ii])
                 ind = self.tsize_inds[ii]
 
-            opt_asst_pol = AssignmentDyn(self.nagents, self.ntargets)
+            opt_asst_pol = assignments.AssignmentDyn(self.nagents, self.ntargets)
             self.optimal_assignment, _ = opt_asst_pol.assignment(t, agents, targets)
         else:
             return

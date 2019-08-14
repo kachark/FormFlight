@@ -5,10 +5,10 @@
 import numpy as np
 import pandas as pd
 import copy
-from controls import *
-from plot import *
 import os
 
+# DOT_assignment
+import plot
 
 def post_process_batch_simulation(batch_results):
 
@@ -1006,9 +1006,9 @@ def plot_batch_performance_metrics(batch_performance_metrics):
     # unpacked = unpack_performance_metrics_OLD2(batch_performance_metrics)
     # unpacked = unpack_performance_metrics_OLD(batch_performance_metrics)
 
-    plot_costs(unpacked)
-    plot_assignments(unpacked)
-    plot_trajectory(unpacked)
+    plot.plot_costs(unpacked)
+    plot.plot_assignments(unpacked)
+    plot.plot_trajectory(unpacked)
 
     collisions = agent_agent_collisions(unpacked)
 
@@ -1077,8 +1077,8 @@ def plot_ensemble_histograms(ensemble_performance_metrics):
     emd_asst_switches = unpacked_ensemble_metrics_emd[:, 3]
 
     # plot_cost_histogram(emd_finalcost_optcost)
-    plot_cost_histogram([unpacked_ensemble_metrics_dyn[:, 0], unpacked_ensemble_metrics_emd[:, 0]])
-    plot_asst_histogram(emd_asst_switches)
+    plot.plot_cost_histogram([unpacked_ensemble_metrics_dyn[:, 0], unpacked_ensemble_metrics_emd[:, 0]])
+    plot.plot_asst_histogram(emd_asst_switches)
 
 def plot_batch_diagnostics(batch_diagnostics):
 
@@ -1087,7 +1087,7 @@ def plot_batch_diagnostics(batch_diagnostics):
 
     unpacked = unpack_batch_diagnostics(batch_diagnostics)
 
-    plot_assignment_comp_time(unpacked)
+    plot.plot_assignment_comp_time(unpacked)
 
 def plot_ensemble_diagnostics(ensemble_diagnostics):
 
@@ -1128,8 +1128,8 @@ def plot_ensemble_diagnostics(ensemble_diagnostics):
     # plot_runtime_histogram(runtime_diff)
     runtimes = [unpacked_ensemble_diagnostics_dyn[:, 2], unpacked_ensemble_diagnostics_emd[:,2]]
     # plot_runtime_histogram(runtimes)
-    plot_runtime_histogram(runtime_diff)
-    plot_runtimes(runtimes)
+    plot.plot_runtime_histogram(runtime_diff)
+    plot.plot_runtimes(runtimes)
 
 
 # TODO MOVE TO log.py
@@ -1278,9 +1278,9 @@ def plot_ensemble_metric_comparisons(ensemble_performance_metrics):
         switch_metrics.update({ensemble_name: ensemble_switches})
         avg_switch_metrics.update({ensemble_name: np.sum(ensemble_switches, axis=0)/ensemble_switches.shape[0]})
 
-    plot_ensemble_cost_histogram(control_exp_metrics)
-    plot_ensemble_switch_histogram(switch_metrics)
-    plot_ensemble_avg_switch(avg_switch_metrics)
+    plot.plot_ensemble_cost_histogram(control_exp_metrics)
+    plot.plot_ensemble_switch_histogram(switch_metrics)
+    plot.plot_ensemble_avg_switch(avg_switch_metrics)
 
 def plot_ensemble_diagnostic_comparison(ensemble_diagnostics):
 
@@ -1330,5 +1330,5 @@ def plot_ensemble_diagnostic_comparison(ensemble_diagnostics):
         avg_runtime_diagnostic.update({ensemble_name: [avg_runtime_emd, avg_runtime_dyn]})
         runtime_diagnostic.update({ensemble_name: [runtimes[1], runtimes[0]]})
 
-    plot_ensemble_avg_runtime(avg_runtime_diagnostic)
-    # plot_ensemble_avg_runtime(runtime_diagnostic)
+    plot.plot_ensemble_avg_runtime(avg_runtime_diagnostic)
+    # plot.plot_ensemble_avg_runtime(runtime_diagnostic)

@@ -3,13 +3,16 @@
 """
 
 import numpy as np
-from assignments import *
-from controls import *
-from dynamics import *
-from engine import *
-from linear_models_2D import *
-from linear_models_3D import *
-from run import *
+import copy
+
+# DOT_assignment
+import assignments
+import controls
+import dynamics
+import engine
+import linear_models_2D
+import linear_models_3D
+import run
 
 def setup_simulation(sim_profile):
 
@@ -55,10 +58,10 @@ def setup_simulation(sim_profile):
 
         if agent_model == "Double_Integrator":
 
-            A, B, C, D, dx, du, statespace = double_integrator_2D()
+            A, B, C, D, dx, du, statespace = linear_models_2D.double_integrator_2D()
 
             ### runner
-            sim_runner = run_identical_doubleint_2D
+            sim_runner = run.run_identical_doubleint_2D
 
         # if agent_model == "Linearized_Quadcopter":
 
@@ -71,17 +74,17 @@ def setup_simulation(sim_profile):
 
         if agent_model == "Double_Integrator":
 
-            A, B, C, D, dx, du, statespace = double_integrator_3D()
+            A, B, C, D, dx, du, statespace = linear_models_3D.double_integrator_3D()
 
             ### runner
             sim_runner = run_identical_doubleint_3D
 
         if agent_model == "Linearized_Quadcopter":
 
-            A, B, C, D, dx, du, statespace = quadcopter_3D()
+            A, B, C, D, dx, du, statespace = linear_models_3D.quadcopter_3D()
 
             ### runner
-            sim_runner = run_identical_linearized_quadcopter_3D #TODO needs to be updated
+            sim_runner = run.run_identical_linearized_quadcopter_3D #TODO needs to be updated
 
     Q = np.eye(dx)
     R = np.eye(du)
@@ -138,10 +141,10 @@ def setup_simulation(sim_profile):
     # poltargets = [LinearFeedbackConstTracker(A, B, Q2, 2*R, c) for c in stationary_states]
 
     if target_control_policy == "LQR":
-        poltargets = [LinearFeedbackConstTracker(A, B, Q, R, c) for c in stationary_states]
+        poltargets = [controls.LinearFeedbackConstTracker(A, B, Q, R, c) for c in stationary_states]
 
     ### target Dynamics
-    dyn_target = LTIDyn(A, B)
+    dyn_target = dynamics.LTIDyn(A, B)
 
     ### agent control law
     if agent_control_policy == "LQR":
@@ -151,22 +154,22 @@ def setup_simulation(sim_profile):
         # initialize LinearFeedbackAugmented by pre-assigning/augmenting this policy with Target 0
         Acl = poltargets[0].get_closed_loop_A()
         gcl = poltargets[0].get_closed_loop_g()
-        poltrack = LinearFeedbackAugmented(A, B, Q3, R, Acl, gcl) # initial augmentation: agent_i tracks target_i
+        poltrack = controls.LinearFeedbackAugmented(A, B, Q3, R, Acl, gcl) # initial augmentation: agent_i tracks target_i
 
     if agent_control_policy == "LQI":
         A, B, Qaug, Raug = LQI_augmented_system(A, B, C) # augmented A, B
         dx = A.shape[0]
-        poltrack = LinearFeedbackIntegralTracking(A, B, Qaug, Raug)
+        poltrack = controls.LinearFeedbackIntegralTracking(A, B, Qaug, Raug)
 
     ### Agent Dynamics
-    ltidyn = LTIDyn(A, B)
+    ltidyn = dynamics.LTIDyn(A, B)
 
     ### Assignment Policy
     if assignment_policy == 'AssignmentDyn':
-        apol = AssignmentDyn(nagents, ntargets)
+        apol = assignments.AssignmentDyn(nagents, ntargets)
 
     if assignment_policy == 'AssignmentEMD':
-        apol = AssignmentEMD(nagents, ntargets)
+        apol = assignments.AssignmentEMD(nagents, ntargets)
 
     ### CONSTRUCT SIMULATION DICTIONARY
     sim['agent_control_policy'] = agent_control_policy
@@ -238,7 +241,7 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
 
         if agent_model == "Double_Integrator":
 
-            A, B, C, D, dx, du, statespace = double_integrator_2D()
+            A, B, C, D, dx, du, statespace = linear_models_2D.double_integrator_2D()
 
             ### Initial conditions
 
@@ -279,6 +282,7 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             stationary_states = np.split(stationary_states, ntargets)
 
 
+        # TODO need to add quadcopter in 2D
         if agent_model == "Linearized_Quadcopter":
 
             A, B, C, D, dx, du, statespace = linear_models_3D() # TODO rewrite for 2D
@@ -341,7 +345,7 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
 
         if agent_model == "Double_Integrator":
 
-            A, B, C, D, dx, du, statespace = double_integrator_3D()
+            A, B, C, D, dx, du, statespace = linear_models_3D.double_integrator_3D()
 
             # Agents
             # x0 = np.zeros((nagents, dx))
@@ -404,7 +408,7 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
 
         if agent_model == "Linearized_Quadcopter":
 
-            A, B, C, D, dx, du, statespace = quadcopter_3D()
+            A, B, C, D, dx, du, statespace = linear_models_3D.quadcopter_3D()
 
             # Agents
             # r = 150 # circle radius
