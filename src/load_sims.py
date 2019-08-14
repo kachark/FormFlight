@@ -27,7 +27,7 @@ if __name__ == "__main__":
     ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
             'identical_'+agent_model+'_LQR_LQR_2019_08_07_16_10_26'
 
-    # # # old data - 100v100 ensemble
+    # # # old data - 100v100 ensemble PRIOR TO JULY 25, 2019
     # root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/100v100_ensemble/'
     # ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_17_00_09_55'
 

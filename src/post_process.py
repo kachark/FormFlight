@@ -121,6 +121,7 @@ def post_process_homogeneous_identical(parameters, sim_results):
     dx = parameters['dx']
     du = parameters['du']
     collisions = parameters['collisions']
+    collision_tol = parameters['collision_tol']
     assignment_epoch = parameters['assignment_epoch']
 
     yout = df.iloc[:, 1:].to_numpy()
@@ -279,6 +280,8 @@ def post_process_homogeneous_identical(parameters, sim_results):
     else:
         col_df = pd.DataFrame([0])
 
+    col_tol_df = pd.DataFrame([collision_tol])
+
     dt_df = pd.DataFrame([dt])
     dim_df = pd.DataFrame([dim])
     dx_df = pd.DataFrame([dx])
@@ -286,7 +289,7 @@ def post_process_homogeneous_identical(parameters, sim_results):
     assignment_epoch_df = pd.DataFrame([assignment_epoch])
     nagents_df = pd.DataFrame([nagents])
     ntargets_df = pd.DataFrame([ntargets])
-    parameters_df = pd.concat([dt_df, dim_df, col_df, assignment_epoch_df, dx_df, du_df, nagents_df, ntargets_df], axis=1)
+    parameters_df = pd.concat([dt_df, dim_df, col_df, col_tol_df, assignment_epoch_df, dx_df, du_df, nagents_df, ntargets_df], axis=1)
 
     fc_df = pd.DataFrame(final_cost)
     sc_df = pd.DataFrame(stage_cost)
@@ -497,6 +500,8 @@ def post_process_homogeneous_nonidentical(parameters, sim_results):
     else:
         col_df = pd.DataFrame([0])
 
+    col_tol_df = pd.DataFrame([collision_tol])
+
     dt_df = pd.DataFrame([dt])
     dim_df = pd.DataFrame([dim])
     dx_df = pd.DataFrame([dx])
@@ -504,7 +509,7 @@ def post_process_homogeneous_nonidentical(parameters, sim_results):
     assignment_epoch_df = pd.DataFrame([assignment_epoch])
     nagents_df = pd.DataFrame([nagents])
     ntargets_df = pd.DataFrame([ntargets])
-    parameters_df = pd.concat([dt_df, dim_df, col_df, assignment_epoch_df, dx_df, du_df, nagents_df, ntargets_df], axis=1)
+    parameters_df = pd.concat([dt_df, dim_df, col_df, col_tol_df, assignment_epoch_df, dx_df, du_df, nagents_df, ntargets_df], axis=1)
 
     fc_df = pd.DataFrame(final_cost)
     sc_df = pd.DataFrame(stage_cost)
@@ -554,8 +559,96 @@ def post_process_heterogeneous(parameters, sim_results):
 #         unpack_heterogeneous(batch_performance_metrics)
 
 # TODO rename to unpack_homogeneous_identical(batch_performance_metrics):
+
 def unpack_performance_metrics(batch_performance_metrics):
     """ Unpacks batch performance metrics DataFrame into a python standard dictionary
+
+    Input:
+    - batch_performance_metrics:           pandas DataFrame
+
+    Output:
+    - unpacked_batch_metrics:              dict containing simulation parameters, results, post-processed results (costs)
+
+    """
+
+    unpacked_batch_metrics = {}
+
+    for sim_name, metrics_df in batch_performance_metrics.items():
+
+        ### unpack simulation metrics ###
+
+        # simulation parameters
+        parameter_cols = 9 # see stored data spec
+        parameters = metrics_df.iloc[0, 0:parameter_cols].to_numpy()
+
+        dt = float(parameters[0])
+        dim = int(parameters[1])
+        collisions = int(parameters[2])
+        collision_tol = float(parameters[3])
+        assignment_epoch = int(parameters[4])
+        dx = int(parameters[5])
+        du = int(parameters[6])
+        nagents = int(parameters[7])
+        ntargets = int(parameters[8])
+
+        # simulation outputs
+        output_cols = 1 + nagents*dx + ntargets*dx + nagents + ntargets*dx + nagents*du
+        outputs = metrics_df.iloc[:, parameter_cols: parameter_cols + output_cols].to_numpy()
+
+        tout = outputs[:, 0]
+        yout_cols = 1 + nagents*dx + ntargets*dx + nagents
+        yout = outputs[:, 1: yout_cols] # good
+        ss_cols = yout_cols + ntargets*dx
+        stationary_states = outputs[0, yout_cols: ss_cols]
+        ctrl_cols = ss_cols + nagents*du
+        agent_controls = outputs[:, ss_cols: 1+ ctrl_cols]
+
+        # simulation costs
+        costs = metrics_df.iloc[:, parameter_cols + output_cols: ].to_numpy()
+
+        fc_cols = nagents
+        final_cost = costs[:, 0:fc_cols]
+        sc_cols = fc_cols + nagents
+        stage_cost = costs[:, fc_cols: sc_cols]
+        ctg_cols = sc_cols + nagents
+        cost_to_go = costs[:, sc_cols: ctg_cols]
+        optimal_cost = costs[:, ctg_cols: ]
+
+        unpacked = [dt, dim, assignment_epoch, collisions, collision_tol, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls, final_cost, stage_cost, cost_to_go, optimal_cost]
+
+        columns = [
+            "dt",
+            "dim",
+            "assignment_epoch",
+            "collisions",
+            "collision_tol",
+            "dx",
+            "du",
+            "nagents",
+            "ntargets",
+            "tout",
+            "yout",
+            "stationary_states",
+            "agent_controls",
+            "final_cost",
+            "stage_cost",
+            "cost_to_go",
+            "optimal_cost"
+        ]
+
+        metrics = {}
+        for (col, met) in zip(columns, unpacked):
+            metrics.update({col: met})
+
+        unpacked_batch_metrics.update({sim_name: metrics})
+
+    return unpacked_batch_metrics
+
+
+def unpack_performance_metrics_OLD_2(batch_performance_metrics):
+    """ Unpacks batch performance metrics DataFrame into a python standard dictionary
+
+    Targets old data storage schematic PRIOR TO AUGUST 13, 2019, AFTER JULY 25, 2019
 
     Input:
     - batch_performance_metrics:           pandas DataFrame
@@ -641,7 +734,7 @@ def unpack_performance_metrics_OLD(batch_performance_metrics):
 
     """ Unpacks batch performance metrics DataFrame into a python standard dictionary
 
-    Targets old data storage schematic
+    Targets old data storage schematic PRIOR TO JULY 25, 2019
 
     Input:
     - batch_performance_metrics:           pandas DataFrame
@@ -910,6 +1003,7 @@ def plot_batch_performance_metrics(batch_performance_metrics):
     """
 
     unpacked = unpack_performance_metrics(batch_performance_metrics)
+    # unpacked = unpack_performance_metrics_OLD2(batch_performance_metrics)
     # unpacked = unpack_performance_metrics_OLD(batch_performance_metrics)
 
     plot_costs(unpacked)

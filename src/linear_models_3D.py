@@ -4,6 +4,7 @@
 
 import numpy as np
 
+# TODO update to match how it's defined in our paper
 def quadcopter_3D():
     # linearized quadcopter dynamics
     m = 0.1         #kg

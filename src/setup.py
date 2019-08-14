@@ -32,6 +32,7 @@ def setup_simulation(sim_profile):
     nagents = sim_profile["nagents"]
     ntargets = sim_profile["ntargets"]
     collisions = sim_profile["collisions"]
+    collision_tol = sim_profile["collision_tol"]
     dim = sim_profile["dim"]
     dt = sim_profile["dt"]
     maxtime = sim_profile["maxtime"]
@@ -173,6 +174,7 @@ def setup_simulation(sim_profile):
     sim['agent_model'] = agent_model
     sim['target_model'] = target_model
     sim['collisions'] = collisions
+    sim['collision_tol'] = collision_tol
     sim['dt'] = dt
     sim['maxtime'] = maxtime
     sim['dx'] = dx

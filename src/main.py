@@ -57,11 +57,11 @@ def main():
 
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 10
+    nbatches = 1
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
-    maxtime = 5
+    maxtime = 3
     dim = 3
     nagents = 5
     ntargets = 5
@@ -70,10 +70,9 @@ def main():
     agent_model = "Linearized_Quadcopter" # 3d only!
     target_model = "Linearized_Quadcopter"
     collisions = True
-    # TODO collision_tol = 1e-1
+    collision_tol = 1e-2
     agent_control_policy = "LQR"
     target_control_policy = "LQR"
-    # every x engine ticks, perform assignment
     assignment_epoch = 10
 
     # Create directory for storage
@@ -114,7 +113,7 @@ def main():
         sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
             'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
             'assignment_policy': asst, 'assignment_epoch': assignment_epoch, 'nagents': nagents, 'ntargets': ntargets,
-            'collisions': collisions, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
+            'collisions': collisions, 'collision_tol': collision_tol, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
 
         # DYN parameters
         dt = dt
@@ -123,7 +122,7 @@ def main():
         sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
             'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
             'assignment_policy': asst, 'assignment_epoch': assignment_epoch, 'nagents': nagents, 'ntargets': ntargets,
-            'collisions': collisions, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
+            'collisions': collisions, 'collision_tol': collision_tol, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
 
         ########################################
 
@@ -149,6 +148,7 @@ def main():
             # TODO not the same order for heterogeneous and non-identical
             # Simulation data structures
             collisions = sim["collisions"]
+            collision_tol = sim["collision_tol"]
             dt = sim["dt"]
             maxtime = sim["maxtime"]
             dx = sim["dx"]
@@ -186,6 +186,7 @@ def main():
                 nagents,
                 ntargets,
                 collisions,
+                collision_tol,
                 dt,
                 maxtime,
             )
@@ -222,6 +223,7 @@ def main():
                 "agent_control_policy": agent_control_policy,
                 "target_control_policy": target_control_policy,
                 "collisions": collisions,
+                "collision_tol": collision_tol,
                 "assignment_epoch": assignment_epoch
             }
 
@@ -246,7 +248,6 @@ def main():
         # collect diagnostics
         packed_batch_diagnostics = post_process_batch_diagnostics(batch_diagnostics) # returns dict
 
-        # # import ipdb; ipdb.set_trace()
         # # DEBUG
         # plot_batch_performance_metrics(batch_performance_metrics)
         # plot_batch_diagnostics(packed_batch_diagnostics)
@@ -258,11 +259,7 @@ def main():
         # store batch results (useful for saving multiple ensembles)
         # ensemble_results.update({batch_name: batch_results})
 
-    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim, 'nagents': nagents, 'ntargets': ntargets,
-            'agent_model': agent_model, 'target_model': target_model, 'collisions': collisions,
-            'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
-            'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name, 'ensemble_directory':
-            ensemble_directory}
+    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim, 'nagents': nagents, 'ntargets': ntargets, 'agent_model': agent_model, 'target_model': target_model, 'collisions': collisions, 'collision_tol': collision_tol, 'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy, 'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name, 'ensemble_directory': ensemble_directory}
 
     print("done!")
 

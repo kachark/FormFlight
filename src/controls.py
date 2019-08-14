@@ -392,12 +392,11 @@ class MinimumTimeIntercept(): # augmented proportional navigation - min time int
     see bryson and ho (1975) 288 ch.9 eqn. 9.4.30
     """
 
-    self.cp = 1
-    self.ce = 3
-
     def __init__(self, time_final, dx):
         self.time_final = time_final
         self.dim_position = dx
+        self.cp = 1
+        self.ce = 3
 
     def get_final_time(self, state2):
         pass
