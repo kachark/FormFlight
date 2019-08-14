@@ -61,7 +61,7 @@ def main():
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
-    maxtime = 3
+    maxtime = 5
     dim = 3
     nagents = 5
     ntargets = 5

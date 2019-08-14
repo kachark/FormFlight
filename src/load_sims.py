@@ -49,7 +49,7 @@ if __name__ == "__main__":
     #     post_process.plot_batch_performance_metrics(loaded_batch)
 
     # load and plot a specific batch
-    batch_num = 3
+    batch_num = 0
     batch_name = 'batch_{0}'.format(batch_num)
     loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
     post_process.plot_batch_performance_metrics(loaded_batch)
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     ##### LOAD DIAGNOSTICS
 
     # load and plot a specific batch
-    batch_num = 3
+    batch_num = 0
     batch_name = 'batch_{0}'.format(batch_num)
     loaded_batch_diagnostics = log.load_batch_diagnostics(ensemble_directory, batch_name, sim_name_list)
     post_process.plot_batch_diagnostics(loaded_batch_diagnostics)

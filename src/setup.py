@@ -120,15 +120,15 @@ def setup_simulation(sim_profile):
             Q3[0, 0] = 1000
             Q3[1, 1] = 1000
             Q3[2, 2] = 1000
-            Q3[3,3] = 0.0
-            Q3[4,4] = 0.0
-            Q3[5,5] = 0.0
+            Q3[3,3] = 1000
+            Q3[4,4] = 1000
+            Q3[5,5] = 1000
             Q3[6,6] = 0.0
             Q3[7,7] = 0.0
             Q3[8,8] = 0.0
-            Q3[9, 9] = 1000
-            Q3[10, 10] = 1000
-            Q3[11, 11] = 1000
+            Q3[9, 9] = 0.0
+            Q3[10, 10] = 0.0
+            Q3[11, 11] = 0.0
 
     ######################
 
@@ -416,18 +416,18 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             x0 = np.zeros((nagents, dx))
             for ii, tt in enumerate(x0):
                 x0[ii] = np.array([
+                    x0p[ii][0],
+                    x0p[ii][1],
+                    x0p[ii][2],
                     rot_x0p[ii][0],
                     rot_x0p[ii][1],
                     rot_x0p[ii][2],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
                     np.random.uniform(-vel_range, vel_range, 1)[0],
                     np.random.uniform(-vel_range, vel_range, 1)[0],
                     np.random.uniform(-vel_range, vel_range, 1)[0],
-                    x0p[ii][0],
-                    x0p[ii][1],
-                    x0p[ii][2]])
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0]])
 
             x0 = x0.flatten()
 
@@ -441,18 +441,18 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             x02 = np.zeros((ntargets, dx))
             for ii, tt in enumerate(x02):
                 x02[ii] = np.array([
+                    x02p[ii][0],
+                    x02p[ii][1],
+                    x02p[ii][2],
                     rot_x02p[ii][0],
                     rot_x02p[ii][1],
                     rot_x02p[ii][2],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
                     np.random.uniform(-vel_range, vel_range, 1)[0],
                     np.random.uniform(-vel_range, vel_range, 1)[0],
                     np.random.uniform(-vel_range, vel_range, 1)[0],
-                    x02p[ii][0],
-                    x02p[ii][1],
-                    x02p[ii][2]])
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0]])
 
             x02 = x02.flatten()
             x0 = np.hstack((x0, x02))
@@ -465,13 +465,11 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             stationary_states_p = np.random.uniform(-100, 100, (ntargets,dim)) # random position spread
             for ii, tt in enumerate(stationary_states):
 
-                stationary_states[ii] = np.array([0, 0, 0, 0, 0, 0,
-                    0,
-                    0,
-                    0,
+                stationary_states[ii] = np.array([
                     stationary_states_p[ii][0],
                     stationary_states_p[ii][1],
-                    stationary_states_p[ii][2]])
+                    stationary_states_p[ii][2],
+                    0, 0, 0, 0, 0, 0, 0, 0, 0])
 
             stationary_states = stationary_states.flatten()
             stationary_states = np.split(stationary_states, ntargets)

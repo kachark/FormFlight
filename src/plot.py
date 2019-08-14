@@ -758,9 +758,9 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
                 y_agent = yout[:, zz*dx:(zz+1)*dx]
 
                 # plot agent trajectory with text
-                ax.scatter3D(y_agent[0, 9], y_agent[0, 10], y_agent[0, 11], color='r', s=scatter_width, label=agent_start_pt_label)
-                ax.plot3D(y_agent[:, 9], y_agent[:, 10], y_agent[:, 11], '-r', linewidth=linewidth_3d, label=agent_traj_label)
-                ax.text(y_agent[0, 9], y_agent[0, 10], y_agent[0, 11], 'A{0}'.format(zz), fontsize=textsize)
+                ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r', s=scatter_width, label=agent_start_pt_label)
+                ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r', linewidth=linewidth_3d, label=agent_traj_label)
+                ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz), fontsize=textsize)
 
                 # # plot location of assignment switches
                 # for switch_ind in assignment_switches[zz]:
@@ -768,23 +768,23 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
 
                 # plot target trajectory
                 y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                ax.scatter3D(y_target[0, 9], y_target[0, 10], y_target[0, 11], color='b', s=scatter_width, label=target_start_pt_label)
-                ax.plot3D(y_target[:, 9], y_target[:, 10], y_target[:, 11], '-b', linewidth=linewidth_3d, label=target_traj_label)
-                ax.text(y_target[0, 9], y_target[0, 10], y_target[0, 11], 'T{0}'.format(zz), fontsize=textsize)
+                ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b', s=scatter_width, label=target_start_pt_label)
+                ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b', linewidth=linewidth_3d, label=target_traj_label)
+                ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
 
                 # TEST
                 # TODO 2d slice
                 # trajectories
-                ax2.plot(y_agent[:, 9], y_agent[:, 10], '-r', linewidth=linewidth, label=agent_traj_label)
-                ax2.plot(y_target[:, 9], y_target[:, 10], '-b', linewidth=linewidth, label=target_traj_label)
+                ax2.plot(y_agent[:, 0], y_agent[:, 1], '-r', linewidth=linewidth, label=agent_traj_label)
+                ax2.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth, label=target_traj_label)
 
                 # points
-                ax2.plot(y_agent[0, 9], y_agent[0, 10], 'ro', markersize=markersize, label=agent_start_pt_label)
-                ax2.plot(y_target[0, 9], y_target[0, 10], 'bo', markersize=markersize, label=target_start_pt_label)
+                ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', markersize=markersize, label=agent_start_pt_label)
+                ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', markersize=markersize, label=target_start_pt_label)
 
                 # text
-                ax2.text(y_agent[0, 9], y_agent[0, 10], 'A{0}'.format(zz), fontsize=textsize)
-                ax2.text(y_target[0, 9], y_target[0, 10], 'T{0}'.format(zz), fontsize=textsize)
+                ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
+                ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
             ### stationary points
             for zz in range(ntargets):
@@ -793,13 +793,13 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
                     stationary_pt_label = '__nolabel__'
 
                 offset = stationary_states[zz*dx:(zz+1)*dx]
-                ax.scatter3D(offset[9], offset[10], offset[11], color='k', s=scatter_width, label=stationary_pt_label)
-                ax.text(offset[9], offset[10], offset[11], 'C{0}'.format(zz), fontsize=textsize)
+                ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
+                ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
 
                 # TEST
                 # TODO 2d slice
-                ax2.plot(offset[9], offset[10], 'ko', markersize=markersize, label=stationary_pt_label)
-                ax2.text(offset[9], offset[10], 'C{0}'.format(zz), fontsize=textsize)
+                ax2.plot(offset[0], offset[1], 'ko', markersize=markersize, label=stationary_pt_label)
+                ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
             ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
             ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -824,9 +824,9 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
                 y_agent = yout[:, zz*dx:(zz+1)*dx]
 
                 # plot agent trajectory with text
-                ax.scatter3D(y_agent[0, 9], y_agent[0, 10], y_agent[0, 11], color='r')
-                ax.plot3D(y_agent[:, 9], y_agent[:, 10], y_agent[:, 11], '--r', linewidth=linewidth_3d, label=agent_traj_label)
-                ax.text(y_agent[0, 9], y_agent[0, 10], y_agent[0, 11], 'A{0}'.format(zz), fontsize=textsize)
+                ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
+                ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '--r', linewidth=linewidth_3d, label=agent_traj_label)
+                ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz), fontsize=textsize)
 
                 # # plot location of assignment switches
                 # for switch_ind in assignment_switches[zz]:
@@ -834,34 +834,34 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
 
                 # plot target trajectory
                 y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                ax.scatter3D(y_target[0, 9], y_target[0, 10], y_target[0, 11], color='b')
-                ax.plot3D(y_target[:, 9], y_target[:, 10], y_target[:, 11], '-b')
-                ax.text(y_target[0, 9], y_target[0, 10], y_target[0, 11], 'T{0}'.format(zz), fontsize=textsize)
+                ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
+                ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
+                ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
 
                 # TEST
                 # TODO 2d slice
                 # trajectories
-                ax2.plot(y_agent[:, 9], y_agent[:, 10], '--r', linewidth=linewidth, label=agent_traj_label)
-                ax2.plot(y_target[:, 9], y_target[:, 10], '-b', linewidth=linewidth)
+                ax2.plot(y_agent[:, 0], y_agent[:, 1], '--r', linewidth=linewidth, label=agent_traj_label)
+                ax2.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth)
 
                 # points
-                ax2.plot(y_agent[0, 9], y_agent[0, 10], 'ro', markersize=markersize)
-                ax2.plot(y_target[0, 9], y_target[0, 10], 'bo', markersize=markersize)
+                ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', markersize=markersize)
+                ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', markersize=markersize)
 
                 # text
-                ax2.text(y_agent[0, 9], y_agent[0, 10], 'A{0}'.format(zz), fontsize=textsize)
-                ax2.text(y_target[0, 9], y_target[0, 10], 'T{0}'.format(zz), fontsize=textsize)
+                ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
+                ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
             # stationary locations
             for zz in range(ntargets):
                 offset = stationary_states[zz*dx:(zz+1)*dx]
-                ax.scatter3D(offset[9], offset[10], offset[11], color='k')
-                ax.text(offset[9], offset[10], offset[11], 'C{0}'.format(zz), fontsize=textsize)
+                ax.scatter3D(offset[0], offset[1], offset[2], color='k')
+                ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
 
                 # TEST
                 # TODO 2d slice
-                ax2.plot(offset[9], offset[10], 'ko', markersize=markersize)
-                ax2.text(offset[9], offset[10], 'C{0}'.format(zz), fontsize=textsize)
+                ax2.plot(offset[0], offset[1], 'ko', markersize=markersize)
+                ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
             ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
             ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
