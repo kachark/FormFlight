@@ -3,9 +3,9 @@
 """
 
 from decimal import Decimal
+from time import time, process_time
 import scipy.integrate as scint
 import numpy as np
-from time import time, process_time
 
 import assignments
 
@@ -30,6 +30,9 @@ class System:
 class OneVOne(System):
 
     """ System representing scenario consisting of one agent to one target engagements
+
+    Assumes equal agent and target swarm sizes
+
     """
 
     def __init__(self, agents, targets, pol, assignment_epoch):
@@ -44,7 +47,6 @@ class OneVOne(System):
         self.ntargets = len(self.targets)
         self.apol = pol
 
-        # every 10 ticks, perform assignment
         self.assignment_epoch = assignment_epoch
         self.optimal_assignment = None
 
@@ -72,7 +74,7 @@ class OneVOne(System):
 
         targets = [None] * self.ntargets
         for ii in range(self.ntargets):
-            for c in collisions: # if this target predicted to collided, don't use in assignment
+            for c in collisions: # if this target predicted to collide, don't use in assignment
                 if ii == c[1]:
                     continue
 
@@ -81,13 +83,6 @@ class OneVOne(System):
 
         # perform assignment
         assignments, cost = self.apol.assignment(t, agents, targets)
-
-        # TODO at t=0 we don't want to have 2 assignments skewing diagnostics
-        # # TEST
-        # # Get dyn assignment at initial conditions (optimal asst that we use to compare against)
-        # if t == 0:
-        #     opt_asst_pol = AssignmentDyn(self.nagents, self.ntargets)
-        #     self.optimal_assignment, _ = opt_asst_pol.assignment(t, agents, targets)
 
         return assignments, cost
 
@@ -125,7 +120,6 @@ class OneVOne(System):
         else:
             return
 
-    # TODO at t=0 we don't want to have 2 assignments skewing diagnostics
     def pre_process(self, t0, x0, collisions):
 
         """ System pre-processor
@@ -134,6 +128,7 @@ class OneVOne(System):
         """
 
         # compute optimal assignment
+        # useful to have optimal assignment to compare against in case running EMD simulation alone
         self.compute_optimal_assignments(t0, x0, collisions)
 
     def update(self, t0, x0, collisions, dt, tick):
@@ -170,7 +165,7 @@ class OneVOne(System):
             else:
                 assignment = self.current_assignment
         else:
-            assignment = self.optimal_assignment
+            assignment = self.current_assignment
 
         # after assignment done
         # pre-compute tracking control policy
@@ -217,13 +212,6 @@ class OneVOne(System):
                 # Agent Control
                 # print(agent.pol)
                 u = agent.pol.evaluate(t, xagent, xtarget, feedforward=tu)
-
-                # if not collisions:
-                # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, xd_c, tu) #ltidyn_cl
-
-                # NON-AUGMENTED DYNAMICS SOLVED HERE
-                # dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u)
-                # dxdt[tind_start:tind_end] = self.targets[jj].dyn.rhs(t, xtarget, tu)
 
                 if not bool(collisions):
                     dxdt[ind_start:ind_end] = agent.dyn.rhs(t, xagent, u)

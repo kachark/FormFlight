@@ -77,19 +77,21 @@ def setup_simulation(sim_profile):
             A, B, C, D, dx, du, statespace = linear_models_3D.double_integrator_3D()
 
             ### runner
-            sim_runner = run_identical_doubleint_3D
+            sim_runner = run.run_identical_doubleint_3D
 
         if agent_model == "Linearized_Quadcopter":
 
             A, B, C, D, dx, du, statespace = linear_models_3D.quadcopter_3D()
 
             ### runner
-            sim_runner = run.run_identical_linearized_quadcopter_3D #TODO needs to be updated
+            sim_runner = run.run_identical_linearized_quadcopter_3D
 
     Q = np.eye(dx)
     R = np.eye(du)
 
     #TEST
+    Q2 = None
+    Q3 = None
     ######################
     if dim == 2:
         Q2 = copy.deepcopy(Q)
@@ -102,8 +104,6 @@ def setup_simulation(sim_profile):
         Q3[2,2] = 0.0
         Q3[3,3] = 0.0
 
-    Q2 = None
-    Q3 = None
     if dim == 3:
         if agent_model == 'Double_Integrator':
             Q2 = copy.deepcopy(Q)
@@ -136,12 +136,12 @@ def setup_simulation(sim_profile):
     ######################
 
     ### target control law
-    # poltargets = [LinearFeedbackOffset(A, B, C, Q, R, c) for c in stationary_states]
-    # poltargets = [ZeroPol(du) for c in cities]
-    # poltargets = [LinearFeedbackConstTracker(A, B, Q2, 2*R, c) for c in stationary_states]
 
     if target_control_policy == "LQR":
+        # poltargets = [controls.LinearFeedbackOffset(A, B, C, Q, R, c) for c in stationary_states]
         poltargets = [controls.LinearFeedbackConstTracker(A, B, Q, R, c) for c in stationary_states]
+
+    # poltargets = [controls.ZeroPol(du) for c in stationary_states]
 
     ### target Dynamics
     dyn_target = dynamics.LTIDyn(A, B)
@@ -155,11 +155,6 @@ def setup_simulation(sim_profile):
         Acl = poltargets[0].get_closed_loop_A()
         gcl = poltargets[0].get_closed_loop_g()
         poltrack = controls.LinearFeedbackAugmented(A, B, Q3, R, Acl, gcl) # initial augmentation: agent_i tracks target_i
-
-    if agent_control_policy == "LQI":
-        A, B, Qaug, Raug = LQI_augmented_system(A, B, C) # augmented A, B
-        dx = A.shape[0]
-        poltrack = controls.LinearFeedbackIntegralTracking(A, B, Qaug, Raug)
 
     ### Agent Dynamics
     ltidyn = dynamics.LTIDyn(A, B)

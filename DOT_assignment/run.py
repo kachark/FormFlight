@@ -41,11 +41,11 @@ def run_identical_doubleint_2D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
 
     dim = 2
 
-    agents = [ag.TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)] # give each trackingagent a tracking policy pre-assigned to Target 0
-    targets = [ag.Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
+    agents = [ag.TrackingAgent(dx, du, statespace, dim, ltidyn, poltrack) for ii in range(nagents)] # give each trackingagent a tracking policy pre-assigned to Target 0
+    targets = [ag.Agent(dx, du, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
     # agents, targets, interactions
-    sys = system.OneVOne(agents, targets, apol, assignment_epoch)
+    sys = systems.OneVOne(agents, targets, apol, assignment_epoch)
 
     # tells system to update, collisions
     eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
@@ -99,8 +99,8 @@ def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, dyn_target, poltr
 
     dim = 3
 
-    agents = [ag.TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
-    targets = [ag.Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
+    agents = [ag.TrackingAgent(dx, du, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
+    targets = [ag.Agent(dx, du, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
     sys = systems.OneVOne(agents, targets, apol, assignment_epoch)
     eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
@@ -157,10 +157,9 @@ def run_identical_linearized_quadcopter_3D(dx, du, statespace, x0, ltidyn, dyn_t
 
     dim = 3
 
-    agents = [ag.TrackingAgent(dx, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
-    targets = [ag.Agent(dx, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
+    agents = [ag.TrackingAgent(dx, du, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
+    targets = [ag.Agent(dx, du, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
-    # sys = OneVOne(agents, targets, apol)
     sys = systems.OneVOne(agents, targets, apol, assignment_epoch)
     eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
 

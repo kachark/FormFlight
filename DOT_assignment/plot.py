@@ -454,9 +454,9 @@ def plot_trajectory(unpacked):
                     y_agent = yout[:, zz*dx:(zz+1)*dx]
 
                     # plot agent trajectory with text
-                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', label=agent_start_pt_label)
-                    ax.plot(y_agent[:, 0], y_agent[:, 1], '-r', label=agent_traj_label)
-                    ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
+                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', markersize=markersize, label=agent_start_pt_label)
+                    ax.plot(y_agent[:, 0], y_agent[:, 1], '-r', linewidth=linewidth, label=agent_traj_label)
+                    ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
 
                     # plot location of assignment switches
                     patches = []
@@ -469,9 +469,9 @@ def plot_trajectory(unpacked):
 
                     # plot target trajectory
                     y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs', label=target_start_pt_label)
-                    ax.plot(y_target[:, 0], y_target[:, 1], '-b', label=target_traj_label)
-                    ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs', markersize=markersize, label=target_start_pt_label)
+                    ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth, label=target_traj_label)
+                    ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
                 ### stationary points
                 for zz in range(ntargets):
@@ -480,8 +480,8 @@ def plot_trajectory(unpacked):
                         stationary_pt_label = '__nolabel__'
 
                     offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.plot(offset[0], offset[1], 'ks', label=stationary_pt_label)
-                    ax.text(offset[0], offset[1], 'C{0}'.format(zz))
+                    ax.plot(offset[0], offset[1], 'ks', markersize=markersize, label=stationary_pt_label)
+                    ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -500,25 +500,25 @@ def plot_trajectory(unpacked):
                     y_agent = yout[:, zz*dx:(zz+1)*dx]
 
                     # plot agent trajectory with text
-                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs')
-                    ax.plot(y_agent[:, 0], y_agent[:, 1], '--r', label=agent_traj_label)
-                    ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz))
+                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', markersize=markersize)
+                    ax.plot(y_agent[:, 0], y_agent[:, 1], '--r', linewidth=linewidth, label=agent_traj_label)
+                    ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
 
                     # plot location of assignment switches
                     # patches = []
                     for switch_ind in assignment_switches[zz]:
                         # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
                         # patches.append(ci)
-                        ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms')
+                        ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms', markersize=markersize)
 
                     # p = PatchCollection(patches)
                     # ax.add_collection(p)
 
                     # plot target trajectory
                     y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs')
-                    ax.plot(y_target[:, 0], y_target[:, 1], '-b')
-                    ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz))
+                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs', markersize=markersize)
+                    ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth)
+                    ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
                 ### stationary points
                 for zz in range(ntargets):
@@ -527,8 +527,8 @@ def plot_trajectory(unpacked):
                         stationary_pt_label = '__nolabel__'
 
                     offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.plot(offset[0], offset[1], 'ks')
-                    ax.text(offset[0], offset[1], 'C{0}'.format(zz))
+                    ax.plot(offset[0], offset[1], 'ks', markersize=markersize)
+                    ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)

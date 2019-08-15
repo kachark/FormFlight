@@ -1,12 +1,14 @@
 
+import os
 import atexit
 from time import time, strftime, localtime
 from datetime import timedelta
 import matplotlib.pyplot as plt
+from datetime import datetime
 import numpy as np
 import pandas as pd
-from datetime import datetime
 
+# DOT_assignment
 from setup import (setup_simulation, generate_initial_conditions)
 from post_process import (
         post_process_batch_simulation,
@@ -14,7 +16,11 @@ from post_process import (
         plot_batch_performance_metrics,
         plot_batch_diagnostics
 )
-from log import (save_batch_metrics_to_csv, save_batch_diagnostics_to_csv)
+from log import (
+        save_batch_metrics_to_csv,
+        save_batch_diagnostics_to_csv,
+        save_test_info_to_txt
+)
 
 
 def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy):
@@ -67,13 +73,13 @@ def main():
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
     maxtime = 5
-    dim = 3
+    dim = 2
     nagents = 5
     ntargets = 5
-    # agent_model = "Double_Integrator"
-    # target_model = "Double_Integrator"
-    agent_model = "Linearized_Quadcopter" # 3d only!
-    target_model = "Linearized_Quadcopter"
+    agent_model = "Double_Integrator"
+    target_model = "Double_Integrator"
+    # agent_model = "Linearized_Quadcopter" # 3d only!
+    # target_model = "Linearized_Quadcopter"
     collisions = True
     collision_tol = 1e-2
     agent_control_policy = "LQR"
@@ -89,12 +95,12 @@ def main():
     root_directory = '/Users/koray/Box Sync/test_results/'
     ensemble_directory = root_directory + ensemble_name
 
-    # create directory to store ensemble
-    try:
-        os.makedirs(ensemble_directory)
-    except FileExistsError:
-        # directory already exists
-        pass
+#     # create directory to store ensemble
+#     try:
+#         os.makedirs(ensemble_directory)
+#     except FileExistsError:
+#         # directory already exists
+#         pass
 
 
     # CONSTRUCT ENSEMBLE OF SIMULATIONS
@@ -253,10 +259,10 @@ def main():
         # collect diagnostics
         packed_batch_diagnostics = post_process_batch_diagnostics(batch_diagnostics) # returns dict
 
-        # # DEBUG
-        # plot_batch_performance_metrics(batch_performance_metrics)
-        # plot_batch_diagnostics(packed_batch_diagnostics)
-        # plt.show()
+        # DEBUG
+        plot_batch_performance_metrics(batch_performance_metrics)
+        plot_batch_diagnostics(packed_batch_diagnostics)
+        plt.show()
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
         save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, batch_name)

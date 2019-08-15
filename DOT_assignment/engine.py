@@ -2,11 +2,11 @@
 """ @file engine.py
 """
 
+import copy
 import pandas as pd
 import numpy as np
-import copy
 
-################################
+###############################
 ## Game Engine
 ###############################
 class Engine:
@@ -57,12 +57,15 @@ class Engine:
             self.diagnostics.iloc[-1, :] = diag_df.iloc[0, :]
             self.diagnostics = pd.concat([self.diagnostics, diag_df.iloc[1:,:]], ignore_index=True)
 
-    # Physics
-    # 2d and 3d
-    # def apriori_collisions(self, current_state, nagents, ntargets, time):
     def apriori_collisions(self, current_state, agents, targets, time):
 
-        """ computes apriori collisions between agents and targets
+        """ computes apriori collisions between agents and targets in 2D/3D
+
+        # implements apriori (continuous) collision detection
+        # use bounding circles/spheres around each particle
+            # easy to calculate distances for circles
+            # more complicated shapes - use gilbert-johnson-keerthi algorithm (GJK)
+
         """
 
         nagents = len(agents)
@@ -71,21 +74,10 @@ class Engine:
         # assumes agent and targets share the same state shape
         dim = self.dim
 
-        # TODO dx dependent on agent/target dynamic models
-        # if self.dim == 3:
-        #     dx = 6
-        # if self.dim == 2:
-        #     dx = 4
-
         tstart = time
         tfinal = time + self.dt
 
         updated_state = copy.deepcopy(current_state)
-
-        # implement a-prior (continuous) collision detection
-        # use bounding circles/spheres around each particle
-            # easy to calculate distances for circles
-            # more complicated shapes - use gilbert-johnson-keerthi algorithm (GJK)
 
         # for now consider all agent-target pairs - can be optimized
         collided = set() # tuple(i, j)
@@ -130,15 +122,14 @@ class Engine:
                 y_target = updated_state[(j+ntargets)*dx:(j+ntargets+1)*dx]
 
                 if dim == 2:
-                    # y_target_final = y_target[:dim] + np.array([y_target[2], y_target[3]])*self.dt # final position components
                     x = target_dim_pos[0]
                     y = target_dim_pos[1]
                     xdot = target_dim_vel[0]
                     ydot = target_dim_vel[1]
                     y_target_current = np.array([y_target[x], y_target[y]])
                     y_target_final = y_target_current + np.array([y_target[xdot], y_target[ydot]])*self.dt
+
                 if dim == 3:
-                    # y_target_final = y_target[:dim] + np.array([y_target[3], y_target[4], y_target[5]])*self.dt # final position components
                     x = target_dim_pos[0]
                     y = target_dim_pos[1]
                     z = target_dim_pos[2]
@@ -149,30 +140,12 @@ class Engine:
                     y_target_final = y_target_current + np.array([y_target[xdot], y_target[ydot], y_target[zdot]])*self.dt
 
                 # agent/target current and future positions
-
-                # TODO
-                # a0 = y_agent[:dim]
-                # af = y_agent_final[:dim]
-                # t0 = y_target[:dim]
-                # tf = y_target_final[:dim]
-                # del_a = af - a0
-                # del_t = tf - t0
                 a0 = y_agent_current
                 af = y_agent_final
                 t0 = y_target_current
                 tf = y_target_final
                 del_a = af - a0
                 del_t = tf - t0
-
-                # ax = del_a[0] - del_t[0]
-                # ay = del_a[1] - del_t[1]
-                # bx = a0[0] - t0[0]
-                # by = a0[1] - t0[1]
-
-                # a = ax**2 + ay**2
-                # b = 2 * (ax*bx + ay*by)
-                # c = (bx**2 + by**2) - (bounding_radius_agent+bounding_radius_target)**2
-
 
                 a = np.linalg.norm(del_t-del_a)**2
                 b = 2*np.dot((t0-a0), (del_t-del_a))
@@ -212,7 +185,11 @@ class Engine:
         time = 0
 
         # SYSTEM PREPROCESSOR
-        collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
+        if self.collisions:
+            collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
+        else:
+            collisions = set()
+
         system.pre_process(time, current_state, collisions)
 
         # RUN THE SYSTEM
@@ -222,16 +199,10 @@ class Engine:
 
             # print("Time: {0:3.2E}".format(time))
             if self.collisions:
-                # collisions = self.apriori_collisions(current_state, system.nagents, system.ntargets, time)
-
-                # TEST
-                # TODO UPDATE TO HANDLE LINEARIZED QC - statespace
                 collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
 
             else:
                 collisions = set()
-
-            # thist, state_hist, assign_hist = system.update(time, current_state, collisions, self.dt, tick)
 
             thist, state_hist, assign_hist, diagnostics = system.update(time, current_state, collisions, self.dt, tick)
 

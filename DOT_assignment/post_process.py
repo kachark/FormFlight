@@ -971,6 +971,8 @@ def agent_agent_collisions(unpacked):
                 agent_pos = np.array(y_agent[:, 9:12])
             if dx == 6:
                 agent_pos = np.array(y_agent[:, 0:3])
+            if dx == 4:
+                agent_pos = np.array(y_agent[:, 0:2])
 
             agent_states[zz] = agent_pos
 

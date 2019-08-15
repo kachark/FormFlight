@@ -6,8 +6,8 @@ from scipy.linalg import solve_continuous_are as care
 import numpy as np
 import copy
 
-################################
-## Agent Policies
+###############################
+## Control Policies
 ###############################
 class ZeroPol:
 
@@ -41,57 +41,6 @@ class LinearFeedback: # Continuous Infinite-Horizon Linear Quadratic Regulator
     def get_R(self):
         return self.R
 
-# DEPRECATE?
-class LinearFeedbackTracking(LinearFeedback):
-
-    def __init__(self, A, B, Q, R):
-        super(LinearFeedbackTracking, self).__init__(A, B, Q, R)
-
-        self.P = care(A, B, Q, R)
-        self.K = np.linalg.solve(R, np.dot(B.T, self.P))
-        self.Bt = copy.deepcopy(B.T)
-        self.RBt = np.dot(np.linalg.inv(R), self.Bt)
-        self.BRBt = np.dot(B, self.RBt)
-
-        self.R = copy.deepcopy(R)
-
-        # Closed loop is
-        # \dot{x} = A_cl x + g_cl
-        self.Acl = A - np.dot(B, self.K)
-
-        self.tracking = None
-
-        # steady-state
-        self.xss = None
-
-        # steady-state optimal control
-        # self.uss = self.evaluate(0, self.xss)
-        self.uss = None
-
-
-    def evaluate(self, time, state1, state2, feedforward=0):
-        # print("state = ", state)
-        diff = state1 - state2
-        # print("TIME: ", time, " CONTROL: ", np.dot(self.K, diff))
-        agent_pol = -np.dot(self.K, diff) + feedforward
-        return agent_pol
-
-    def cost_to_go(self, time, state1, state2):
-        diff = state1 - state2
-        cost_to_go = np.dot(diff, np.dot(self.P, diff))
-        return cost_to_go
-
-    def get_uss(self, xss, ud_ss):
-        self.uss = -np.dot(self.K, xss) + ud_ss
-        return self.uss
-        # return -np.dot(self.RBt, np.dot(self.P, self.xss) + self.p)
-
-    def get_xss(self, ud_ss):
-        self.xss = -np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), np.dot(self.B, ud_ss))
-        return self.xss
-
-##################################3
-# NEW
 class LinearFeedbackConstTracker:
 
     """ Class for linear quadratic tracker for constant state tracking
@@ -345,47 +294,7 @@ class LinearFeedbackAugmented(LinearFeedbackConstTracker):
 
         return cost_to_go
 
-##################################3
-
-# DEPRECATE?
-class LinearFeedbackOffset(LinearFeedback):
-
-    def __init__(self, A, B, Q, R, const):
-        super(LinearFeedbackOffset, self).__init__(A, B, Q, R)
-        self.const = copy.deepcopy(const)
-        self.dim_offset = self.const.shape[0] # np array
-        self.P = care(A, B, Q, R)
-        self.K = -np.linalg.solve(R, np.dot(B.T, self.P))
-        self.Acl = A + np.matmul(B, self.K)
-        # self.r = np.matmul(B, np.matmul(-self.K, self.offset))
-        RB = np.matmul(np.linalg.inv(R), B.T)
-        ur = np.matmul(RB, np.linalg.inv(self.Acl.T))
-        ur = np.matmul(ur, np.matmul(self.P, np.matmul(A, const)))
-        Kr = np.matmul(-self.K, const)
-        self.r = np.matmul(B, Kr - ur)
-
-        # self.r = -np.matmul(B, ur)
-
-        # rho = -np.matmul(A, offset)
-        # self.r = -np.matmul(B, ur) + rho
-
-    def evaluate(self, time, state1):
-
-        s1 = copy.deepcopy(state1)
-        diff = copy.deepcopy(state1)
-        diff -= self.const
-        agent_pol = np.dot(self.K, diff)
-        # agent_pol = np.dot(-self.K, diff) # ltidyn_cl
-        return agent_pol
-
-    def cost_to_go(self, time, state1):
-        s1 = copy.deepcopy(state1)
-        diff = copy.deepcopy(state1)
-        diff[:self.dim_offset] = s1[:self.dim_offset] - self.const
-        cost_to_go = np.dot(diff, np.dot(self.P, diff))
-        return cost_to_go
-
-# BROKEN
+# IN DEVELOPMENT
 class MinimumTimeIntercept(): # augmented proportional navigation - min time intercept with target accel
 
     """
