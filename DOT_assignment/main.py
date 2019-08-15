@@ -102,6 +102,13 @@ def main():
         # directory already exists
         pass
 
+    # TODO assumes heterogeneous swarms
+    # formations: uniform_distribution, circle, fibonacci_sphere
+    initial_formation_params = {
+            'nagents': nagents, 'agent_model': agent_model, 'agent_swarm_formation': 'uniform_distribution',
+            'ntargets': ntargets, 'target_model': target_model, 'target_swarm_formation': 'fibonacci_sphere',
+            'nstationary_states': ntargets, 'stationary_states_formation': 'circle'
+            }
 
     # CONSTRUCT ENSEMBLE OF SIMULATIONS
     for batch_i in range(nbatches):
@@ -111,8 +118,7 @@ def main():
 
         # SIM SETUP
 
-        # TODO specify agent, target, stationary_states formation/distribution
-        initial_conditions = generate_initial_conditions(dim, agent_model, target_model, nagents, ntargets)
+        initial_conditions = generate_initial_conditions(dim, initial_formation_params)
 
         ###### DEFINE SIMULATION PROFILES ######
         sim_profiles = {}
