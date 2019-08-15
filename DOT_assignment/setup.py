@@ -63,12 +63,12 @@ def setup_simulation(sim_profile):
             ### runner
             sim_runner = run.run_identical_doubleint_2D
 
-        # if agent_model == "Linearized_Quadcopter":
+        if agent_model == "Linearized_Quadcopter":
 
-        #     A, B, C, D, dx, du, statespace = quadcopter_2D()
+            A, B, C, D, dx, du, statespace = linear_models_2D.quadcopter_2D()
 
             ### runner
-            # sim_runner = run_identical_linearized_quadcopter_2D()
+            sim_runner = run.run_identical_linearized_quadcopter_2D
 
     if dim == 3:
 
@@ -94,15 +94,28 @@ def setup_simulation(sim_profile):
     Q3 = None
     ######################
     if dim == 2:
-        Q2 = copy.deepcopy(Q)
-        Q2[2,2] = 0.0
-        Q2[3,3] = 0.0
+        if agent_model == 'Double_Integrator':
+            Q2 = copy.deepcopy(Q)
+            Q2[2,2] = 0.0
+            Q2[3,3] = 0.0
 
-        Q3 = copy.deepcopy(Q)
-        Q3[0, 0] = 100
-        Q3[1, 1] = 100
-        Q3[2,2] = 0.0
-        Q3[3,3] = 0.0
+            Q3 = copy.deepcopy(Q)
+            Q3[0, 0] = 100
+            Q3[1, 1] = 100
+            Q3[2,2] = 0.0
+            Q3[3,3] = 0.0
+        if agent_model == 'Linearized_Quadcopter':
+
+            Q3 = copy.deepcopy(Q)
+            Q3[0, 0] = 100
+            Q3[1, 1] = 100
+            Q3[2,2] = 100
+            Q3[3,3] = 100
+            Q3[4,4] = 0.0
+            Q3[5,5] = 0.0
+            Q3[6, 6] = 0.0
+            Q3[7, 7] = 0.0
+
 
     if dim == 3:
         if agent_model == 'Double_Integrator':
@@ -277,42 +290,49 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             stationary_states = np.split(stationary_states, ntargets)
 
 
-        # TODO need to add quadcopter in 2D
         if agent_model == "Linearized_Quadcopter":
 
-            A, B, C, D, dx, du, statespace = linear_models_3D() # TODO rewrite for 2D
+            A, B, C, D, dx, du, statespace = linear_models_2D.quadcopter_2D()
 
             # Agents
             # r = 150 # circle radius
             # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
-            x0p = np.random.uniform(-1000, 1000, (nagents,dim)) # position spread
+            x0p = np.random.uniform(-100, 100, (nagents,dim)) # position spread
+            rot_x0p = np.random.uniform(-2*np.pi, 2*np.pi, (nagents,dim)) # position spread
+            vel_range = 500
+            rot_vel_range = 25
             x0 = np.zeros((nagents, dx))
-            vel_range = 5000
             for ii, tt in enumerate(x0):
-                x0[ii] = np.array([0, 0, 0, 0, 0, 0,
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                x0[ii] = np.array([
                     x0p[ii][0],
                     x0p[ii][1],
-                    x0p[ii][2]])
+                    rot_x0p[ii][0],
+                    rot_x0p[ii][1],
+                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0]])
 
             x0 = x0.flatten()
 
             # Targets
             # r = 150 # circle radius
             # x02p = [circle(r, ntargets, t) for t in range(ntargets)]
-            x02p = np.random.uniform(-1000, 1000, (ntargets,dim)) # position spread
+            x02p = np.random.uniform(-100, 100, (ntargets,dim)) # position spread
+            rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
+            vel_range = 50
+            rot_vel_range = 25
             x02 = np.zeros((ntargets, dx))
-            vel_range = 1000
             for ii, tt in enumerate(x02):
-                x0[ii] = np.array([0, 0, 0, 0, 0, 0,
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                x02[ii] = np.array([
                     x02p[ii][0],
                     x02p[ii][1],
-                    x02p[ii][2]])
+                    rot_x02p[ii][0],
+                    rot_x02p[ii][1],
+                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
+                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0]])
 
             x02 = x02.flatten()
             x0 = np.hstack((x0, x02))
@@ -321,17 +341,14 @@ def generate_initial_conditions(dim, agent_model, target_model, nagents, ntarget
             stationary_states = np.zeros((ntargets, dx))
             r = 2000
             # stationary_states_p = [circle(r, ntargets, t) for t in range(ntargets)] # circle
-            stationary_states_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
-            # stationary_states_p = np.random.uniform(-1000, 1000, (ntargets,dim)) # random position spread
+            # stationary_states_p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            stationary_states_p = np.random.uniform(-100, 100, (ntargets,dim)) # random position spread
             for ii, tt in enumerate(stationary_states):
 
-                stationary_states[ii] = np.array([0, 0, 0, 0, 0, 0,
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
+                stationary_states[ii] = np.array([
                     stationary_states_p[ii][0],
                     stationary_states_p[ii][1],
-                    stationary_states_p[ii][2]])
+                    0, 0, 0, 0, 0, 0])
 
             stationary_states = stationary_states.flatten()
             stationary_states = np.split(stationary_states, ntargets)

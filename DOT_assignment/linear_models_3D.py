@@ -4,7 +4,41 @@
 
 import numpy as np
 
-# TODO update to match how it's defined in our paper
+def double_integrator_3D():
+    # 3D double integrator
+    dx = 6
+
+    # State components
+    pos_components = np.array([0, 1, 2])
+    vel_components = np.array([3, 4, 5])
+
+    statespace = {
+            'position': pos_components,
+            'velocity': vel_components,
+            'attitude': None,
+            'angular_velocity': None
+            }
+
+    du = 3
+    A = np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
+
+    B = np.array([[0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0],
+                  [1.0, 0.0, 0.0],
+                  [0.0, 1.0, 0.0],
+                  [0.0, 0.0, 1.0]])
+
+    C = np.eye(dx)
+    D = 0
+
+    return A, B, C, D, dx, du, statespace
+
 def quadcopter_3D():
     # linearized quadcopter dynamics
     m = 0.1         #kg
@@ -59,41 +93,6 @@ def quadcopter_3D():
                   [0.0, 0.0, 0.0, 1.0/Izz]])
 
     C = np.eye(A.shape[0])
-    D = 0
-
-    return A, B, C, D, dx, du, statespace
-
-def double_integrator_3D():
-    # 3D double integrator
-    dx = 6
-
-    # State components
-    pos_components = np.array([0, 1, 2])
-    vel_components = np.array([3, 4, 5])
-
-    statespace = {
-            'position': pos_components,
-            'velocity': vel_components,
-            'attitude': None,
-            'angular_velocity': None
-            }
-
-    du = 3
-    A = np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
-
-    B = np.array([[0.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0],
-                  [1.0, 0.0, 0.0],
-                  [0.0, 1.0, 0.0],
-                  [0.0, 0.0, 1.0]])
-
-    C = np.eye(dx)
     D = 0
 
     return A, B, C, D, dx, du, statespace

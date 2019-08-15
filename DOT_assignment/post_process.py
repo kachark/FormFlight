@@ -39,11 +39,11 @@ def post_process_batch_simulation(batch_results):
         # post-process each sim within batch
         # NOTE assumes agent/target homogeneity
         if parameters['dim'] == 2:
-            if parameters['agent_model'] == 'Double_Integrator':
+            if parameters['agent_model'] == 'Double_Integrator' and parameters['target_model'] == 'Double_Integrator':
                 post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
 
-            # if parameters['agent_model'] == 'Linearized Quadcopter':
-            #     post_process_identical_2d_doubleint()
+            if parameters['agent_model'] == 'Linearized_Quadcopter' and parameters['target_model'] == 'Linearized_Quadcopter':
+                post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
 
         # NOTE assumes agent/target homogeneity
         if parameters['dim'] == 3:
@@ -561,6 +561,7 @@ def post_process_heterogeneous(parameters, sim_results):
 # TODO rename to unpack_homogeneous_identical(batch_performance_metrics):
 
 def unpack_performance_metrics(batch_performance_metrics):
+
     """ Unpacks batch performance metrics DataFrame into a python standard dictionary
 
     Input:
@@ -966,12 +967,15 @@ def agent_agent_collisions(unpacked):
         for zz in range(nagents):
             y_agent = yout[:, zz*dx:(zz+1)*dx]
 
+            # TODO make this not hardcoded
             # get positions
-            if dx == 12:
+            if dx == 12: # 3D linearized quadcopter
                 agent_pos = np.array(y_agent[:, 9:12])
-            if dx == 6:
+            if dx == 6: # 3D double integrator
                 agent_pos = np.array(y_agent[:, 0:3])
-            if dx == 4:
+            if dx == 4: # 2D double integrator
+                agent_pos = np.array(y_agent[:, 0:2])
+            if dx == 8: # 2D linearized quadcopter
                 agent_pos = np.array(y_agent[:, 0:2])
 
             agent_states[zz] = agent_pos

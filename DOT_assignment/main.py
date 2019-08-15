@@ -76,10 +76,10 @@ def main():
     dim = 2
     nagents = 5
     ntargets = 5
-    agent_model = "Double_Integrator"
-    target_model = "Double_Integrator"
-    # agent_model = "Linearized_Quadcopter" # 3d only!
-    # target_model = "Linearized_Quadcopter"
+    # agent_model = "Double_Integrator"
+    # target_model = "Double_Integrator"
+    agent_model = "Linearized_Quadcopter"
+    target_model = "Linearized_Quadcopter"
     collisions = True
     collision_tol = 1e-2
     agent_control_policy = "LQR"
@@ -95,12 +95,12 @@ def main():
     root_directory = '/Users/koray/Box Sync/test_results/'
     ensemble_directory = root_directory + ensemble_name
 
-#     # create directory to store ensemble
-#     try:
-#         os.makedirs(ensemble_directory)
-#     except FileExistsError:
-#         # directory already exists
-#         pass
+    # create directory to store ensemble
+    try:
+        os.makedirs(ensemble_directory)
+    except FileExistsError:
+        # directory already exists
+        pass
 
 
     # CONSTRUCT ENSEMBLE OF SIMULATIONS
@@ -259,10 +259,10 @@ def main():
         # collect diagnostics
         packed_batch_diagnostics = post_process_batch_diagnostics(batch_diagnostics) # returns dict
 
-        # DEBUG
-        plot_batch_performance_metrics(batch_performance_metrics)
-        plot_batch_diagnostics(packed_batch_diagnostics)
-        plt.show()
+        # # DEBUG
+        # plot_batch_performance_metrics(batch_performance_metrics)
+        # plot_batch_diagnostics(packed_batch_diagnostics)
+        # plt.show()
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
         save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, batch_name)

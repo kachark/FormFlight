@@ -739,6 +739,111 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
     target_traj_label = labels[3]
     stationary_pt_label = labels[4]
 
+    if dim == 2:
+
+        ### Agent / Target Trajectories
+        # optimal trajectories (solid lines)
+        if sim_name == 'AssignmentDyn':
+
+            for zz in range(nagents):
+
+                if zz >= 1:
+                    agent_traj_label = '__nolabel__'
+                    agent_start_pt_label = '__nolabel__'
+                    target_start_pt_label = '__nolabel__'
+                    target_traj_label = '__nolabel__'
+
+                # agent state over time
+                y_agent = yout[:, zz*dx:(zz+1)*dx]
+
+                # plot agent trajectory with text
+                ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', markersize=markersize, label=agent_start_pt_label)
+                ax.plot(y_agent[:, 0], y_agent[:, 1], '-r', linewidth=linewidth, label=agent_traj_label)
+                ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
+
+                # plot location of assignment switches
+                patches = []
+                for switch_ind in assignment_switches[zz]:
+                    ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='b', fill=True)
+                    patches.append(ci)
+
+                p = PatchCollection(patches)
+                ax.add_collection(p)
+
+                # plot target trajectory
+                y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
+                ax.plot(y_target[0, 0], y_target[0, 1], 'bs', markersize=markersize, label=target_start_pt_label)
+                ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth, label=target_traj_label)
+                ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
+
+            ### stationary points
+            for zz in range(ntargets):
+
+                if zz >= 1:
+                    stationary_pt_label = '__nolabel__'
+
+                offset = stationary_states[zz*dx:(zz+1)*dx]
+                ax.plot(offset[0], offset[1], 'ks', markersize=markersize, label=stationary_pt_label)
+                ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
+
+            ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+            ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+
+        elif sim_name == 'AssignmentEMD':
+
+            agent_traj_label = 'Agent Path (EMD)'
+
+            # non-optimal trajectories (dotted lines)
+            for zz in range(nagents):
+
+                if zz >= 1:
+                    agent_traj_label = '__nolabel__'
+
+                # agent state over time
+                y_agent = yout[:, zz*dx:(zz+1)*dx]
+
+                # plot agent trajectory with text
+                ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', markersize=markersize)
+                ax.plot(y_agent[:, 0], y_agent[:, 1], '--r', linewidth=linewidth, label=agent_traj_label)
+                ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
+
+                # plot location of assignment switches
+                # patches = []
+                for switch_ind in assignment_switches[zz]:
+                    # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
+                    # patches.append(ci)
+                    ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms', markersize=markersize)
+
+                # p = PatchCollection(patches)
+                # ax.add_collection(p)
+
+                # plot target trajectory
+                y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
+                ax.plot(y_target[0, 0], y_target[0, 1], 'bs', markersize=markersize)
+                ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth)
+                ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
+
+            ### stationary points
+            for zz in range(ntargets):
+
+                if zz >= 1:
+                    stationary_pt_label = '__nolabel__'
+
+                offset = stationary_states[zz*dx:(zz+1)*dx]
+                ax.plot(offset[0], offset[1], 'ks', markersize=markersize)
+                ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
+
+            ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+            ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+
+        # dim == 2
+        ax.xaxis.set_tick_params(labelsize=labelsize)
+        ax.yaxis.set_tick_params(labelsize=labelsize)
+
+    # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
+    ax.legend(loc='lower right', fontsize=14)
+
+
     if dim == 3:
 
         # optimal trajectories (solid lines)
