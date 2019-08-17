@@ -79,10 +79,13 @@ class Engine:
 
         updated_state = copy.deepcopy(current_state)
 
+        # circle/sphere around every agent/target, if they touch = collision
+        bounding_radius_agent = self.collision_tol/2
+        bounding_radius_target = self.collision_tol/2
+
         # for now consider all agent-target pairs - can be optimized
         collided = set() # tuple(i, j)
-        bounding_radius_agent = self.collision_tol
-        bounding_radius_target = self.collision_tol
+
         for i in range(nagents):
             # agent state components (differs per dynamic model)
             y_agent_statespace = agents[i].get_statespace()
@@ -90,27 +93,12 @@ class Engine:
             agent_dim_vel = y_agent_statespace['velocity']
             dx = agents[i].state_size()
 
-            y_agent = updated_state[i*dx:(i+1)*dx] # time history of agent i
+            # full agent state
+            y_agent = updated_state[i*dx:(i+1)*dx] # agent i
 
-            if dim == 2:
-                # y_agent_final = y_agent[:dim] + np.array([y_agent[2], y_agent[3]])*self.dt
-                x = agent_dim_pos[0]
-                y = agent_dim_pos[1]
-                xdot = agent_dim_vel[0]
-                ydot = agent_dim_vel[1]
-                y_agent_current = np.array([y_agent[x], y_agent[y]])
-                y_agent_final = y_agent_current + np.array([y_agent[xdot], y_agent[ydot]])*self.dt
-            if dim == 3:
-                # y_agent_final = y_agent[:dim] + np.array([y_agent[3], y_agent[4], y_agent[5]])*self.dt
-                x = agent_dim_pos[0]
-                y = agent_dim_pos[1]
-                z = agent_dim_pos[2]
-                xdot = agent_dim_vel[0]
-                ydot = agent_dim_vel[1]
-                zdot = agent_dim_vel[2]
-                y_agent_current = np.array([y_agent[x], y_agent[y], y_agent[z]])
-                y_agent_final = y_agent_current + np.array([y_agent[xdot], y_agent[ydot], y_agent[zdot]])*self.dt
-            # print(y_agent)
+            # agent current and projected future position
+            y_agent_current_pos = y_agent[agent_dim_pos]
+            y_agent_final_pos = y_agent_current_pos + y_agent[agent_dim_vel]*self.dt
 
             # check each agent against each target
             for j in range(ntargets):
@@ -119,31 +107,18 @@ class Engine:
                 target_dim_vel = y_target_statespace['velocity']
                 dx = targets[j].state_size()
 
+                # full target state
                 y_target = updated_state[(j+ntargets)*dx:(j+ntargets+1)*dx]
 
-                if dim == 2:
-                    x = target_dim_pos[0]
-                    y = target_dim_pos[1]
-                    xdot = target_dim_vel[0]
-                    ydot = target_dim_vel[1]
-                    y_target_current = np.array([y_target[x], y_target[y]])
-                    y_target_final = y_target_current + np.array([y_target[xdot], y_target[ydot]])*self.dt
-
-                if dim == 3:
-                    x = target_dim_pos[0]
-                    y = target_dim_pos[1]
-                    z = target_dim_pos[2]
-                    xdot = target_dim_vel[0]
-                    ydot = target_dim_vel[1]
-                    zdot = target_dim_vel[2]
-                    y_target_current = np.array([y_target[x], y_target[y], y_target[z]])
-                    y_target_final = y_target_current + np.array([y_target[xdot], y_target[ydot], y_target[zdot]])*self.dt
+                # target current and projected future position
+                y_target_current_pos = y_target[target_dim_pos]
+                y_target_final_pos = y_target_current_pos + y_target[target_dim_vel]*self.dt
 
                 # agent/target current and future positions
-                a0 = y_agent_current
-                af = y_agent_final
-                t0 = y_target_current
-                tf = y_target_final
+                a0 = y_agent_current_pos
+                af = y_agent_final_pos
+                t0 = y_target_current_pos
+                tf = y_target_final_pos
                 del_a = af - a0
                 del_t = tf - t0
 
@@ -163,12 +138,25 @@ class Engine:
                         print("       ", a0, " t0: ", t0)
                         collided.add((i,j))
 
+                        # TODO update agent/target state to show projected collision location
+                        # update agent to be at location of collision
+                        updated_state[i*dx:(i+1)*dx][agent_dim_pos] = y_agent_final_pos
+                        # updated_state[i*dx:(i+1)*dx][agent_dim_vel] = np.zeros((3))
+
+                        # update target to be at location of collision
+                        updated_state[(j+ntargets)*dx:(j+ntargets+1)*dx][target_dim_pos] = y_target_final_pos
+                        # updated_state[(j+ntargets)*dx:(j+ntargets+1)*dx][target_dim_vel] = np.zeros((3))
+
+
                 # if t_collisions.size != 0:
                 #     if 0 <= np.amin(t_collisions[np.isreal(t_collisions)]) <= 1:
                 #         collided.append((i,j))
 
         print("COLLISIONS: ", collided)
-        return collided
+        # return collided
+
+        # TODO return the collision location and set as the final location of that agent/target
+        return collided, updated_state
 
     def run(self, x0, system):
 
@@ -186,11 +174,14 @@ class Engine:
 
         # SYSTEM PREPROCESSOR
         if self.collisions:
-            collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
+            # collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
+            collisions, updated_state = self.apriori_collisions(current_state, system.agents, system.targets, time)
         else:
-            collisions = set()
+            # collisions = set()
+            collisions, updated_state = set()
 
-        system.pre_process(time, current_state, collisions)
+        # system.pre_process(time, current_state, collisions)
+        system.pre_process(time, updated_state, collisions)
 
         # RUN THE SYSTEM
         for time in np.arange(0.0, self.maxtime, self.dt):
@@ -199,12 +190,15 @@ class Engine:
 
             # print("Time: {0:3.2E}".format(time))
             if self.collisions:
-                collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
+                # collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
+                collisions, updated_state = self.apriori_collisions(current_state, system.agents, system.targets, time)
 
             else:
-                collisions = set()
+                # collisions = set()
+                collisions, updated_state = set()
 
-            thist, state_hist, assign_hist, diagnostics = system.update(time, current_state, collisions, self.dt, tick)
+            # thist, state_hist, assign_hist, diagnostics = system.update(time, current_state, collisions, self.dt, tick)
+            thist, state_hist, assign_hist, diagnostics = system.update(time, updated_state, collisions, self.dt, tick)
 
             newdf = pd.DataFrame(np.hstack((thist[:, np.newaxis],
                                             state_hist,
