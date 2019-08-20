@@ -12,7 +12,7 @@ from matplotlib.collections import PatchCollection
 import matplotlib.ticker as ticker
 import scipy.stats as sts
 
-import post_process
+from DOT_assignment import post_process
 
 # # TeX fonts
 # import matplotlib

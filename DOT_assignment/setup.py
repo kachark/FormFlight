@@ -6,13 +6,13 @@ import numpy as np
 import copy
 
 # DOT_assignment
-import assignments
-import controls
-import dynamics
-import engine
-import linear_models_2D
-import linear_models_3D
-import run
+from DOT_assignment import assignments
+from DOT_assignment import controls
+from DOT_assignment import dynamics
+from DOT_assignment import engine
+from DOT_assignment import linear_models_2D
+from DOT_assignment import linear_models_3D
+from DOT_assignment import run
 
 def setup_simulation(sim_profile):
 

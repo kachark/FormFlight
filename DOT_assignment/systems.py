@@ -7,7 +7,7 @@ from time import time, process_time
 import scipy.integrate as scint
 import numpy as np
 
-import assignments
+from DOT_assignment import assignments
 
 ################################
 ## Big Systems

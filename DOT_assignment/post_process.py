@@ -8,7 +8,7 @@ import copy
 import os
 
 # DOT_assignment
-import plot
+from DOT_assignment import plot
 
 def post_process_batch_simulation(batch_results):
 

@@ -5,12 +5,12 @@
 from time import time, process_time
 import pandas as pd
 
-import agents as ag
-import controls
-import dynamics
-import engine
-import systems
-import post_process
+from DOT_assignment import agents as ag
+from DOT_assignment import controls
+from DOT_assignment import dynamics
+from DOT_assignment import engine
+from DOT_assignment import systems
+from DOT_assignment import post_process
 
 
 def run_identical_doubleint_2D(dx, du, statespace, x0, ltidyn, dyn_target, poltrack, poltargets, apol, assignment_epoch, nagents, ntargets, collisions, collision_tol, dt=0.01, maxtime=10):
