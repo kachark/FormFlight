@@ -38,6 +38,8 @@ The available agent and target swarm controllers:
 
 Some demonstrations are available in the examples folder.
 
+Documentation can be loaded by opening: docs/html/index.html
+
 
 ### Built With
 
