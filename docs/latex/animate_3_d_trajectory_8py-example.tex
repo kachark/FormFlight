@@ -1,0 +1,462 @@
+\hypertarget{animate_3_d_trajectory_8py-example}{}\section{animate\+\_\+3\+D\+\_\+trajectory.\+py}
+
+\begin{DoxyCodeInclude}{0}
+\end{DoxyCodeInclude}
+ Example of how to plot an animation in 3D. See the S\+E\+T\+UP section for an example of loading the simulation Adjust \textquotesingle{}batch\+\_\+num\textquotesingle{} to select the desired batch to load within the ensemble folder
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{2 }
+\DoxyCodeLine{7 }
+\DoxyCodeLine{8 }
+\DoxyCodeLine{9 \textcolor{keyword}{import} os.path}
+\DoxyCodeLine{10 \textcolor{keyword}{import} sys}
+\DoxyCodeLine{11 sys.path.append(os.path.join(os.path.dirname(\_\_file\_\_), \textcolor{stringliteral}{'..'}))}
+\DoxyCodeLine{12 }
+\DoxyCodeLine{13 \textcolor{keyword}{import} os}
+\DoxyCodeLine{14 \textcolor{keyword}{import} pandas \textcolor{keyword}{as} pd}
+\DoxyCodeLine{15 \textcolor{keyword}{import} numpy \textcolor{keyword}{as} np}
+\DoxyCodeLine{16 \textcolor{keyword}{import} matplotlib.pyplot \textcolor{keyword}{as} plt}
+\DoxyCodeLine{17 \textcolor{keyword}{from} mpl\_toolkits \textcolor{keyword}{import} mplot3d}
+\DoxyCodeLine{18 \textcolor{keyword}{import} matplotlib.animation \textcolor{keyword}{as} animation}
+\DoxyCodeLine{19 \textcolor{keyword}{import} matplotlib.ticker \textcolor{keyword}{as} ticker}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{keyword}{from} DOT\_assignment \textcolor{keyword}{import} log}
+\DoxyCodeLine{22 \textcolor{keyword}{from} DOT\_assignment \textcolor{keyword}{import} post\_process}
+\DoxyCodeLine{23 }
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 }
+\DoxyCodeLine{26 \textcolor{keyword}{def }get\_trajectory(unpacked):}
+\DoxyCodeLine{27     \textcolor{comment}{\# Attaching 3D axis to the figure}}
+\DoxyCodeLine{28     \textcolor{comment}{\# fig = plt.figure()}}
+\DoxyCodeLine{29     \textcolor{comment}{\# ax = p3.Axes3D(fig)}}
+\DoxyCodeLine{30 }
+\DoxyCodeLine{31     fontsize = 32}
+\DoxyCodeLine{32     fontweight = \textcolor{stringliteral}{'bold'}}
+\DoxyCodeLine{33     labelsize = 32}
+\DoxyCodeLine{34 }
+\DoxyCodeLine{35     fig = plt.figure()}
+\DoxyCodeLine{36     ax = fig.add\_axes([0, 0, 1, 1], projection=\textcolor{stringliteral}{'3d'})}
+\DoxyCodeLine{37 }
+\DoxyCodeLine{38     \textcolor{comment}{\# lines: emd lines, dyn lines, target lines (only once)}}
+\DoxyCodeLine{39     \textcolor{comment}{\# pts: emd/dyn pts (only once), target pts, city pts}}
+\DoxyCodeLine{40     \textcolor{comment}{\# textpts: emd text, dyn text, target text, city text}}
+\DoxyCodeLine{41     \textcolor{comment}{\# lines = [ax.plot([], [], []) for a in range(2*nagents + 2*ntargets)]}}
+\DoxyCodeLine{42     \textcolor{comment}{\# pts = [ax.plot([], [], [], 'o') for a in range(nagents + 2*ntargets)]}}
+\DoxyCodeLine{43     \textcolor{comment}{\# textpts = [ax.plot([], [], [], 'o') for a in range(2*nagents + 2*nagents)]}}
+\DoxyCodeLine{44 }
+\DoxyCodeLine{45     dyn\_agents = []}
+\DoxyCodeLine{46     emd\_agents = []}
+\DoxyCodeLine{47     targets = []}
+\DoxyCodeLine{48 }
+\DoxyCodeLine{49     \textcolor{keywordflow}{for} sim\_name, metrics \textcolor{keywordflow}{in} unpacked.items():}
+\DoxyCodeLine{50 }
+\DoxyCodeLine{51         dx = metrics[\textcolor{stringliteral}{'dx'}]}
+\DoxyCodeLine{52         du = metrics[\textcolor{stringliteral}{'du'}]}
+\DoxyCodeLine{53         dim = metrics[\textcolor{stringliteral}{'dim'}]}
+\DoxyCodeLine{54         nagents = metrics[\textcolor{stringliteral}{'nagents'}]}
+\DoxyCodeLine{55         ntargets = metrics[\textcolor{stringliteral}{'ntargets'}]}
+\DoxyCodeLine{56         tout = metrics[\textcolor{stringliteral}{'tout'}]}
+\DoxyCodeLine{57         yout = metrics[\textcolor{stringliteral}{'yout'}]}
+\DoxyCodeLine{58         stationary\_states = metrics[\textcolor{stringliteral}{'stationary\_states'}]}
+\DoxyCodeLine{59 }
+\DoxyCodeLine{60         assignment\_switches = post\_process.find\_switches(tout, yout, nagents, ntargets, dx, dx)}
+\DoxyCodeLine{61 }
+\DoxyCodeLine{62         agent\_traj\_label = \textcolor{stringliteral}{'Agent Path (Dyn)'}}
+\DoxyCodeLine{63         agent\_start\_pt\_label = \textcolor{stringliteral}{'Agent Start'}}
+\DoxyCodeLine{64         target\_start\_pt\_label = \textcolor{stringliteral}{'Target Start'}}
+\DoxyCodeLine{65         target\_traj\_label = \textcolor{stringliteral}{'Target Path'}}
+\DoxyCodeLine{66         stationary\_pt\_label = \textcolor{stringliteral}{'Terminal State'}}
+\DoxyCodeLine{67 }
+\DoxyCodeLine{68         \textcolor{comment}{\# TEST \# TODO REMOVE EVENTUALLY}}
+\DoxyCodeLine{69         \textcolor{keywordflow}{if} dx == 12:}
+\DoxyCodeLine{70             agent\_model = \textcolor{stringliteral}{'Linearized\_Quadcopter'}}
+\DoxyCodeLine{71             target\_model = \textcolor{stringliteral}{'Linearized\_Quadcopter'}}
+\DoxyCodeLine{72             labels = [agent\_traj\_label, agent\_start\_pt\_label, target\_start\_pt\_label, target\_traj\_label, stationary\_pt\_label]}
+\DoxyCodeLine{73             get\_trajectory\_qc(unpacked)}
+\DoxyCodeLine{74             \textcolor{keywordflow}{continue}}
+\DoxyCodeLine{75         \textcolor{keywordflow}{if} dx == 6:}
+\DoxyCodeLine{76             agent\_model = \textcolor{stringliteral}{'Double\_Integrator'}}
+\DoxyCodeLine{77             target\_model = \textcolor{stringliteral}{'Double\_Integrator'}}
+\DoxyCodeLine{78 }
+\DoxyCodeLine{79         \textcolor{keywordflow}{if} dim == 3:}
+\DoxyCodeLine{80 }
+\DoxyCodeLine{81             \textcolor{comment}{\# optimal trajectories (solid lines)}}
+\DoxyCodeLine{82             \textcolor{keywordflow}{if} sim\_name == \textcolor{stringliteral}{'AssignmentDyn'}:}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{84                 \textcolor{comment}{\# agent/target trajectories}}
+\DoxyCodeLine{85                 \textcolor{keywordflow}{for} zz \textcolor{keywordflow}{in} range(nagents):}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87                     \textcolor{comment}{\# avoid repeated legend entries}}
+\DoxyCodeLine{88                     \textcolor{keywordflow}{if} zz >= 1:}
+\DoxyCodeLine{89                         agent\_traj\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{90                         agent\_start\_pt\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{91                         target\_start\_pt\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{92                         target\_traj\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{93 }
+\DoxyCodeLine{94                     \textcolor{comment}{\# agent state over time}}
+\DoxyCodeLine{95                     y\_agent = yout[:, zz*dx:(zz+1)*dx]}
+\DoxyCodeLine{96 }
+\DoxyCodeLine{97                     dyn\_agents.append(y\_agent[:, 0:3])}
+\DoxyCodeLine{98 }
+\DoxyCodeLine{99                     \textcolor{comment}{\# plot agent trajectory with text}}
+\DoxyCodeLine{100                     ax.scatter3D(y\_agent[0, 0], y\_agent[0, 1], y\_agent[0, 2], color=\textcolor{stringliteral}{'r'}, label=agent\_start\_pt\_label)}
+\DoxyCodeLine{101                     ax.plot3D(y\_agent[:, 0], y\_agent[:, 1], y\_agent[:, 2], \textcolor{stringliteral}{'-r'}, label=agent\_traj\_label)}
+\DoxyCodeLine{102                     ax.text(y\_agent[0, 0], y\_agent[0, 1], y\_agent[0, 2], \textcolor{stringliteral}{'A\{0\}'}.format(zz))}
+\DoxyCodeLine{103 }
+\DoxyCodeLine{104                     \textcolor{comment}{\# \# plot location of assignment switches}}
+\DoxyCodeLine{105                     \textcolor{comment}{\# for switch\_ind in assignment\_switches[zz]:}}
+\DoxyCodeLine{106                     \textcolor{comment}{\#     ax.scatter3D(y\_agent[switch\_ind, 0], y\_agent[switch\_ind, 1], y\_agent[switch\_ind, 2], color='m') \# TODO}}
+\DoxyCodeLine{107 }
+\DoxyCodeLine{108                     \textcolor{comment}{\# plot target trajectory}}
+\DoxyCodeLine{109                     y\_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]}
+\DoxyCodeLine{110                     ax.scatter3D(y\_target[0, 0], y\_target[0, 1], y\_target[0, 2], color=\textcolor{stringliteral}{'b'}, label=target\_start\_pt\_label)}
+\DoxyCodeLine{111                     ax.plot3D(y\_target[:, 0], y\_target[:, 1], y\_target[:, 2], \textcolor{stringliteral}{'-b'}, label=target\_traj\_label)}
+\DoxyCodeLine{112                     ax.text(y\_target[0, 0], y\_target[0, 1], y\_target[0, 2], \textcolor{stringliteral}{'T\{0\}'}.format(zz))}
+\DoxyCodeLine{113 }
+\DoxyCodeLine{114                     targets.append(y\_target[:, 0:3])}
+\DoxyCodeLine{115 }
+\DoxyCodeLine{116                 }
+\DoxyCodeLine{117                 \textcolor{keywordflow}{for} zz \textcolor{keywordflow}{in} range(ntargets):}
+\DoxyCodeLine{118 }
+\DoxyCodeLine{119                     \textcolor{keywordflow}{if} zz >= 1:}
+\DoxyCodeLine{120                         stationary\_pt\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{121 }
+\DoxyCodeLine{122                     offset = stationary\_states[zz*dx:(zz+1)*dx]}
+\DoxyCodeLine{123                     ax.scatter3D(offset[0], offset[1], offset[2], color=\textcolor{stringliteral}{'k'}, label=stationary\_pt\_label)}
+\DoxyCodeLine{124                     ax.text(offset[0], offset[1], offset[2], \textcolor{stringliteral}{'C\{0\}'}.format(zz))}
+\DoxyCodeLine{125 }
+\DoxyCodeLine{126                 ax.set\_xlabel(\textcolor{stringliteral}{"x"}, fontweight=fontweight, fontsize=fontsize)}
+\DoxyCodeLine{127                 ax.set\_ylabel(\textcolor{stringliteral}{"y"}, fontweight=fontweight, fontsize=fontsize)}
+\DoxyCodeLine{128                 ax.set\_zlabel(\textcolor{stringliteral}{"z"}, fontweight=fontweight, fontsize=fontsize)}
+\DoxyCodeLine{129 }
+\DoxyCodeLine{130             \textcolor{keywordflow}{elif} sim\_name == \textcolor{stringliteral}{'AssignmentEMD'}:}
+\DoxyCodeLine{131                 \textcolor{comment}{\# non-optimal trajectories (dotted lines)}}
+\DoxyCodeLine{132 }
+\DoxyCodeLine{133                 agent\_traj\_label = \textcolor{stringliteral}{'Agent Path (EMD)'}}
+\DoxyCodeLine{134 }
+\DoxyCodeLine{135                 \textcolor{comment}{\# agent/target trajectories}}
+\DoxyCodeLine{136                 \textcolor{keywordflow}{for} zz \textcolor{keywordflow}{in} range(nagents):}
+\DoxyCodeLine{137 }
+\DoxyCodeLine{138                     \textcolor{comment}{\# avoid repeated legend entries}}
+\DoxyCodeLine{139                     \textcolor{keywordflow}{if} zz >= 1:}
+\DoxyCodeLine{140                         agent\_traj\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{141 }
+\DoxyCodeLine{142                     \textcolor{comment}{\# agent state over time}}
+\DoxyCodeLine{143                     y\_agent = yout[:, zz*dx:(zz+1)*dx]}
+\DoxyCodeLine{144 }
+\DoxyCodeLine{145                     emd\_agents.append(y\_agent[:, 0:3])}
+\DoxyCodeLine{146 }
+\DoxyCodeLine{147                     \textcolor{comment}{\# plot agent trajectory with text}}
+\DoxyCodeLine{148                     ax.scatter3D(y\_agent[0, 0], y\_agent[0, 1], y\_agent[0, 2], color=\textcolor{stringliteral}{'r'})}
+\DoxyCodeLine{149                     ax.plot3D(y\_agent[:, 0], y\_agent[:, 1], y\_agent[:, 2], \textcolor{stringliteral}{'--r'}, label=agent\_traj\_label)}
+\DoxyCodeLine{150                     ax.text(y\_agent[0, 0], y\_agent[0, 1], y\_agent[0, 2], \textcolor{stringliteral}{'A\{0\}'}.format(zz))}
+\DoxyCodeLine{151 }
+\DoxyCodeLine{152                     \textcolor{comment}{\# \# plot location of assignment switches}}
+\DoxyCodeLine{153                     \textcolor{comment}{\# for switch\_ind in assignment\_switches[zz]:}}
+\DoxyCodeLine{154                     \textcolor{comment}{\#     ax.scatter3D(y\_agent[switch\_ind, 0], y\_agent[switch\_ind, 1], y\_agent[switch\_ind, 2], color='m') \# TODO}}
+\DoxyCodeLine{155 }
+\DoxyCodeLine{156                     \textcolor{comment}{\# plot target trajectory}}
+\DoxyCodeLine{157                     y\_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]}
+\DoxyCodeLine{158                     ax.scatter3D(y\_target[0, 0], y\_target[0, 1], y\_target[0, 2], color=\textcolor{stringliteral}{'b'})}
+\DoxyCodeLine{159                     ax.plot3D(y\_target[:, 0], y\_target[:, 1], y\_target[:, 2], \textcolor{stringliteral}{'-b'})}
+\DoxyCodeLine{160                     ax.text(y\_target[0, 0], y\_target[0, 1], y\_target[0, 2], \textcolor{stringliteral}{'T\{0\}'}.format(zz))}
+\DoxyCodeLine{161 }
+\DoxyCodeLine{162                 \textcolor{comment}{\# stationary locations}}
+\DoxyCodeLine{163                 \textcolor{keywordflow}{for} zz \textcolor{keywordflow}{in} range(ntargets):}
+\DoxyCodeLine{164                     offset = stationary\_states[zz*dx:(zz+1)*dx]}
+\DoxyCodeLine{165                     ax.scatter3D(offset[0], offset[1], offset[2], color=\textcolor{stringliteral}{'k'})}
+\DoxyCodeLine{166                     ax.text(offset[0], offset[1], offset[2], \textcolor{stringliteral}{'C\{0\}'}.format(zz))}
+\DoxyCodeLine{167 }
+\DoxyCodeLine{168                 ax.set\_xlabel(\textcolor{stringliteral}{"x"}, fontweight=fontweight, fontsize=fontsize+4)}
+\DoxyCodeLine{169                 ax.set\_ylabel(\textcolor{stringliteral}{"y"}, fontweight=fontweight, fontsize=fontsize+4)}
+\DoxyCodeLine{170                 ax.set\_zlabel(\textcolor{stringliteral}{"z"}, fontweight=fontweight, fontsize=fontsize+4)}
+\DoxyCodeLine{171 }
+\DoxyCodeLine{172             \textcolor{comment}{\# dim = 3}}
+\DoxyCodeLine{173 }
+\DoxyCodeLine{174             tick\_spacing = 1000}
+\DoxyCodeLine{175             ax.xaxis.set\_major\_locator(ticker.MultipleLocator(tick\_spacing))}
+\DoxyCodeLine{176             ax.yaxis.set\_major\_locator(ticker.MultipleLocator(tick\_spacing))}
+\DoxyCodeLine{177             ax.zaxis.set\_major\_locator(ticker.MultipleLocator(tick\_spacing))}
+\DoxyCodeLine{178 }
+\DoxyCodeLine{179             ax.xaxis.set\_tick\_params(labelsize=labelsize+4)}
+\DoxyCodeLine{180             ax.yaxis.set\_tick\_params(labelsize=labelsize+4)}
+\DoxyCodeLine{181             ax.zaxis.set\_tick\_params(labelsize=labelsize+4)}
+\DoxyCodeLine{182 }
+\DoxyCodeLine{183             ax.tick\_params(axis=\textcolor{stringliteral}{'x'}, which=\textcolor{stringliteral}{'major'}, pad=15)}
+\DoxyCodeLine{184             ax.tick\_params(axis=\textcolor{stringliteral}{'y'}, which=\textcolor{stringliteral}{'major'}, pad=15)}
+\DoxyCodeLine{185             ax.tick\_params(axis=\textcolor{stringliteral}{'z'}, which=\textcolor{stringliteral}{'major'}, pad=15)}
+\DoxyCodeLine{186 }
+\DoxyCodeLine{187             ax.xaxis.labelpad = 25}
+\DoxyCodeLine{188             ax.yaxis.labelpad = 25}
+\DoxyCodeLine{189             ax.zaxis.labelpad = 25}
+\DoxyCodeLine{190 }
+\DoxyCodeLine{191         \textcolor{comment}{\# ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)}}
+\DoxyCodeLine{192         \textcolor{comment}{\# ax.legend(loc='lower right', fontsize=fontsize)}}
+\DoxyCodeLine{193         ax.legend(loc=\textcolor{stringliteral}{'center left'}, bbox\_to\_anchor=(1.07, 0.5), fontsize=fontsize+4)}
+\DoxyCodeLine{194 }
+\DoxyCodeLine{195     \textcolor{keywordflow}{return} fig, ax, dyn\_agents, emd\_agents, targets}
+\DoxyCodeLine{196 }
+\DoxyCodeLine{197 \textcolor{keyword}{def }get\_trajectory\_qc(unpacked):}
+\DoxyCodeLine{198 }
+\DoxyCodeLine{199     linewidth\_3d = 2}
+\DoxyCodeLine{200     linewidth = 4}
+\DoxyCodeLine{201     markersize = 8}
+\DoxyCodeLine{202     scatter\_width = markersize**2}
+\DoxyCodeLine{203     textsize = 32}
+\DoxyCodeLine{204 }
+\DoxyCodeLine{205     fontsize = 40}
+\DoxyCodeLine{206     fontweight = \textcolor{stringliteral}{'bold'}}
+\DoxyCodeLine{207     labelsize = 40}
+\DoxyCodeLine{208 }
+\DoxyCodeLine{209     axispad = 18}
+\DoxyCodeLine{210     labelpad = 40}
+\DoxyCodeLine{211 }
+\DoxyCodeLine{212     fontsize = 32}
+\DoxyCodeLine{213     fontweight = \textcolor{stringliteral}{'bold'}}
+\DoxyCodeLine{214     labelsize = 32}
+\DoxyCodeLine{215 }
+\DoxyCodeLine{216     fig = plt.figure()}
+\DoxyCodeLine{217     ax = fig.add\_axes([0, 0, 1, 1], projection=\textcolor{stringliteral}{'3d'})}
+\DoxyCodeLine{218 }
+\DoxyCodeLine{219     dyn\_agents = []}
+\DoxyCodeLine{220     emd\_agents = []}
+\DoxyCodeLine{221     targets = []}
+\DoxyCodeLine{222 }
+\DoxyCodeLine{223     \textcolor{keywordflow}{for} sim\_name, metrics \textcolor{keywordflow}{in} unpacked.items():}
+\DoxyCodeLine{224 }
+\DoxyCodeLine{225         dx = metrics[\textcolor{stringliteral}{'dx'}]}
+\DoxyCodeLine{226         du = metrics[\textcolor{stringliteral}{'du'}]}
+\DoxyCodeLine{227         dim = metrics[\textcolor{stringliteral}{'dim'}]}
+\DoxyCodeLine{228         nagents = metrics[\textcolor{stringliteral}{'nagents'}]}
+\DoxyCodeLine{229         ntargets = metrics[\textcolor{stringliteral}{'ntargets'}]}
+\DoxyCodeLine{230         tout = metrics[\textcolor{stringliteral}{'tout'}]}
+\DoxyCodeLine{231         yout = metrics[\textcolor{stringliteral}{'yout'}]}
+\DoxyCodeLine{232         stationary\_states = metrics[\textcolor{stringliteral}{'stationary\_states'}]}
+\DoxyCodeLine{233 }
+\DoxyCodeLine{234         assignment\_switches = post\_process.find\_switches(tout, yout, nagents, ntargets, dx, dx)}
+\DoxyCodeLine{235 }
+\DoxyCodeLine{236         agent\_traj\_label = \textcolor{stringliteral}{'Agent Path (Dyn)'}}
+\DoxyCodeLine{237         agent\_start\_pt\_label = \textcolor{stringliteral}{'Agent Start'}}
+\DoxyCodeLine{238         target\_start\_pt\_label = \textcolor{stringliteral}{'Target Start'}}
+\DoxyCodeLine{239         target\_traj\_label = \textcolor{stringliteral}{'Target Path'}}
+\DoxyCodeLine{240         stationary\_pt\_label = \textcolor{stringliteral}{'Terminal State'}}
+\DoxyCodeLine{241 }
+\DoxyCodeLine{242         \textcolor{comment}{\# TEST \# TODO REMOVE EVENTUALLY}}
+\DoxyCodeLine{243         \textcolor{keywordflow}{if} dx == 12:}
+\DoxyCodeLine{244             agent\_model = \textcolor{stringliteral}{'Linearized\_Quadcopter'}}
+\DoxyCodeLine{245             target\_model = \textcolor{stringliteral}{'Linearized\_Quadcopter'}}
+\DoxyCodeLine{246             labels = [agent\_traj\_label, agent\_start\_pt\_label, target\_start\_pt\_label, target\_traj\_label, stationary\_pt\_label]}
+\DoxyCodeLine{247 }
+\DoxyCodeLine{248         \textcolor{keywordflow}{if} dim == 3:}
+\DoxyCodeLine{249 }
+\DoxyCodeLine{250             \textcolor{comment}{\# optimal trajectories (solid lines)}}
+\DoxyCodeLine{251             \textcolor{keywordflow}{if} sim\_name == \textcolor{stringliteral}{'AssignmentDyn'}:}
+\DoxyCodeLine{252 }
+\DoxyCodeLine{253                 \textcolor{comment}{\# agent/target trajectories}}
+\DoxyCodeLine{254                 \textcolor{keywordflow}{for} zz \textcolor{keywordflow}{in} range(nagents):}
+\DoxyCodeLine{255 }
+\DoxyCodeLine{256                     \textcolor{comment}{\# avoid repeated legend entries}}
+\DoxyCodeLine{257                     \textcolor{keywordflow}{if} zz >= 1:}
+\DoxyCodeLine{258                         agent\_traj\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{259                         agent\_start\_pt\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{260                         target\_start\_pt\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{261                         target\_traj\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{262 }
+\DoxyCodeLine{263                     \textcolor{comment}{\# agent state over time}}
+\DoxyCodeLine{264                     y\_agent = yout[:, zz*dx:(zz+1)*dx]}
+\DoxyCodeLine{265 }
+\DoxyCodeLine{266                     dyn\_agents.append(y\_agent[:, 0:3])}
+\DoxyCodeLine{267 }
+\DoxyCodeLine{268                     \textcolor{comment}{\# plot agent trajectory with text}}
+\DoxyCodeLine{269                     ax.scatter3D(y\_agent[0, 0], y\_agent[0, 1], y\_agent[0, 2], color=\textcolor{stringliteral}{'r'}, s=scatter\_width, label=agent\_start\_pt\_label)}
+\DoxyCodeLine{270                     ax.plot3D(y\_agent[:, 0], y\_agent[:, 1], y\_agent[:, 2], \textcolor{stringliteral}{'-r'}, linewidth=linewidth\_3d, label=agent\_traj\_label)}
+\DoxyCodeLine{271                     ax.text(y\_agent[0, 0], y\_agent[0, 1], y\_agent[0, 2], \textcolor{stringliteral}{'A\{0\}'}.format(zz), fontsize=textsize)}
+\DoxyCodeLine{272 }
+\DoxyCodeLine{273                     \textcolor{comment}{\# \# plot location of assignment switches}}
+\DoxyCodeLine{274                     \textcolor{comment}{\# for switch\_ind in assignment\_switches[zz]:}}
+\DoxyCodeLine{275                     \textcolor{comment}{\#     ax.scatter3D(y\_agent[switch\_ind, 0], y\_agent[switch\_ind, 1], y\_agent[switch\_ind, 2], color='m') \# TODO}}
+\DoxyCodeLine{276 }
+\DoxyCodeLine{277                     \textcolor{comment}{\# plot target trajectory}}
+\DoxyCodeLine{278                     y\_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]}
+\DoxyCodeLine{279                     ax.scatter3D(y\_target[0, 0], y\_target[0, 1], y\_target[0, 2], color=\textcolor{stringliteral}{'b'}, s=scatter\_width, label=target\_start\_pt\_label)}
+\DoxyCodeLine{280                     ax.plot3D(y\_target[:, 0], y\_target[:, 1], y\_target[:, 2], \textcolor{stringliteral}{'-b'}, linewidth=linewidth\_3d, label=target\_traj\_label)}
+\DoxyCodeLine{281                     ax.text(y\_target[0, 0], y\_target[0, 1], y\_target[0, 2], \textcolor{stringliteral}{'T\{0\}'}.format(zz), fontsize=textsize)}
+\DoxyCodeLine{282 }
+\DoxyCodeLine{283                     targets.append(y\_target[:, 0:3])}
+\DoxyCodeLine{284 }
+\DoxyCodeLine{285                 }
+\DoxyCodeLine{286                 \textcolor{keywordflow}{for} zz \textcolor{keywordflow}{in} range(ntargets):}
+\DoxyCodeLine{287 }
+\DoxyCodeLine{288                     \textcolor{keywordflow}{if} zz >= 1:}
+\DoxyCodeLine{289                         stationary\_pt\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{290 }
+\DoxyCodeLine{291                     offset = stationary\_states[zz*dx:(zz+1)*dx]}
+\DoxyCodeLine{292                     ax.scatter3D(offset[0], offset[1], offset[2], color=\textcolor{stringliteral}{'k'}, s=scatter\_width, label=stationary\_pt\_label)}
+\DoxyCodeLine{293                     ax.text(offset[0], offset[1], offset[2], \textcolor{stringliteral}{'C\{0\}'}.format(zz), fontsize=textsize)}
+\DoxyCodeLine{294 }
+\DoxyCodeLine{295 }
+\DoxyCodeLine{296                 ax.set\_xlabel(\textcolor{stringliteral}{"x"}, fontweight=fontweight, fontsize=fontsize)}
+\DoxyCodeLine{297                 ax.set\_ylabel(\textcolor{stringliteral}{"y"}, fontweight=fontweight, fontsize=fontsize)}
+\DoxyCodeLine{298                 ax.set\_zlabel(\textcolor{stringliteral}{"z"}, fontweight=fontweight, fontsize=fontsize)}
+\DoxyCodeLine{299 }
+\DoxyCodeLine{300             \textcolor{keywordflow}{elif} sim\_name == \textcolor{stringliteral}{'AssignmentEMD'}:}
+\DoxyCodeLine{301                 \textcolor{comment}{\# non-optimal trajectories (dotted lines)}}
+\DoxyCodeLine{302 }
+\DoxyCodeLine{303                 agent\_traj\_label = \textcolor{stringliteral}{'Agent Path (EMD)'}}
+\DoxyCodeLine{304 }
+\DoxyCodeLine{305                 \textcolor{comment}{\# agent/target trajectories}}
+\DoxyCodeLine{306                 \textcolor{keywordflow}{for} zz \textcolor{keywordflow}{in} range(nagents):}
+\DoxyCodeLine{307 }
+\DoxyCodeLine{308                     \textcolor{comment}{\# avoid repeated legend entries}}
+\DoxyCodeLine{309                     \textcolor{keywordflow}{if} zz >= 1:}
+\DoxyCodeLine{310                         agent\_traj\_label = \textcolor{stringliteral}{'\_\_nolabel\_\_'}}
+\DoxyCodeLine{311 }
+\DoxyCodeLine{312                     \textcolor{comment}{\# agent state over time}}
+\DoxyCodeLine{313                     y\_agent = yout[:, zz*dx:(zz+1)*dx]}
+\DoxyCodeLine{314 }
+\DoxyCodeLine{315                     emd\_agents.append(y\_agent[:, 0:3])}
+\DoxyCodeLine{316 }
+\DoxyCodeLine{317                     \textcolor{comment}{\# plot agent trajectory with text}}
+\DoxyCodeLine{318                     ax.scatter3D(y\_agent[0, 0], y\_agent[0, 1], y\_agent[0, 2], color=\textcolor{stringliteral}{'r'})}
+\DoxyCodeLine{319                     ax.plot3D(y\_agent[:, 0], y\_agent[:, 1], y\_agent[:, 2], \textcolor{stringliteral}{'--r'}, linewidth=linewidth\_3d, label=agent\_traj\_label)}
+\DoxyCodeLine{320                     ax.text(y\_agent[0, 0], y\_agent[0, 1], y\_agent[0, 2], \textcolor{stringliteral}{'A\{0\}'}.format(zz), fontsize=textsize)}
+\DoxyCodeLine{321 }
+\DoxyCodeLine{322                     \textcolor{comment}{\# \# plot location of assignment switches}}
+\DoxyCodeLine{323                     \textcolor{comment}{\# for switch\_ind in assignment\_switches[zz]:}}
+\DoxyCodeLine{324                     \textcolor{comment}{\#     ax.scatter3D(y\_agent[switch\_ind, 0], y\_agent[switch\_ind, 1], y\_agent[switch\_ind, 2], color='m') \# TODO}}
+\DoxyCodeLine{325 }
+\DoxyCodeLine{326                     \textcolor{comment}{\# plot target trajectory}}
+\DoxyCodeLine{327                     y\_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]}
+\DoxyCodeLine{328                     ax.scatter3D(y\_target[0, 0], y\_target[0, 1], y\_target[0, 2], color=\textcolor{stringliteral}{'b'})}
+\DoxyCodeLine{329                     ax.plot3D(y\_target[:, 0], y\_target[:, 1], y\_target[:, 2], \textcolor{stringliteral}{'-b'})}
+\DoxyCodeLine{330                     ax.text(y\_target[0, 0], y\_target[0, 1], y\_target[0, 2], \textcolor{stringliteral}{'T\{0\}'}.format(zz), fontsize=textsize)}
+\DoxyCodeLine{331 }
+\DoxyCodeLine{332                 \textcolor{comment}{\# stationary locations}}
+\DoxyCodeLine{333                 \textcolor{keywordflow}{for} zz \textcolor{keywordflow}{in} range(ntargets):}
+\DoxyCodeLine{334                     offset = stationary\_states[zz*dx:(zz+1)*dx]}
+\DoxyCodeLine{335                     ax.scatter3D(offset[0], offset[1], offset[2], color=\textcolor{stringliteral}{'k'})}
+\DoxyCodeLine{336                     ax.text(offset[0], offset[1], offset[2], \textcolor{stringliteral}{'C\{0\}'}.format(zz), fontsize=textsize)}
+\DoxyCodeLine{337 }
+\DoxyCodeLine{338                 ax.set\_xlabel(\textcolor{stringliteral}{"x"}, fontweight=fontweight, fontsize=fontsize)}
+\DoxyCodeLine{339                 ax.set\_ylabel(\textcolor{stringliteral}{"y"}, fontweight=fontweight, fontsize=fontsize)}
+\DoxyCodeLine{340                 ax.set\_zlabel(\textcolor{stringliteral}{"z"}, fontweight=fontweight, fontsize=fontsize)}
+\DoxyCodeLine{341 }
+\DoxyCodeLine{342         \textcolor{comment}{\# dim = 3}}
+\DoxyCodeLine{343 }
+\DoxyCodeLine{344         \textcolor{comment}{\# tick\_spacing = 1000}}
+\DoxyCodeLine{345         \textcolor{comment}{\# ax.xaxis.set\_major\_locator(ticker.MultipleLocator(tick\_spacing))}}
+\DoxyCodeLine{346         \textcolor{comment}{\# ax.yaxis.set\_major\_locator(ticker.MultipleLocator(tick\_spacing))}}
+\DoxyCodeLine{347         \textcolor{comment}{\# ax.zaxis.set\_major\_locator(ticker.MultipleLocator(tick\_spacing))}}
+\DoxyCodeLine{348 }
+\DoxyCodeLine{349         ax.xaxis.set\_tick\_params(labelsize=labelsize)}
+\DoxyCodeLine{350         ax.yaxis.set\_tick\_params(labelsize=labelsize)}
+\DoxyCodeLine{351         ax.zaxis.set\_tick\_params(labelsize=labelsize)}
+\DoxyCodeLine{352 }
+\DoxyCodeLine{353         ax.tick\_params(axis=\textcolor{stringliteral}{'x'}, which=\textcolor{stringliteral}{'major'}, pad=axispad)}
+\DoxyCodeLine{354         ax.tick\_params(axis=\textcolor{stringliteral}{'y'}, which=\textcolor{stringliteral}{'major'}, pad=axispad)}
+\DoxyCodeLine{355         ax.tick\_params(axis=\textcolor{stringliteral}{'z'}, which=\textcolor{stringliteral}{'major'}, pad=axispad)}
+\DoxyCodeLine{356 }
+\DoxyCodeLine{357         ax.xaxis.labelpad = labelpad}
+\DoxyCodeLine{358         ax.yaxis.labelpad = labelpad}
+\DoxyCodeLine{359         ax.zaxis.labelpad = labelpad}
+\DoxyCodeLine{360 }
+\DoxyCodeLine{361         ax.set\_zlim3d(-100, 100)}
+\DoxyCodeLine{362 }
+\DoxyCodeLine{363     \textcolor{comment}{\# ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)}}
+\DoxyCodeLine{364     \textcolor{comment}{\# ax.legend(loc='lower right', fontsize=fontsize)}}
+\DoxyCodeLine{365     legend = ax.legend(loc=\textcolor{stringliteral}{'center left'}, bbox\_to\_anchor=(1.07, 0.5), fontsize=fontsize)}
+\DoxyCodeLine{366     legend.remove()}
+\DoxyCodeLine{367 }
+\DoxyCodeLine{368     \textcolor{keywordflow}{return} fig, ax, dyn\_agents, emd\_agents, targets}
+\DoxyCodeLine{369 }
+\DoxyCodeLine{370 }
+\DoxyCodeLine{371 \textcolor{comment}{\# SETUP}}
+\DoxyCodeLine{372 \textcolor{comment}{\# .\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}
+\DoxyCodeLine{373 }
+\DoxyCodeLine{374 \textcolor{comment}{\# loads desired batch within a single ensemble which the user specifies}}
+\DoxyCodeLine{375 dim = 3}
+\DoxyCodeLine{376 }
+\DoxyCodeLine{377 nagents = 5}
+\DoxyCodeLine{378 ntargets = 5}
+\DoxyCodeLine{379 }
+\DoxyCodeLine{380 agent\_model = \textcolor{stringliteral}{'Linearized\_Quadcopter'}}
+\DoxyCodeLine{381 target\_model = \textcolor{stringliteral}{'Linearized\_Quadcopter'}}
+\DoxyCodeLine{382 ensemble\_name = \textcolor{stringliteral}{'ensemble\_0\_'}+str(dim)+\textcolor{stringliteral}{'D\_'}+str(nagents)+\textcolor{stringliteral}{'v'}+str(ntargets)+\textcolor{stringliteral}{'\_'}+\(\backslash\)}
+\DoxyCodeLine{383         \textcolor{stringliteral}{'identical\_'}+agent\_model+\textcolor{stringliteral}{'\_LQR\_LQR\_2019\_08\_22\_16\_47\_21'}}
+\DoxyCodeLine{384 }
+\DoxyCodeLine{385 root\_directory = \textcolor{stringliteral}{'/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'}}
+\DoxyCodeLine{386 ensemble\_directory = root\_directory + ensemble\_name}
+\DoxyCodeLine{387 }
+\DoxyCodeLine{388 \textcolor{comment}{\# get number of batches}}
+\DoxyCodeLine{389 batch\_dirs = [x[0] \textcolor{keywordflow}{for} x \textcolor{keywordflow}{in} os.walk(ensemble\_directory)]}
+\DoxyCodeLine{390 nbatches = len(batch\_dirs[1:])}
+\DoxyCodeLine{391 }
+\DoxyCodeLine{392 \textcolor{comment}{\# load batches and plot}}
+\DoxyCodeLine{393 sim\_name\_list = [\textcolor{stringliteral}{'AssignmentDyn'}, \textcolor{stringliteral}{'AssignmentEMD'}]}
+\DoxyCodeLine{394 }
+\DoxyCodeLine{395 \textcolor{comment}{\# load and plot a specific batch}}
+\DoxyCodeLine{396 batch\_num = 0}
+\DoxyCodeLine{397 batch\_name = \textcolor{stringliteral}{'batch\_\{0\}'}.format(batch\_num)}
+\DoxyCodeLine{398 loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}
+\DoxyCodeLine{399 }
+\DoxyCodeLine{400 unpacked = post\_process.unpack\_performance\_metrics(loaded\_batch)}
+\DoxyCodeLine{401 }
+\DoxyCodeLine{402 \textcolor{comment}{\# .\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}
+\DoxyCodeLine{403 }
+\DoxyCodeLine{404 \textcolor{keywordflow}{if} agent\_model == \textcolor{stringliteral}{"Double\_Integrator"}:}
+\DoxyCodeLine{405     fig, ax, dyn\_agents, emd\_agents, targets = get\_trajectory(unpacked)}
+\DoxyCodeLine{406 }
+\DoxyCodeLine{407 \textcolor{keywordflow}{if} agent\_model == \textcolor{stringliteral}{"Linearized\_Quadcopter"}:}
+\DoxyCodeLine{408     fig, ax, dyn\_agents, emd\_agents, targets = get\_trajectory\_qc(unpacked)}
+\DoxyCodeLine{409 }
+\DoxyCodeLine{410 dyn\_agent\_lines = sum([ax.plot([], [], [], \textcolor{stringliteral}{'ro'}) \textcolor{keywordflow}{for} dat \textcolor{keywordflow}{in} dyn\_agents], [])}
+\DoxyCodeLine{411 emd\_agent\_lines = sum([ax.plot([], [], [], \textcolor{stringliteral}{'r*'}) \textcolor{keywordflow}{for} dat \textcolor{keywordflow}{in} emd\_agents], [])}
+\DoxyCodeLine{412 target\_lines = sum([ax.plot([], [], [], \textcolor{stringliteral}{'bo'}) \textcolor{keywordflow}{for} dat \textcolor{keywordflow}{in} targets], [])}
+\DoxyCodeLine{413 }
+\DoxyCodeLine{414 \textcolor{keyword}{def }init():}
+\DoxyCodeLine{415     \textcolor{keywordflow}{for} dyn\_line, emd\_line, target\_line \textcolor{keywordflow}{in} zip(dyn\_agent\_lines, emd\_agent\_lines, target\_lines):}
+\DoxyCodeLine{416         dyn\_line.set\_data([], [])}
+\DoxyCodeLine{417         dyn\_line.set\_3d\_properties([])}
+\DoxyCodeLine{418 }
+\DoxyCodeLine{419         emd\_line.set\_data([], [])}
+\DoxyCodeLine{420         emd\_line.set\_3d\_properties([])}
+\DoxyCodeLine{421 }
+\DoxyCodeLine{422         target\_line.set\_data([], [])}
+\DoxyCodeLine{423         target\_line.set\_3d\_properties([])}
+\DoxyCodeLine{424     \textcolor{keywordflow}{return} dyn\_agent\_lines + emd\_agent\_lines + target\_lines}
+\DoxyCodeLine{425 }
+\DoxyCodeLine{426 \textcolor{keyword}{def }animate(i):}
+\DoxyCodeLine{427     i = (50*i) \% dyn\_agents[0].shape[0]}
+\DoxyCodeLine{428 }
+\DoxyCodeLine{429     \textcolor{keywordflow}{try}:}
+\DoxyCodeLine{430         \textcolor{keywordflow}{for} line, data \textcolor{keywordflow}{in} zip(dyn\_agent\_lines, dyn\_agents) :}
+\DoxyCodeLine{431             \textcolor{comment}{\# NOTE: there is no .set\_data() for 3 dim data...}}
+\DoxyCodeLine{432             x, y, z = data[i]}
+\DoxyCodeLine{433             line.set\_data(x,y)}
+\DoxyCodeLine{434             line.set\_3d\_properties(z)}
+\DoxyCodeLine{435 }
+\DoxyCodeLine{436         \textcolor{keywordflow}{for} line, data \textcolor{keywordflow}{in} zip(emd\_agent\_lines, emd\_agents) :}
+\DoxyCodeLine{437             x, y, z = data[i]}
+\DoxyCodeLine{438             \textcolor{comment}{\# NOTE: there is no .set\_data() for 3 dim data...}}
+\DoxyCodeLine{439             line.set\_data(x,y)}
+\DoxyCodeLine{440             line.set\_3d\_properties(z)}
+\DoxyCodeLine{441 }
+\DoxyCodeLine{442         \textcolor{keywordflow}{for} line, data \textcolor{keywordflow}{in} zip(target\_lines, targets) :}
+\DoxyCodeLine{443             x, y, z = data[i]}
+\DoxyCodeLine{444             \textcolor{comment}{\# NOTE: there is no .set\_data() for 3 dim data...}}
+\DoxyCodeLine{445             line.set\_data(x,y)}
+\DoxyCodeLine{446             line.set\_3d\_properties(z)}
+\DoxyCodeLine{447     \textcolor{keywordflow}{except} IndexError:}
+\DoxyCodeLine{448         \textcolor{keywordflow}{return} dyn\_agent\_lines + emd\_agent\_lines + target\_lines}
+\DoxyCodeLine{449 }
+\DoxyCodeLine{450     fig.canvas.draw()}
+\DoxyCodeLine{451     \textcolor{keywordflow}{return} dyn\_agent\_lines + emd\_agent\_lines + target\_lines}
+\DoxyCodeLine{452 }
+\DoxyCodeLine{453 \textcolor{comment}{\# Creating the Animation object}}
+\DoxyCodeLine{454 line\_ani = animation.FuncAnimation(fig, animate, init\_func=init, frames=1000, interval=10, blit=\textcolor{keyword}{True}, repeat=\textcolor{keyword}{True})}
+\DoxyCodeLine{455 }
+\DoxyCodeLine{456 plt.show()}
+\end{DoxyCodeInclude}
+ 

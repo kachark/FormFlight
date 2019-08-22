@@ -1,4 +1,8 @@
 
+import os.path
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 import os
 import pandas as pd
 import numpy as np
@@ -7,8 +11,8 @@ from mpl_toolkits import mplot3d
 import matplotlib.animation as animation
 import matplotlib.ticker as ticker
 
-import log
-import post_process
+from DOT_assignment import log
+from DOT_assignment import post_process
 
 ### TEST ANIMATION
 
@@ -252,12 +256,12 @@ def get_trajectory_qc(unpacked):
                     # agent state over time
                     y_agent = yout[:, zz*dx:(zz+1)*dx]
 
-                    dyn_agents.append(y_agent[:, 9:12])
+                    dyn_agents.append(y_agent[:, 0:3])
 
                     # plot agent trajectory with text
-                    ax.scatter3D(y_agent[0, 9], y_agent[0, 10], y_agent[0, 11], color='r', s=scatter_width, label=agent_start_pt_label)
-                    ax.plot3D(y_agent[:, 9], y_agent[:, 10], y_agent[:, 11], '-r', linewidth=linewidth_3d, label=agent_traj_label)
-                    ax.text(y_agent[0, 9], y_agent[0, 10], y_agent[0, 11], 'A{0}'.format(zz), fontsize=textsize)
+                    ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r', s=scatter_width, label=agent_start_pt_label)
+                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r', linewidth=linewidth_3d, label=agent_traj_label)
+                    ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz), fontsize=textsize)
 
                     # # plot location of assignment switches
                     # for switch_ind in assignment_switches[zz]:
@@ -265,11 +269,11 @@ def get_trajectory_qc(unpacked):
 
                     # plot target trajectory
                     y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.scatter3D(y_target[0, 9], y_target[0, 10], y_target[0, 11], color='b', s=scatter_width, label=target_start_pt_label)
-                    ax.plot3D(y_target[:, 9], y_target[:, 10], y_target[:, 11], '-b', linewidth=linewidth_3d, label=target_traj_label)
-                    ax.text(y_target[0, 9], y_target[0, 10], y_target[0, 11], 'T{0}'.format(zz), fontsize=textsize)
+                    ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b', s=scatter_width, label=target_start_pt_label)
+                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b', linewidth=linewidth_3d, label=target_traj_label)
+                    ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
 
-                    targets.append(y_target[:, 9:12])
+                    targets.append(y_target[:, 0:3])
 
                 ### stationary points
                 for zz in range(ntargets):
@@ -278,8 +282,8 @@ def get_trajectory_qc(unpacked):
                         stationary_pt_label = '__nolabel__'
 
                     offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[9], offset[10], offset[11], color='k', s=scatter_width, label=stationary_pt_label)
-                    ax.text(offset[9], offset[10], offset[11], 'C{0}'.format(zz), fontsize=textsize)
+                    ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
+                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
 
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
@@ -301,12 +305,12 @@ def get_trajectory_qc(unpacked):
                     # agent state over time
                     y_agent = yout[:, zz*dx:(zz+1)*dx]
 
-                    emd_agents.append(y_agent[:, 9:12])
+                    emd_agents.append(y_agent[:, 0:3])
 
                     # plot agent trajectory with text
-                    ax.scatter3D(y_agent[0, 9], y_agent[0, 10], y_agent[0, 11], color='r')
-                    ax.plot3D(y_agent[:, 9], y_agent[:, 10], y_agent[:, 11], '--r', linewidth=linewidth_3d, label=agent_traj_label)
-                    ax.text(y_agent[0, 9], y_agent[0, 10], y_agent[0, 11], 'A{0}'.format(zz), fontsize=textsize)
+                    ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
+                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '--r', linewidth=linewidth_3d, label=agent_traj_label)
+                    ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz), fontsize=textsize)
 
                     # # plot location of assignment switches
                     # for switch_ind in assignment_switches[zz]:
@@ -314,15 +318,15 @@ def get_trajectory_qc(unpacked):
 
                     # plot target trajectory
                     y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.scatter3D(y_target[0, 9], y_target[0, 10], y_target[0, 11], color='b')
-                    ax.plot3D(y_target[:, 9], y_target[:, 10], y_target[:, 11], '-b')
-                    ax.text(y_target[0, 9], y_target[0, 10], y_target[0, 11], 'T{0}'.format(zz), fontsize=textsize)
+                    ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
+                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
+                    ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
 
                 # stationary locations
                 for zz in range(ntargets):
                     offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[9], offset[10], offset[11], color='k')
-                    ax.text(offset[9], offset[10], offset[11], 'C{0}'.format(zz), fontsize=textsize)
+                    ax.scatter3D(offset[0], offset[1], offset[2], color='k')
+                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -358,20 +362,18 @@ def get_trajectory_qc(unpacked):
 
 
 # SETUP
+####################################################################
 dim = 3
 
 nagents = 5
 ntargets = 5
 
-agent_model = 'Double_Integrator'
 agent_model = 'Linearized_Quadcopter'
-
+target_model = 'Linearized_Quadcopter'
 ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-        'identical_'+agent_model+'_LQR_LQR_2019_08_07_16_10_26'
+        'identical_'+agent_model+'_LQR_LQR_2019_08_22_16_47_21'
 
-# root_directory = '/Users/koray/Box Sync/test_results/'
-# root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/'
-root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/5v5_quadcopter_ensemble/'
+root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'
 ensemble_directory = root_directory + ensemble_name
 
 # get number of batches
@@ -382,11 +384,13 @@ nbatches = len(batch_dirs[1:])
 sim_name_list = ['AssignmentDyn', 'AssignmentEMD']
 
 # load and plot a specific batch
-batch_num = 3
+batch_num = 0
 batch_name = 'batch_{0}'.format(batch_num)
 loaded_batch = log.load_batch_metrics(ensemble_directory, batch_name, sim_name_list)
 
 unpacked = post_process.unpack_performance_metrics(loaded_batch)
+
+####################################################################
 
 if agent_model == "Double_Integrator":
     fig, ax, dyn_agents, emd_agents, targets = get_trajectory(unpacked)

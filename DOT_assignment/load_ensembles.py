@@ -1,16 +1,23 @@
+import os.path
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import os
-import post_process
-import log
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+from DOT_assignment import post_process
+from DOT_assignment import log
 
 if __name__ == "__main__":
 
+# SETUP
+#########################################################################
+    dim = 3
+
     # get list of ensemble tests
-    root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/'
+    root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'
     # elements = [x[0] for x in os.walk(ensemble_directory)] # recursively get (root, dirs, files)
     dirs = next(os.walk(root_directory))[1]
     ensembles = []
@@ -18,10 +25,12 @@ if __name__ == "__main__":
         if 'ensemble_0' in d:
             ensembles.append(d)
 
-    dim = 3
-
+    # ensemble engagement scenarios that are loaded. loads 5v5, 10v10, 20v20 agent-target engagements
     desired_conditions = ['5v5', '10v10', '20v20']
     # desired_conditions = ['5v5', '10v10']
+
+#########################################################################
+
 
     ensembles_to_load = []
     for ensemble in ensembles:

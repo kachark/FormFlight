@@ -458,14 +458,13 @@ def plot_trajectory(unpacked):
                     ax.plot(y_agent[:, 0], y_agent[:, 1], '-r', linewidth=linewidth, label=agent_traj_label)
                     ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
 
-                    # plot location of assignment switches
-                    patches = []
-                    for switch_ind in assignment_switches[zz]:
-                        ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='b', fill=True)
-                        patches.append(ci)
-
-                    p = PatchCollection(patches)
-                    ax.add_collection(p)
+                    # # plot location of assignment switches
+                    # patches = []
+                    # for switch_ind in assignment_switches[zz]:
+                    #     ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='b', fill=True)
+                    #     patches.append(ci)
+                    # p = PatchCollection(patches)
+                    # ax.add_collection(p)
 
                     # plot target trajectory
                     y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
@@ -506,10 +505,10 @@ def plot_trajectory(unpacked):
 
                     # plot location of assignment switches
                     # patches = []
-                    for switch_ind in assignment_switches[zz]:
+                    # for switch_ind in assignment_switches[zz]:
                         # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
                         # patches.append(ci)
-                        ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms', markersize=markersize)
+                        # ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms', markersize=markersize)
 
                     # p = PatchCollection(patches)
                     # ax.add_collection(p)
@@ -706,6 +705,9 @@ def plot_trajectory(unpacked):
         legend = ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
         legend.remove()
 
+        if dim == 2:
+            ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
+
         if dim == 3:
             # ax2.legend(loc='lower right', fontsize=fontsize-4)
             ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
@@ -809,10 +811,10 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
 
                 # plot location of assignment switches
                 # patches = []
-                for switch_ind in assignment_switches[zz]:
+                # for switch_ind in assignment_switches[zz]:
                     # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
                     # patches.append(ci)
-                    ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms', markersize=markersize)
+                    # ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms', markersize=markersize)
 
                 # p = PatchCollection(patches)
                 # ax.add_collection(p)
@@ -1005,6 +1007,9 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
     # ax.legend(loc='lower right', fontsize=fontsize)
     legend = ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
     legend.remove()
+
+    if dim == 2:
+        ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
 
     if dim == 3:
         # ax2.legend(loc='lower right', fontsize=fontsize-4)

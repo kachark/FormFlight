@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['plot_5fassignment_5fcomp_5ftime',['plot_assignment_comp_time',['../namespace_d_o_t__assignment_1_1plot.html#a41c48deaad4aadf9bac59a450318d1e5',1,'DOT_assignment::plot']]],
+  ['plot_5fassignments',['plot_assignments',['../namespace_d_o_t__assignment_1_1plot.html#ad31101e31b7291d4b6504ad2fe1c8a33',1,'DOT_assignment::plot']]],
+  ['plot_5fbatch_5fdiagnostics',['plot_batch_diagnostics',['../namespace_d_o_t__assignment_1_1post__process.html#a9ef8af894bef78b4bd967a0e0298b141',1,'DOT_assignment::post_process']]],
+  ['plot_5fbatch_5fperformance_5fmetrics',['plot_batch_performance_metrics',['../namespace_d_o_t__assignment_1_1post__process.html#a132b56854e07708185775fca4cc1bcd3',1,'DOT_assignment::post_process']]],
+  ['plot_5fcost_5fhistogram',['plot_cost_histogram',['../namespace_d_o_t__assignment_1_1plot.html#afb683832b4ea2820d609be73b21eb67f',1,'DOT_assignment::plot']]],
+  ['plot_5fcosts',['plot_costs',['../namespace_d_o_t__assignment_1_1plot.html#a34b200ef06cd2da33cd0b0a7f704326a',1,'DOT_assignment::plot']]],
+  ['plot_5fensemble_5favg_5fruntime',['plot_ensemble_avg_runtime',['../namespace_d_o_t__assignment_1_1plot.html#a445286ce718da0ac59c11bcc6de51311',1,'DOT_assignment::plot']]],
+  ['plot_5fensemble_5favg_5fswitch',['plot_ensemble_avg_switch',['../namespace_d_o_t__assignment_1_1plot.html#a5037418a2810224c8bbfbe8695770586',1,'DOT_assignment::plot']]],
+  ['plot_5fensemble_5fcost_5fhistogram',['plot_ensemble_cost_histogram',['../namespace_d_o_t__assignment_1_1plot.html#ae5f64fdabec72f709496c2da413678be',1,'DOT_assignment::plot']]],
+  ['plot_5fensemble_5fdiagnostic_5fcomparison',['plot_ensemble_diagnostic_comparison',['../namespace_d_o_t__assignment_1_1post__process.html#ac7d20cd04bb73f5a144e1a84f7aae0a1',1,'DOT_assignment::post_process']]],
+  ['plot_5fensemble_5fdiagnostics',['plot_ensemble_diagnostics',['../namespace_d_o_t__assignment_1_1post__process.html#acd3fd5ffd64792ddf60d6b5f258dd422',1,'DOT_assignment::post_process']]],
+  ['plot_5fensemble_5fhistograms',['plot_ensemble_histograms',['../namespace_d_o_t__assignment_1_1post__process.html#a1e8346306e97b9ab19b9bd682c3ddcd7',1,'DOT_assignment::post_process']]],
+  ['plot_5fensemble_5fmetric_5fcomparisons',['plot_ensemble_metric_comparisons',['../namespace_d_o_t__assignment_1_1post__process.html#a00d9169a5cfaaade92ec1bfdb2483216',1,'DOT_assignment::post_process']]],
+  ['plot_5fensemble_5fswitch_5fhistogram',['plot_ensemble_switch_histogram',['../namespace_d_o_t__assignment_1_1plot.html#a8e7cceeee3ae69675f6b50f01e7ad5d9',1,'DOT_assignment::plot']]],
+  ['plot_5fruntime_5fhistogram',['plot_runtime_histogram',['../namespace_d_o_t__assignment_1_1plot.html#afbb74722a284cbde02592718454e2527',1,'DOT_assignment::plot']]],
+  ['plot_5fruntimes',['plot_runtimes',['../namespace_d_o_t__assignment_1_1plot.html#a50114c367603224c13ffcbe4a3b9af57',1,'DOT_assignment::plot']]],
+  ['plot_5ftrajectory',['plot_trajectory',['../namespace_d_o_t__assignment_1_1plot.html#aa38c6beb5fcecbc098a1aa7038939a9c',1,'DOT_assignment::plot']]],
+  ['plot_5ftrajectory_5fqc',['plot_trajectory_qc',['../namespace_d_o_t__assignment_1_1plot.html#a241463a4d6d425e3b2045c332ee73877',1,'DOT_assignment::plot']]],
+  ['post_5fprocess_5fbatch_5fdiagnostics',['post_process_batch_diagnostics',['../namespace_d_o_t__assignment_1_1post__process.html#a173a9e602939fed90b0066290955da75',1,'DOT_assignment::post_process']]],
+  ['post_5fprocess_5fbatch_5fsimulation',['post_process_batch_simulation',['../namespace_d_o_t__assignment_1_1post__process.html#a03dba68b980b5e4cf8a5cec548972679',1,'DOT_assignment::post_process']]],
+  ['post_5fprocess_5fheterogeneous',['post_process_heterogeneous',['../namespace_d_o_t__assignment_1_1post__process.html#a0c208c013680627d4b74a80c959ff6e4',1,'DOT_assignment::post_process']]],
+  ['post_5fprocess_5fhomogeneous_5fidentical',['post_process_homogeneous_identical',['../namespace_d_o_t__assignment_1_1post__process.html#ae71799543cb6119a9650663972df1840',1,'DOT_assignment::post_process']]],
+  ['post_5fprocess_5fhomogeneous_5fnonidentical',['post_process_homogeneous_nonidentical',['../namespace_d_o_t__assignment_1_1post__process.html#abf2ab504edf8d52d5efb83521560a3ce',1,'DOT_assignment::post_process']]],
+  ['pre_5fprocess',['pre_process',['../class_d_o_t__assignment_1_1systems_1_1_one_v_one.html#a4056ed3fbb2f274091018b67b9183348',1,'DOT_assignment::systems::OneVOne']]]
+];

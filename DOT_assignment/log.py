@@ -116,7 +116,8 @@ def load_batch_metrics(ensemble_directory, batch_name, sim_name_list):
 
     # TEST
     # TODO reorder sim_file_list to make sure files loaded in correct way
-    sim_file_list = sorted(sim_file_list, key=lambda x: x.split()[1])
+    # sim_file_list = sorted(sim_file_list, key=lambda x: x.split()[1])
+    sim_file_list = sorted(sim_file_list, key=lambda x: x.split()[0])
 
     batch_performance_metrics = {}
     for sim_file_name in sim_file_list:
@@ -150,7 +151,8 @@ def load_batch_diagnostics(ensemble_directory, batch_name, sim_name_list):
 
     # TEST
     # TODO reorder sim_file_list to make sure files loaded in correct way
-    csv_file_list = sorted(csv_file_list, key=lambda x: x.split()[1])
+    # csv_file_list = sorted(csv_file_list, key=lambda x: x.split()[1])
+    csv_file_list = sorted(csv_file_list, key=lambda x: x.split()[0])
 
     batch_diagnostics = {}
     for csv_file_name in csv_file_list:

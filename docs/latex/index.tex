@@ -1,0 +1,247 @@
+\subsection*{Table of Contents}
+
+
+\begin{DoxyItemize}
+\item \href{\#about-the-project}{\texttt{ About the Project}}
+\begin{DoxyItemize}
+\item \href{\#built-with}{\texttt{ Built With}}
+\end{DoxyItemize}
+\item \href{\#getting-started}{\texttt{ Getting Started}}
+\begin{DoxyItemize}
+\item \href{\#prerequisites}{\texttt{ Prerequisites}}
+\item \href{\#installation}{\texttt{ Installation}}
+\end{DoxyItemize}
+\item \href{\#usage}{\texttt{ Usage}}
+\item \href{\#roadmap}{\texttt{ Roadmap}}
+\item \href{\#license}{\texttt{ License}}
+\item \href{\#contact}{\texttt{ Contact}}
+\item \href{\#acknowledgements}{\texttt{ Acknowledgements}}
+\end{DoxyItemize}
+
+\subsection*{About The Project}
+
+This library provides a first-\/look at the potential that optimal transport has in the areas of task assignment, resource allocation, flight formation, and more by offering a simulation framework from which to test these scenarios. Packaged into this library are examples focused on task assignment, specifically centered around the canonical target assignment problem.
+
+The examples provided generate a scenario where an agent swarm is tasked to rendezvous with a dynamically evolving target swarm of equal size which is attempting to terminate at locations in space. A dynamic decision-\/maker leverages discrete optimal transport to perform the optimal assignment of agent members to target members. Comparisons are given with a standard nearest-\/neighbor method.
+
+The following initial formations are availble for the agent, target, and terminal state distributions\+:
+\begin{DoxyItemize}
+\item Uniform distribution
+\item Fibonacci sphere
+\item Circle
+\end{DoxyItemize}
+
+The available agent and target swarm dynamic models availble\+:
+\begin{DoxyItemize}
+\item Double Integrator (2D/3D)
+\item Linearized Quadcoptor (2D/3D)
+\end{DoxyItemize}
+
+The available agent and target swarm controllers\+:
+\begin{DoxyItemize}
+\item Linearized Quadratic Tracker
+\end{DoxyItemize}
+
+Some demonstrations are available in the examples folder.
+
+\subsubsection*{Built With}
+
+
+\begin{DoxyItemize}
+\item \href{https://github.com/rflamary/POT}{\texttt{ P\+OT Python Optimal Transport Library}}
+\end{DoxyItemize}
+
+\subsection*{Getting Started}
+
+To get a local copy up and running follow these steps.
+
+\subsubsection*{Prerequisites}
+
+D\+O\+T\+\_\+assignment requires the following packages and subsequent dependencies in order to function.
+
+
+\begin{DoxyItemize}
+\item Python ($>$=3.\+6.\+7)
+\item Numpy ($>$=1.\+15.\+4)
+\item pandas ($>$=0.\+24.\+2)
+\item Matplotlib ($>$=3.\+0.\+3)
+\item Python Optimal Transport ($>$=0.\+5.\+1) 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{pip install POT}
+\end{DoxyCode}
+
+\item pytest ($>$=5.\+1.\+0) 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{pip install pytest}
+\end{DoxyCode}
+
+\end{DoxyItemize}
+
+\subsubsection*{Installation}
+
+To download this package from the online git repository (currently not publically available)\+:
+
+
+\begin{DoxyEnumerate}
+\item Clone the repo 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{git clone git@bitbucket.org:goroda/targetingmdp.git}
+\end{DoxyCode}
+
+\end{DoxyEnumerate}
+
+\subsection*{Usage}
+
+\subsubsection*{Running simulations}
+
+main.\+py is the primary entry point for tweaking simulation parameters. Simulations are organized together in batches that aim to keep constant initial states operating over different assignment policies. Multiple batches can be grouped together within an ensemble to perform Monte Carlo simulations.
+
+Define number of batches 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{nbatches = 1}
+\end{DoxyCode}
+
+
+Define simulation parameters that are constant across an ensemble of tests 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{dt = 0.01}
+\DoxyCodeLine{maxtime = 5}
+\DoxyCodeLine{dim = 3}
+\DoxyCodeLine{nagents = 5}
+\DoxyCodeLine{ntargets = 5}
+\DoxyCodeLine{agent\_model = "Linearized\_Quadcopter"}
+\DoxyCodeLine{target\_model = "Linearized\_Quadcopter"}
+\DoxyCodeLine{collisions = True}
+\DoxyCodeLine{collision\_tol = 1e-2}
+\DoxyCodeLine{agent\_control\_policy = "LQR"}
+\DoxyCodeLine{target\_control\_policy = "LQR"}
+\DoxyCodeLine{assignment\_epoch = 10}
+\end{DoxyCode}
+ N\+O\+TE\+: the number of agents (nagents) and number of targets (ntargets) must be equal in release v0.\+1.\+0
+
+Define simulation parameters constant across a batch, such as initial swarm formations 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\# INITIAL SWARM DISTRIBUTIONS and TERMINAL LOCATION DISTRIBUTION}
+\DoxyCodeLine{\# formations: uniform\_distribution, circle, fibonacci\_sphere}
+\DoxyCodeLine{initial\_formation\_params = \{}
+\DoxyCodeLine{        'nagents': nagents, }
+\DoxyCodeLine{        'agent\_model': agent\_model, }
+\DoxyCodeLine{        'agent\_swarm\_formation': 'uniform\_distribution',}
+\DoxyCodeLine{        'ntargets': ntargets, }
+\DoxyCodeLine{        'target\_model': target\_model, }
+\DoxyCodeLine{        'target\_swarm\_formation': 'fibonacci\_sphere',}
+\DoxyCodeLine{        'nstationary\_states': ntargets, }
+\DoxyCodeLine{        'stationary\_states\_formation': 'circle'}
+\DoxyCodeLine{        \}}
+\end{DoxyCode}
+
+
+Create simulation profile to be run within a batch 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{dt = dt}
+\DoxyCodeLine{asst = 'AssignmentDyn'}
+\DoxyCodeLine{sim\_profile\_name = 'dyn'}
+\DoxyCodeLine{sim\_profiles.update(\{sim\_profile\_name: \{'agent\_model': agent\_model, 'target\_model': target\_model,}
+\DoxyCodeLine{    'agent\_control\_policy': agent\_control\_policy, 'target\_control\_policy': target\_control\_policy,}
+\DoxyCodeLine{    'assignment\_policy': asst, 'assignment\_epoch': assignment\_epoch, 'nagents': nagents, 'ntargets': ntargets,}
+\DoxyCodeLine{    'collisions': collisions, 'collision\_tol': collision\_tol, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial\_conditions': initial\_conditions\}\})}
+\end{DoxyCode}
+
+
+Run the ensemble of simulations 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{python -m DOT\_assignment}
+\end{DoxyCode}
+
+
+N\+O\+TE\+: python commands are run from the root of the directory
+
+\subsubsection*{Loading and plotting data}
+
+load\+\_\+sims.\+py will load saved test data and plot the results.
+
+N\+O\+TE\+: the dimension of the test and agent and target dynamic models to correctly load the files. This information is readily available in each batch folder within the sim\+\_\+info.\+txt.
+
+load\+\_\+sims.\+py will load single or all batches within an ensemble folder which is specified. In addition to the raw simulation data and post-\/processed results, simulation diagnostics are also plotted.
+
+load\+\_\+sims.\+py 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\# SETUP}
+\DoxyCodeLine{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+\DoxyCodeLine{dim = 3}
+\DoxyCodeLine{}
+\DoxyCodeLine{nagents = 5}
+\DoxyCodeLine{ntargets = 5}
+\DoxyCodeLine{}
+\DoxyCodeLine{agent\_model = 'Double\_Integrator'}
+\DoxyCodeLine{target\_model = 'Double\_Integrator'}
+\DoxyCodeLine{ensemble\_name = 'ensemble\_0\_'+str(dim)+'D\_'+str(nagents)+'v'+str(ntargets)+'\_'+\(\backslash\)}
+\DoxyCodeLine{         'identical\_'+agent\_model+'\_LQR\_LQR\_2019\_07\_31\_14\_06\_36'}
+\DoxyCodeLine{}
+\DoxyCodeLine{root\_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'}
+\DoxyCodeLine{ensemble\_directory = root\_directory + ensemble\_name}
+\DoxyCodeLine{}
+\DoxyCodeLine{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+\end{DoxyCode}
+
+
+Load and plot simulations 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{python DOT\_assignment/load\_sims.py}
+\end{DoxyCode}
+
+
+Additional visualizations include\+:
+\begin{DoxyItemize}
+\item animate\+\_\+trajectories.\+py \+: loads and plots a 3-\/dimensional animation of the agent and target swarms evolving over time.
+\item load\+\_\+ensembles.\+py \+: loads and plots histograms using data from all ensembles in a given directory. N\+O\+TE\+: must specify the \textquotesingle{}agent\textquotesingle{}V\textquotesingle{}target\textquotesingle{} scenarios of the ensembles being loaded
+\end{DoxyItemize}
+
+\+\_\+\+For more examples, please refer to the Examples page.
+
+\subsubsection*{Tests}
+
+In order to run tests\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{python -m pytest -v tests}
+\end{DoxyCode}
+
+
+\subsection*{Roadmap}
+
+Some immediate areas of improvement include the following additions to the target-\/assignment scenario\+:
+\begin{DoxyItemize}
+\item additional realistic dynamic models
+\item additional controllers
+\begin{DoxyItemize}
+\item minimum-\/time intercept
+\item fuel-\/optimal orbit injection
+\end{DoxyItemize}
+\item additions to the target-\/assignment scenario, including waves of target swarms (ie. dynamic swarm size over time), stochastic dynamic conditions
+\item heterogeneous swarms
+\end{DoxyItemize}
+
+\subsection*{License}
+
+Distributed under the M\+IT License. See {\ttfamily L\+I\+C\+E\+N\+SE} for more information.
+
+T\+BD
+
+\subsection*{Contact}
+
+
+\begin{DoxyItemize}
+\item Koray Kachar -\/ \href{https://www.linkedin.com/in/koray-kachar/}{\texttt{ @linkedin}} -\/ \href{mailto:kkachar@umich.edu}{\texttt{ kkachar@umich.\+edu}}
+\item Alex Gorodetsky -\/ \href{https://www.alexgorodetsky.com}{\texttt{ https\+://www.\+alexgorodetsky.\+com}} -\/ \href{mailto:goroda@umich.edu}{\texttt{ goroda@umich.\+edu}}
+\end{DoxyItemize}
+
+\subsection*{Acknowledgements}
+
+
+\begin{DoxyItemize}
+\item \href{https://www.draper.com}{\texttt{ Draper Laboratory}}
+\item \href{https://github.com/rflamary/POT}{\texttt{ P\+OT Python Optimal Transport Library}}
+\item \href{https://aero.engin.umich.edu}{\texttt{ University of Michigan}} 
+\end{DoxyItemize}

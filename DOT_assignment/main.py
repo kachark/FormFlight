@@ -65,12 +65,12 @@ def main():
 
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 1
+    nbatches = 2
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
     maxtime = 5
-    dim = 2
+    dim = 3
     nagents = 5
     ntargets = 5
     # agent_model = "Double_Integrator"
@@ -89,7 +89,8 @@ def main():
     # TODO ensemble should not default to 'identical'
     ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy)
 
-    root_directory = '/Users/koray/Box Sync/test_results/'
+    # root_directory = '/Users/koray/Box Sync/test_results/'
+    root_directory = './'
     ensemble_directory = root_directory + ensemble_name
 
     # create directory to store ensemble

@@ -1,17 +1,23 @@
+import os.path
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import os
-import post_process
-import log
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+from DOT_assignment import post_process
+from DOT_assignment import log
 
 if __name__ == "__main__":
 
     # get list of ensemble tests
-    ensembles = [x[0] for x in os.walk('./test_results')]
+    # ensembles = [x[0] for x in os.walk('./test_results')]
+    ensembles = [x[0] for x in os.walk('./')]
 
+# SETUP
+#########################################################################
     dim = 3
 
     nagents = 5
@@ -25,16 +31,12 @@ if __name__ == "__main__":
     agent_model = 'Linearized_Quadcopter'
     target_model = 'Linearized_Quadcopter'
     ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_'+agent_model+'_LQR_LQR_2019_08_14_11_02_16'
+            'identical_'+agent_model+'_LQR_LQR_2019_08_22_16_47_21'
 
-    # # # old data - 100v100 ensemble PRIOR TO JULY 25, 2019
-    # root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/100v100_ensemble/'
-    # ensemble_name = 'ensemble_0_'+str(dim)+'D_'+'identical_Double_Integrator_LQR_LQR_2019_07_17_00_09_55'
-
-    # root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/'
-    root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/5v5_quadcopter_ensemble/'
-    root_directory = '/Users/koray/Box Sync/test_results/'
+    root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'
     ensemble_directory = root_directory + ensemble_name
+
+#########################################################################
 
     # get number of batches
     batch_dirs = [x[0] for x in os.walk(ensemble_directory)]

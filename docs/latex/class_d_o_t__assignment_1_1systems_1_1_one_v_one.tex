@@ -1,0 +1,123 @@
+\hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one}{}\section{D\+O\+T\+\_\+assignment.\+systems.\+One\+V\+One Class Reference}
+\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one}\index{DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}}
+Inheritance diagram for D\+O\+T\+\_\+assignment.\+systems.\+One\+V\+One\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{class_d_o_t__assignment_1_1systems_1_1_one_v_one}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1systems_1_1_one_v_one_af1b5a9b54110a79dbcd85f09ac343d7a}{\+\_\+\+\_\+init\+\_\+\+\_\+}} (self, agents, targets, pol, assignment\+\_\+epoch)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1systems_1_1_one_v_one_aa5b2a62d904ce5fbbc229c861c20c2b3}{compute\+\_\+assignments}} (self, t, x0, collisions)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1systems_1_1_one_v_one_ad4469fcccbebd08f45e7b9a2187b96a5}{compute\+\_\+optimal\+\_\+assignments}} (self, t, x0, collisions)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a4056ed3fbb2f274091018b67b9183348}{pre\+\_\+process}} (self, t0, x0, collisions)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a8a5d76d462e6208f560f3398578ea19c}{update}} (self, t0, x0, collisions, dt, tick)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a26389818a6db30eb7a020bf880ddd597}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a26389818a6db30eb7a020bf880ddd597}} 
+{\bfseries targets}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a6d02027a5bfb4a49432f15171744d60b}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a6d02027a5bfb4a49432f15171744d60b}} 
+{\bfseries tsizes}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_ab5f9331fd396e81079d79a3e68875f36}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_ab5f9331fd396e81079d79a3e68875f36}} 
+{\bfseries tsize\+\_\+inds}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a241ab9a930011dcba14d0ccd2bd514ed}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a241ab9a930011dcba14d0ccd2bd514ed}} 
+{\bfseries ntargets}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_ac6bf92245cb14af9c5100bb0efa5b0e4}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_ac6bf92245cb14af9c5100bb0efa5b0e4}} 
+{\bfseries apol}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_abbba76fa0a848d97286c0f747a370a96}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_abbba76fa0a848d97286c0f747a370a96}} 
+{\bfseries assignment\+\_\+epoch}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_aa37d9a58140138808b4051e1c2f92276}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_aa37d9a58140138808b4051e1c2f92276}} 
+{\bfseries optimal\+\_\+assignment}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_acb1da4621e5ef113d72930ab79cbc923}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_acb1da4621e5ef113d72930ab79cbc923}} 
+{\bfseries costs}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a89bf29ce9d9ee50c627b511204a8dedf}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a89bf29ce9d9ee50c627b511204a8dedf}} 
+{\bfseries current\+\_\+assignment}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}System representing scenario consisting of one agent to one target engagements
+
+Assumes equal agent and target swarm sizes\end{DoxyVerb}
+ 
+
+\subsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_af1b5a9b54110a79dbcd85f09ac343d7a}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_af1b5a9b54110a79dbcd85f09ac343d7a}} 
+\index{DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}!\_\_init\_\_@{\_\_init\_\_}}
+\index{\_\_init\_\_@{\_\_init\_\_}!DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}}
+\subsubsection{\texorpdfstring{\_\_init\_\_()}{\_\_init\_\_()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+systems.\+One\+V\+One.\+\_\+\+\_\+init\+\_\+\+\_\+ (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{agents,  }\item[{}]{targets,  }\item[{}]{pol,  }\item[{}]{assignment\+\_\+epoch }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Constructor for OneVOne System
+\end{DoxyVerb}
+ 
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_aa5b2a62d904ce5fbbc229c861c20c2b3}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_aa5b2a62d904ce5fbbc229c861c20c2b3}} 
+\index{DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}!compute\_assignments@{compute\_assignments}}
+\index{compute\_assignments@{compute\_assignments}!DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}}
+\subsubsection{\texorpdfstring{compute\_assignments()}{compute\_assignments()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+systems.\+One\+V\+One.\+compute\+\_\+assignments (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{t,  }\item[{}]{x0,  }\item[{}]{collisions }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Compute assignments between agent and target swarms
+
+Does not perfrom assignments for agents that are collided with targets\end{DoxyVerb}
+ \mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_ad4469fcccbebd08f45e7b9a2187b96a5}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_ad4469fcccbebd08f45e7b9a2187b96a5}} 
+\index{DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}!compute\_optimal\_assignments@{compute\_optimal\_assignments}}
+\index{compute\_optimal\_assignments@{compute\_optimal\_assignments}!DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}}
+\subsubsection{\texorpdfstring{compute\_optimal\_assignments()}{compute\_optimal\_assignments()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+systems.\+One\+V\+One.\+compute\+\_\+optimal\+\_\+assignments (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{t,  }\item[{}]{x0,  }\item[{}]{collisions }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Compute optimal assignments (DYN) between agent and target swarms
+
+Does not perfrom assignments for agents that are collided with targets\end{DoxyVerb}
+ \mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a4056ed3fbb2f274091018b67b9183348}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a4056ed3fbb2f274091018b67b9183348}} 
+\index{DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}!pre\_process@{pre\_process}}
+\index{pre\_process@{pre\_process}!DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}}
+\subsubsection{\texorpdfstring{pre\_process()}{pre\_process()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+systems.\+One\+V\+One.\+pre\+\_\+process (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{t0,  }\item[{}]{x0,  }\item[{}]{collisions }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}System pre-processor
+
+Perform functions prior to starting engine loop
+\end{DoxyVerb}
+ \mbox{\Hypertarget{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a8a5d76d462e6208f560f3398578ea19c}\label{class_d_o_t__assignment_1_1systems_1_1_one_v_one_a8a5d76d462e6208f560f3398578ea19c}} 
+\index{DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}!update@{update}}
+\index{update@{update}!DOT\_assignment.systems.OneVOne@{DOT\_assignment.systems.OneVOne}}
+\subsubsection{\texorpdfstring{update()}{update()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+systems.\+One\+V\+One.\+update (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{t0,  }\item[{}]{x0,  }\item[{}]{collisions,  }\item[{}]{dt,  }\item[{}]{tick }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Computes assignments at assignment epoch and advances dynamics per engine tick
+
+Input:
+- t0:           start time of integration
+- x0:           agent, target, target terminal states at start time of integration
+- dt:           engine time step size
+
+Output:
+return tout, yout, assign_out, diagnostics
+- tout:         time integrated over between [t0, t0+dt]
+- yout:         agent states, target states between [t0, t0+dt]
+- assign_out:   index assignments between agent_i and target_j
+- diagnostics:  diagnostics recorded between [t0, t0+dt]\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+D\+O\+T\+\_\+assignment/systems.\+py\end{DoxyCompactItemize}
