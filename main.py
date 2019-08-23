@@ -91,8 +91,8 @@ def main():
     # TODO ensemble should not default to 'identical'
     ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy)
 
-    # root_directory = '/Users/koray/Box Sync/test_results/'
-    root_directory = './'
+    # root_directory = './'
+    root_directory = os.getcwd() + '/'
     ensemble_directory = root_directory + ensemble_name
 
     # create directory to store ensemble

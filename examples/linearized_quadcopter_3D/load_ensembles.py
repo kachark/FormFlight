@@ -30,9 +30,7 @@ if __name__ == "__main__":
 
     # get list of ensemble tests
 
-    # EDIT the root directory path here to where the ensemble test folders are located
-    # DON'T FORGET THE '/' at the end!
-    root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'
+    root_directory = os.getcwd() + '/'
     # elements = [x[0] for x in os.walk(ensemble_directory)] # recursively get (root, dirs, files)
 
     dirs = next(os.walk(root_directory))[1]

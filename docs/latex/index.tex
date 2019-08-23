@@ -101,9 +101,19 @@ The workflow for D\+O\+T\+\_\+assignment is as follows
 \item load and plot results
 \end{DoxyEnumerate}
 
+main.\+py creates the test data directory under the following format\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{ensemble\_0\_<dimension>\_<\#agentsV\#targets>\_identical\_<agent/target model>\_<agent controller>\_<target\_controller>\_<date/time>}
+\end{DoxyCode}
+
+
+Once a test is run, the user must provide the information of the new test folder into the load\+\_\+sims.\+py (or equivalent) file to properly load and plot the results.
+
 \subsubsection*{Simulation setup}
 
-main.\+py is the primary entry point for tweaking simulation parameters. Simulations are organized together in batches that aim to keep constant initial states operating over different assignment policies. Multiple batches can be grouped together within an ensemble to perform Monte Carlo simulations.
+main.\+py is the primary entry point for tweaking simulation parameters.
+
+Simulations are organized together in batches that aim to keep constant initial states operating over different assignment policies. Multiple batches can be grouped together within an ensemble to perform Monte Carlo simulations.
 
 Define number of batches 
 \begin{DoxyCode}{0}
@@ -271,7 +281,7 @@ To run a simulation setup simply run
 \end{DoxyCode}
 
 
-After making necessary edits, load and plot an example simulation. See \textquotesingle{}Loading and plotting data\textquotesingle{} for details. 
+Load and plot an example simulation. 
 \begin{DoxyCode}{0}
 \DoxyCodeLine{python examples/double\_integrator\_3D/load\_single\_batch\_sims.py}
 \end{DoxyCode}

@@ -32,9 +32,9 @@ if __name__ == "__main__":
     ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
             'identical_'+agent_model+'_LQR_LQR_2019_08_23_15_05_40'
 
-    # EDIT the root directory path here to where the ensemble test folder is located
-    # DON'T FORGET THE '/' at the end!
-    root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/sandbox/targetingmdp/'
+    # the path where the ensemble test folder is located
+    root_directory = os.getcwd() + '/'
+
     ensemble_directory = root_directory + ensemble_name
 
 #########################################################################

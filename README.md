@@ -87,9 +87,18 @@ The workflow for DOT_assignment is as follows
 2. run simulation
 3. load and plot results
 
+main.py creates the test data directory under the following format:
+```sh
+ensemble_0_<dimension>_<#agentsV#targets>_identical_<agent/target model>_<agent controller>_<target_controller>_<date/time>
+```
+
+Once a test is run, the user must provide the information of the new test folder into the load_sims.py (or equivalent) file to properly load and plot the results. 
+
 ### Simulation setup
 
-main.py is the primary entry point for tweaking simulation parameters. Simulations are organized together in batches that aim to keep constant initial states operating over different assignment policies. Multiple batches can be grouped together within an ensemble to perform Monte Carlo simulations.
+main.py is the primary entry point for tweaking simulation parameters. 
+
+Simulations are organized together in batches that aim to keep constant initial states operating over different assignment policies. Multiple batches can be grouped together within an ensemble to perform Monte Carlo simulations.
 
 Define number of batches
 ```python
@@ -248,7 +257,7 @@ To run a simulation setup simply run
 python examples/double_integrator_3D/main.py
 ```
 
-After making necessary edits, load and plot an example simulation. See 'Loading and plotting data' for details.
+Load and plot an example simulation.
 ```python
 python examples/double_integrator_3D/load_single_batch_sims.py
 ```

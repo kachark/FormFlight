@@ -399,11 +399,9 @@ target_model = 'Linearized_Quadcopter'
 
 # EDIT the date here to match the ensemble test folder, you would like to load
 ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-        'identical_'+agent_model+'_LQR_LQR_2019_08_23_15_05_40'
+        'identical_'+agent_model+'_LQR_LQR_LINEARIZED_QUADCOPTER_3D_EXAMPLE'
 
-# EDIT the root directory path here to where the ensemble test folder is located
-# DON'T FORGET THE '/' at the end!
-root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/sandbox/targetingmdp/'
+root_directory = os.getcwd() + '/'
 ensemble_directory = root_directory + ensemble_name
 
 # get number of batches

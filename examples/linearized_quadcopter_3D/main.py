@@ -98,9 +98,12 @@ def main():
     nensemble = 0
 
     # TODO ensemble should not default to 'identical'
-    ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy)
+    # ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy)
+    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
+            'identical_'+agent_model+'_LQR_LQR_LINEARIZED_QUADCOPTER_3D_EXAMPLE'
 
-    root_directory = './'
+    # root_directory = './'
+    root_directory = os.getcwd() + '/'
     ensemble_directory = root_directory + ensemble_name
 
     # create directory to store ensemble
