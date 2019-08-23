@@ -1,0 +1,373 @@
+\hypertarget{_2examples_2linearized_quadcopter_3_d_2main_8py-example}{}\section{/examples/linearized\+\_\+quadcopter\+\_\+3\+D/main.\+py}
+
+\begin{DoxyCodeInclude}{0}
+\end{DoxyCodeInclude}
+ Example of how to setup two swarms in 3D. Both the agent and targets swarm are operating with a homogenous set of linearized quadcopter dynamic models with the linear quadratic regulator/tracker (L\+QR) controls. The agents are initialized in a uniform distribution, targets are in a fibonacci sphere and the terminal locations are in a circle
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{6 }
+\DoxyCodeLine{7 \textcolor{keyword}{import} os.path}
+\DoxyCodeLine{8 \textcolor{keyword}{import} sys}
+\DoxyCodeLine{9 sys.path.append(os.path.join(os.path.dirname(\_\_file\_\_), \textcolor{stringliteral}{'../../'}))}
+\DoxyCodeLine{10 }
+\DoxyCodeLine{11 \textcolor{keyword}{import} os}
+\DoxyCodeLine{12 \textcolor{keyword}{import} atexit}
+\DoxyCodeLine{13 \textcolor{keyword}{from} time \textcolor{keyword}{import} time, strftime, localtime}
+\DoxyCodeLine{14 \textcolor{keyword}{import} matplotlib.pyplot \textcolor{keyword}{as} plt}
+\DoxyCodeLine{15 \textcolor{keyword}{from} datetime \textcolor{keyword}{import} timedelta, datetime}
+\DoxyCodeLine{16 \textcolor{keyword}{import} numpy \textcolor{keyword}{as} np}
+\DoxyCodeLine{17 \textcolor{keyword}{import} pandas \textcolor{keyword}{as} pd}
+\DoxyCodeLine{18 }
+\DoxyCodeLine{19 \textcolor{comment}{\# DOT\_assignment}}
+\DoxyCodeLine{20 \textcolor{keyword}{from} \mbox{\hyperlink{namespace_d_o_t__assignment_1_1setup}{DOT\_assignment.setup}} \textcolor{keyword}{import} (setup\_simulation, generate\_initial\_conditions)}
+\DoxyCodeLine{21 \textcolor{keyword}{from} DOT\_assignment.post\_process.post\_process \textcolor{keyword}{import} (}
+\DoxyCodeLine{22         post\_process\_batch\_simulation,}
+\DoxyCodeLine{23         post\_process\_batch\_diagnostics,}
+\DoxyCodeLine{24         plot\_batch\_performance\_metrics,}
+\DoxyCodeLine{25         plot\_batch\_diagnostics}
+\DoxyCodeLine{26 )}
+\DoxyCodeLine{27 \textcolor{keyword}{from} \mbox{\hyperlink{namespace_d_o_t__assignment_1_1log}{DOT\_assignment.log}} \textcolor{keyword}{import} (}
+\DoxyCodeLine{28         save\_batch\_metrics\_to\_csv,}
+\DoxyCodeLine{29         save\_batch\_diagnostics\_to\_csv,}
+\DoxyCodeLine{30         save\_test\_info\_to\_txt}
+\DoxyCodeLine{31 )}
+\DoxyCodeLine{32 }
+\DoxyCodeLine{33 }
+\DoxyCodeLine{34 \textcolor{keyword}{def }get\_ensemble\_name(nensemble, dim, nagents, ntargets, agent\_model, target\_model, agent\_control\_policy, target\_control\_policy):}
+\DoxyCodeLine{35 }
+\DoxyCodeLine{36     \textcolor{stringliteral}{""" Returns ensemble name}}
+\DoxyCodeLine{37 \textcolor{stringliteral}{}}
+\DoxyCodeLine{38 \textcolor{stringliteral}{    """}}
+\DoxyCodeLine{39 }
+\DoxyCodeLine{40     identical = (agent\_model==target\_model)}
+\DoxyCodeLine{41     \textcolor{keywordflow}{if} identical:}
+\DoxyCodeLine{42         ensemble\_name = \textcolor{stringliteral}{'ensemble\_'} + str(nensemble) + \textcolor{stringliteral}{'\_'} + (str(dim) + \textcolor{stringliteral}{'D'}) + \textcolor{stringliteral}{'\_'} +\(\backslash\)}
+\DoxyCodeLine{43                 str(nagents) + \textcolor{stringliteral}{'v'} + str(ntargets) + \textcolor{stringliteral}{'\_identical\_'} + agent\_model + \textcolor{stringliteral}{'\_'} + agent\_control\_policy + \textcolor{stringliteral}{'\_'} +\(\backslash\)}
+\DoxyCodeLine{44                 target\_control\_policy + \textcolor{stringliteral}{'\_'} + datetime.now().strftime(\textcolor{stringliteral}{'\%Y\_\%m\_\%d\_\%H\_\%M\_\%S'})}
+\DoxyCodeLine{45     \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{46         ensemble\_name = \textcolor{stringliteral}{'ensemble\_'} + str(nensemble) + \textcolor{stringliteral}{'\_'} + (str(dim) + \textcolor{stringliteral}{'D'}) + \(\backslash\)}
+\DoxyCodeLine{47                 \textcolor{stringliteral}{'\_'} + str(nagents) + \textcolor{stringliteral}{'v'} + str(ntargets) + agent\_model + \textcolor{stringliteral}{'\_'} + target\_model + \textcolor{stringliteral}{'\_'} + agent\_control\_policy + \textcolor{stringliteral}{'\_'} +\(\backslash\)}
+\DoxyCodeLine{48                 target\_control\_policy + \textcolor{stringliteral}{'\_'} + datetime.now().strftime(\textcolor{stringliteral}{'\%Y\_\%m\_\%d\_\%H\_\%M\_\%S'})}
+\DoxyCodeLine{49 }
+\DoxyCodeLine{50     \textcolor{keywordflow}{return} ensemble\_name}
+\DoxyCodeLine{51 }
+\DoxyCodeLine{52 \textcolor{keyword}{def }\mbox{\hyperlink{namespacemain}{main}}():}
+\DoxyCodeLine{53 }
+\DoxyCodeLine{54     \textcolor{stringliteral}{""" Linearized quadcopter agent and target swarms in 3D}}
+\DoxyCodeLine{55 \textcolor{stringliteral}{}}
+\DoxyCodeLine{56 \textcolor{stringliteral}{    Setup ensemble, batch, and individual simulation parameters}}
+\DoxyCodeLine{57 \textcolor{stringliteral}{    Create new directory to store ensemble, batch, and individual simulation results}}
+\DoxyCodeLine{58 \textcolor{stringliteral}{    Call functions to perform simulations, pack results and diagnostics, and save to .csv}}
+\DoxyCodeLine{59 \textcolor{stringliteral}{}}
+\DoxyCodeLine{60 \textcolor{stringliteral}{    \#\#\#\#\#\#\# INFO \#\#\#\#\#\#}}
+\DoxyCodeLine{61 \textcolor{stringliteral}{    \# simulation: set of initial conditions with 1 asst pol}}
+\DoxyCodeLine{62 \textcolor{stringliteral}{    \# batch\_simulation: set of simulations with SAME initial conditions}}
+\DoxyCodeLine{63 \textcolor{stringliteral}{    \# ensemble\_simulation: set of different batch simulations}}
+\DoxyCodeLine{64 \textcolor{stringliteral}{}}
+\DoxyCodeLine{65 \textcolor{stringliteral}{    \# ex. ic\_i = ith initial\_conditions}}
+\DoxyCodeLine{66 \textcolor{stringliteral}{    \# sim1 = ic\_1 and EMD}}
+\DoxyCodeLine{67 \textcolor{stringliteral}{    \# sim2 = ic\_1 and DYN}}
+\DoxyCodeLine{68 \textcolor{stringliteral}{    \# batch\_1 = [sim1, sim2] = [ic\_1 and EMD, ic\_1 and DYN]}}
+\DoxyCodeLine{69 \textcolor{stringliteral}{    \# sim3 = ic\_2 and EMD}}
+\DoxyCodeLine{70 \textcolor{stringliteral}{    \# sim4 = ic\_2 and DYN}}
+\DoxyCodeLine{71 \textcolor{stringliteral}{    \# batch\_2 = [sim3, sim4] = [ic\_2 and EMD, ic\_2 and DYN]}}
+\DoxyCodeLine{72 \textcolor{stringliteral}{    \# ensemble\_1 = [batch\_1, batch\_2] = [ [sim1, sim2], [sim3, sim4] ]}}
+\DoxyCodeLine{73 \textcolor{stringliteral}{    \#            = [ [ic\_1 and EMD, ic\_1 and DYN], [ic\_2 and EMD, ic\_2 and DYN] ]}}
+\DoxyCodeLine{74 \textcolor{stringliteral}{}}
+\DoxyCodeLine{75 \textcolor{stringliteral}{    """}}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77     ensemble\_simulation = []}
+\DoxyCodeLine{78     batch\_simulation = []}
+\DoxyCodeLine{79     nbatches = 1}
+\DoxyCodeLine{80 }
+\DoxyCodeLine{81     }
+\DoxyCodeLine{83     dt = 0.01}
+\DoxyCodeLine{84     maxtime = 5}
+\DoxyCodeLine{85     dim = 3}
+\DoxyCodeLine{86     nagents = 5}
+\DoxyCodeLine{87     ntargets = 5}
+\DoxyCodeLine{88     agent\_model = \textcolor{stringliteral}{"Linearized\_Quadcopter"}}
+\DoxyCodeLine{89     target\_model = \textcolor{stringliteral}{"Linearized\_Quadcopter"}}
+\DoxyCodeLine{90     collisions = \textcolor{keyword}{True}}
+\DoxyCodeLine{91     collision\_tol = 1e-2}
+\DoxyCodeLine{92     agent\_control\_policy = \textcolor{stringliteral}{"LQR"}}
+\DoxyCodeLine{93     target\_control\_policy = \textcolor{stringliteral}{"LQR"}}
+\DoxyCodeLine{94     assignment\_epoch = 10}
+\DoxyCodeLine{95     }
+\DoxyCodeLine{96 }
+\DoxyCodeLine{97     \textcolor{comment}{\# Create directory for storage}}
+\DoxyCodeLine{98     nensemble = 0}
+\DoxyCodeLine{99 }
+\DoxyCodeLine{100     \textcolor{comment}{\# TODO ensemble should not default to 'identical'}}
+\DoxyCodeLine{101     \textcolor{comment}{\# ensemble\_name = get\_ensemble\_name(nensemble, dim, nagents, ntargets, agent\_model, target\_model, agent\_control\_policy, target\_control\_policy)}}
+\DoxyCodeLine{102     ensemble\_name = \textcolor{stringliteral}{'ensemble\_0\_'}+str(dim)+\textcolor{stringliteral}{'D\_'}+str(nagents)+\textcolor{stringliteral}{'v'}+str(ntargets)+\textcolor{stringliteral}{'\_'}+\(\backslash\)}
+\DoxyCodeLine{103             \textcolor{stringliteral}{'identical\_'}+agent\_model+\textcolor{stringliteral}{'\_LQR\_LQR\_LINEARIZED\_QUADCOPTER\_3D\_EXAMPLE'}}
+\DoxyCodeLine{104 }
+\DoxyCodeLine{105     \textcolor{comment}{\# root\_directory = './'}}
+\DoxyCodeLine{106     root\_directory = os.getcwd() + \textcolor{stringliteral}{'/'}}
+\DoxyCodeLine{107     ensemble\_directory = root\_directory + ensemble\_name}
+\DoxyCodeLine{108 }
+\DoxyCodeLine{109     \textcolor{comment}{\# create directory to store ensemble}}
+\DoxyCodeLine{110     \textcolor{keywordflow}{try}:}
+\DoxyCodeLine{111         os.makedirs(ensemble\_directory)}
+\DoxyCodeLine{112     \textcolor{keywordflow}{except} FileExistsError:}
+\DoxyCodeLine{113         \textcolor{comment}{\# directory already exists}}
+\DoxyCodeLine{114         \textcolor{keywordflow}{pass}}
+\DoxyCodeLine{115 }
+\DoxyCodeLine{116     \textcolor{comment}{\# TODO assumes heterogeneous swarms}}
+\DoxyCodeLine{117     \textcolor{comment}{\# formations: uniform\_distribution, circle, fibonacci\_sphere}}
+\DoxyCodeLine{118     initial\_formation\_params = \{}
+\DoxyCodeLine{119             \textcolor{stringliteral}{'nagents'}: nagents, \textcolor{stringliteral}{'agent\_model'}: agent\_model, \textcolor{stringliteral}{'agent\_swarm\_formation'}: \textcolor{stringliteral}{'uniform\_distribution'},}
+\DoxyCodeLine{120             \textcolor{stringliteral}{'ntargets'}: ntargets, \textcolor{stringliteral}{'target\_model'}: target\_model, \textcolor{stringliteral}{'target\_swarm\_formation'}: \textcolor{stringliteral}{'fibonacci\_sphere'},}
+\DoxyCodeLine{121             \textcolor{stringliteral}{'nstationary\_states'}: ntargets, \textcolor{stringliteral}{'stationary\_states\_formation'}: \textcolor{stringliteral}{'circle'}}
+\DoxyCodeLine{122             \}}
+\DoxyCodeLine{123 }
+\DoxyCodeLine{124     \textcolor{comment}{\# CONSTRUCT ENSEMBLE OF SIMULATIONS}}
+\DoxyCodeLine{125     \textcolor{keywordflow}{for} batch\_i \textcolor{keywordflow}{in} range(nbatches):}
+\DoxyCodeLine{126 }
+\DoxyCodeLine{127         \textcolor{comment}{\# Create a batch of simulations (ie. group of sim with same initial state conditions)}}
+\DoxyCodeLine{128         batch = \{\}}
+\DoxyCodeLine{129 }
+\DoxyCodeLine{130         \textcolor{comment}{\# SIM SETUP}}
+\DoxyCodeLine{131 }
+\DoxyCodeLine{132         initial\_conditions = generate\_initial\_conditions(dim, initial\_formation\_params)}
+\DoxyCodeLine{133 }
+\DoxyCodeLine{134         }
+\DoxyCodeLine{135         sim\_profiles = \{\}}
+\DoxyCodeLine{136 }
+\DoxyCodeLine{137         \textcolor{comment}{\# EMD parameters}}
+\DoxyCodeLine{138         dt = dt}
+\DoxyCodeLine{139         asst = \textcolor{stringliteral}{'AssignmentEMD'}}
+\DoxyCodeLine{140         sim\_profile\_name = \textcolor{stringliteral}{'emd'}}
+\DoxyCodeLine{141         sim\_profiles.update(\{sim\_profile\_name: \{\textcolor{stringliteral}{'agent\_model'}: agent\_model, \textcolor{stringliteral}{'target\_model'}: target\_model,}
+\DoxyCodeLine{142             \textcolor{stringliteral}{'agent\_control\_policy'}: agent\_control\_policy, \textcolor{stringliteral}{'target\_control\_policy'}: target\_control\_policy,}
+\DoxyCodeLine{143             \textcolor{stringliteral}{'assignment\_policy'}: asst, \textcolor{stringliteral}{'assignment\_epoch'}: assignment\_epoch, \textcolor{stringliteral}{'nagents'}: nagents, \textcolor{stringliteral}{'ntargets'}: ntargets,}
+\DoxyCodeLine{144             \textcolor{stringliteral}{'collisions'}: collisions, \textcolor{stringliteral}{'collision\_tol'}: collision\_tol, \textcolor{stringliteral}{'dim'}: dim, \textcolor{stringliteral}{'dt'}: dt, \textcolor{stringliteral}{'maxtime'}: maxtime, \textcolor{stringliteral}{'initial\_conditions'}: initial\_conditions\}\})}
+\DoxyCodeLine{145 }
+\DoxyCodeLine{146         \textcolor{comment}{\# DYN parameters}}
+\DoxyCodeLine{147         dt = dt}
+\DoxyCodeLine{148         asst = \textcolor{stringliteral}{'AssignmentDyn'}}
+\DoxyCodeLine{149         sim\_profile\_name = \textcolor{stringliteral}{'dyn'}}
+\DoxyCodeLine{150         sim\_profiles.update(\{sim\_profile\_name: \{\textcolor{stringliteral}{'agent\_model'}: agent\_model, \textcolor{stringliteral}{'target\_model'}: target\_model,}
+\DoxyCodeLine{151             \textcolor{stringliteral}{'agent\_control\_policy'}: agent\_control\_policy, \textcolor{stringliteral}{'target\_control\_policy'}: target\_control\_policy,}
+\DoxyCodeLine{152             \textcolor{stringliteral}{'assignment\_policy'}: asst, \textcolor{stringliteral}{'assignment\_epoch'}: assignment\_epoch, \textcolor{stringliteral}{'nagents'}: nagents, \textcolor{stringliteral}{'ntargets'}: ntargets,}
+\DoxyCodeLine{153             \textcolor{stringliteral}{'collisions'}: collisions, \textcolor{stringliteral}{'collision\_tol'}: collision\_tol, \textcolor{stringliteral}{'dim'}: dim, \textcolor{stringliteral}{'dt'}: dt, \textcolor{stringliteral}{'maxtime'}: maxtime, \textcolor{stringliteral}{'initial\_conditions'}: initial\_conditions\}\})}
+\DoxyCodeLine{154 }
+\DoxyCodeLine{155         }
+\DoxyCodeLine{156 }
+\DoxyCodeLine{157         \textcolor{keywordflow}{for} profile\_name, profile \textcolor{keywordflow}{in} sim\_profiles.items():}
+\DoxyCodeLine{158             sim = setup\_simulation(profile)}
+\DoxyCodeLine{159             sim\_name = sim[\textcolor{stringliteral}{'asst\_pol'}].\_\_class\_\_.\_\_name\_\_}
+\DoxyCodeLine{160             batch.update(\{sim\_name: sim\})}
+\DoxyCodeLine{161 }
+\DoxyCodeLine{162         \textcolor{comment}{\# add batch to ensemble}}
+\DoxyCodeLine{163         ensemble\_simulation.append(batch)}
+\DoxyCodeLine{164 }
+\DoxyCodeLine{165     \textcolor{comment}{\# TODO separate functions?}}
+\DoxyCodeLine{166     \textcolor{comment}{\# RUN SIMULATION}}
+\DoxyCodeLine{167     ensemble\_results = \{\}}
+\DoxyCodeLine{168     \textcolor{keywordflow}{for} ii, batch \textcolor{keywordflow}{in} enumerate(ensemble\_simulation):}
+\DoxyCodeLine{169 }
+\DoxyCodeLine{170         batch\_name = \textcolor{stringliteral}{'batch\_\{0\}'}.format(ii)}
+\DoxyCodeLine{171         batch\_results = \{\}}
+\DoxyCodeLine{172         batch\_diagnostics = \{\}}
+\DoxyCodeLine{173 }
+\DoxyCodeLine{174         \textcolor{keywordflow}{for} sim\_name, sim \textcolor{keywordflow}{in} batch.items():}
+\DoxyCodeLine{175 }
+\DoxyCodeLine{176             \textcolor{comment}{\# TODO not the same order for heterogeneous and non-identical}}
+\DoxyCodeLine{177             \textcolor{comment}{\# Simulation data structures}}
+\DoxyCodeLine{178             collisions = sim[\textcolor{stringliteral}{"collisions"}]}
+\DoxyCodeLine{179             collision\_tol = sim[\textcolor{stringliteral}{"collision\_tol"}]}
+\DoxyCodeLine{180             dt = sim[\textcolor{stringliteral}{"dt"}]}
+\DoxyCodeLine{181             maxtime = sim[\textcolor{stringliteral}{"maxtime"}]}
+\DoxyCodeLine{182             dx = sim[\textcolor{stringliteral}{"dx"}]}
+\DoxyCodeLine{183             du = sim[\textcolor{stringliteral}{"du"}]}
+\DoxyCodeLine{184             statespace = sim[\textcolor{stringliteral}{"statespace"}]}
+\DoxyCodeLine{185             x0 = sim[\textcolor{stringliteral}{"x0"}]}
+\DoxyCodeLine{186             ltidyn = sim[\textcolor{stringliteral}{"agent\_dyn"}]}
+\DoxyCodeLine{187             target\_dyn = sim[\textcolor{stringliteral}{"target\_dyns"}]}
+\DoxyCodeLine{188             poltrack = sim[\textcolor{stringliteral}{"agent\_pol"}]}
+\DoxyCodeLine{189             poltargets = sim[\textcolor{stringliteral}{"target\_pol"}]}
+\DoxyCodeLine{190             assignment\_pol = sim[\textcolor{stringliteral}{"asst\_pol"}]}
+\DoxyCodeLine{191             assignment\_epoch = sim[\textcolor{stringliteral}{"asst\_epoch"}]}
+\DoxyCodeLine{192             nagents = sim[\textcolor{stringliteral}{"nagents"}]}
+\DoxyCodeLine{193             ntargets = sim[\textcolor{stringliteral}{"ntargets"}]}
+\DoxyCodeLine{194             runner = sim[\textcolor{stringliteral}{"runner"}]}
+\DoxyCodeLine{195 }
+\DoxyCodeLine{196             \textcolor{comment}{\# Other simulation information}}
+\DoxyCodeLine{197             agent\_model = sim[\textcolor{stringliteral}{"agent\_model"}]}
+\DoxyCodeLine{198             target\_model = sim[\textcolor{stringliteral}{"target\_model"}]}
+\DoxyCodeLine{199             agent\_control\_policy = sim[\textcolor{stringliteral}{"agent\_control\_policy"}]}
+\DoxyCodeLine{200             target\_control\_policy = sim[\textcolor{stringliteral}{"target\_control\_policy"}]}
+\DoxyCodeLine{201 }
+\DoxyCodeLine{202             \textcolor{comment}{\# run simulation}}
+\DoxyCodeLine{203             results, diagnostics = runner(}
+\DoxyCodeLine{204                 dx,}
+\DoxyCodeLine{205                 du,}
+\DoxyCodeLine{206                 statespace,}
+\DoxyCodeLine{207                 x0,}
+\DoxyCodeLine{208                 ltidyn,}
+\DoxyCodeLine{209                 target\_dyn,}
+\DoxyCodeLine{210                 poltrack,}
+\DoxyCodeLine{211                 poltargets,}
+\DoxyCodeLine{212                 assignment\_pol,}
+\DoxyCodeLine{213                 assignment\_epoch,}
+\DoxyCodeLine{214                 nagents,}
+\DoxyCodeLine{215                 ntargets,}
+\DoxyCodeLine{216                 collisions,}
+\DoxyCodeLine{217                 collision\_tol,}
+\DoxyCodeLine{218                 dt,}
+\DoxyCodeLine{219                 maxtime,}
+\DoxyCodeLine{220             )}
+\DoxyCodeLine{221 }
+\DoxyCodeLine{222             \textcolor{comment}{\# results components}}
+\DoxyCodeLine{223             components = [}
+\DoxyCodeLine{224                 \textcolor{stringliteral}{"agents"},}
+\DoxyCodeLine{225                 \textcolor{stringliteral}{"targets"},}
+\DoxyCodeLine{226                 \textcolor{stringliteral}{"data"},}
+\DoxyCodeLine{227                 \textcolor{stringliteral}{"tracking\_policy"},}
+\DoxyCodeLine{228                 \textcolor{stringliteral}{"target\_pol"},}
+\DoxyCodeLine{229                 \textcolor{stringliteral}{"nagents"},}
+\DoxyCodeLine{230                 \textcolor{stringliteral}{"ntargets"},}
+\DoxyCodeLine{231                 \textcolor{stringliteral}{"asst\_cost"},}
+\DoxyCodeLine{232                 \textcolor{stringliteral}{"agent\_pol"},}
+\DoxyCodeLine{233                 \textcolor{stringliteral}{"optimal\_asst"},}
+\DoxyCodeLine{234                 \textcolor{stringliteral}{"asst\_policy"},}
+\DoxyCodeLine{235             ]}
+\DoxyCodeLine{236 }
+\DoxyCodeLine{237             \textcolor{comment}{\# diagnostics components}}
+\DoxyCodeLine{238             diag\_components = [}
+\DoxyCodeLine{239                     \textcolor{stringliteral}{"runtime\_diagnostics"}}
+\DoxyCodeLine{240                     ]}
+\DoxyCodeLine{241 }
+\DoxyCodeLine{242             \textcolor{comment}{\# organize simulation parameters}}
+\DoxyCodeLine{243             sim\_parameters = \{}
+\DoxyCodeLine{244                 \textcolor{stringliteral}{"dt"}: dt,}
+\DoxyCodeLine{245                 \textcolor{stringliteral}{"dim"}: dim,}
+\DoxyCodeLine{246                 \textcolor{stringliteral}{"dx"}: dx,}
+\DoxyCodeLine{247                 \textcolor{stringliteral}{"du"}: du,}
+\DoxyCodeLine{248                 \textcolor{stringliteral}{"statespace"}: statespace,}
+\DoxyCodeLine{249                 \textcolor{stringliteral}{"agent\_model"}: agent\_model,}
+\DoxyCodeLine{250                 \textcolor{stringliteral}{"target\_model"}: target\_model,}
+\DoxyCodeLine{251                 \textcolor{stringliteral}{"agent\_control\_policy"}: agent\_control\_policy,}
+\DoxyCodeLine{252                 \textcolor{stringliteral}{"target\_control\_policy"}: target\_control\_policy,}
+\DoxyCodeLine{253                 \textcolor{stringliteral}{"collisions"}: collisions,}
+\DoxyCodeLine{254                 \textcolor{stringliteral}{"collision\_tol"}: collision\_tol,}
+\DoxyCodeLine{255                 \textcolor{stringliteral}{"assignment\_epoch"}: assignment\_epoch}
+\DoxyCodeLine{256             \}}
+\DoxyCodeLine{257 }
+\DoxyCodeLine{258             \textcolor{comment}{\# organize results according to components}}
+\DoxyCodeLine{259             sim\_results = \{\}}
+\DoxyCodeLine{260             \textcolor{keywordflow}{for} (comp, res) \textcolor{keywordflow}{in} zip(components, results):}
+\DoxyCodeLine{261                 sim\_results.update(\{comp: res\})}
+\DoxyCodeLine{262 }
+\DoxyCodeLine{263             \textcolor{comment}{\# organize diagnostics}}
+\DoxyCodeLine{264             sim\_diagnostics = \{\}}
+\DoxyCodeLine{265             \textcolor{keywordflow}{for} (diag\_comp, diag) \textcolor{keywordflow}{in} zip(diag\_components, diagnostics):}
+\DoxyCodeLine{266                 sim\_diagnostics.update(\{diag\_comp: diag\})}
+\DoxyCodeLine{267 }
+\DoxyCodeLine{268             \textcolor{comment}{\# store sim results into a batch}}
+\DoxyCodeLine{269             batch\_results.update(\{sim\_name: [sim\_parameters, sim\_results]\}) \textcolor{comment}{\# dict}}
+\DoxyCodeLine{270 }
+\DoxyCodeLine{271             \textcolor{comment}{\# store sim diagnostics into a batch}}
+\DoxyCodeLine{272             batch\_diagnostics.update(\{sim\_name: [sim\_parameters, sim\_diagnostics]\}) \textcolor{comment}{\# dict}}
+\DoxyCodeLine{273 }
+\DoxyCodeLine{274         \textcolor{comment}{\# post-process and save}}
+\DoxyCodeLine{275         batch\_performance\_metrics = post\_process\_batch\_simulation(batch\_results) \textcolor{comment}{\# returns dict}}
+\DoxyCodeLine{276         \textcolor{comment}{\# collect diagnostics}}
+\DoxyCodeLine{277         packed\_batch\_diagnostics = post\_process\_batch\_diagnostics(batch\_diagnostics) \textcolor{comment}{\# returns dict}}
+\DoxyCodeLine{278 }
+\DoxyCodeLine{279         \textcolor{comment}{\# \# DEBUG}}
+\DoxyCodeLine{280         \textcolor{comment}{\# plot\_batch\_performance\_metrics(batch\_performance\_metrics)}}
+\DoxyCodeLine{281         \textcolor{comment}{\# plot\_batch\_diagnostics(packed\_batch\_diagnostics)}}
+\DoxyCodeLine{282         \textcolor{comment}{\# plt.show()}}
+\DoxyCodeLine{283 }
+\DoxyCodeLine{284         save\_batch\_metrics\_to\_csv(batch\_performance\_metrics, ensemble\_directory, batch\_name)}
+\DoxyCodeLine{285         save\_batch\_diagnostics\_to\_csv(packed\_batch\_diagnostics, ensemble\_directory, batch\_name)}
+\DoxyCodeLine{286 }
+\DoxyCodeLine{287         \textcolor{comment}{\# store batch results (useful for saving multiple ensembles)}}
+\DoxyCodeLine{288         \textcolor{comment}{\# ensemble\_results.update(\{batch\_name: batch\_results\})}}
+\DoxyCodeLine{289 }
+\DoxyCodeLine{290     test\_conditions = \{\textcolor{stringliteral}{'nbatches'}: nbatches, \textcolor{stringliteral}{'default\_dt'}: dt, \textcolor{stringliteral}{'maxtime'}: maxtime, \textcolor{stringliteral}{'dim'}: dim, \textcolor{stringliteral}{'nagents'}: nagents, \textcolor{stringliteral}{'ntargets'}: ntargets, \textcolor{stringliteral}{'agent\_model'}: agent\_model, \textcolor{stringliteral}{'target\_model'}: target\_model, \textcolor{stringliteral}{'collisions'}: collisions, \textcolor{stringliteral}{'collision\_tol'}: collision\_tol, \textcolor{stringliteral}{'agent\_control\_policy'}: agent\_control\_policy, \textcolor{stringliteral}{'target\_control\_policy'}: target\_control\_policy, \textcolor{stringliteral}{'assignment\_epoch'}: assignment\_epoch, \textcolor{stringliteral}{'ensemble\_name'}: ensemble\_name, \textcolor{stringliteral}{'ensemble\_directory'}: ensemble\_directory\}}
+\DoxyCodeLine{291 }
+\DoxyCodeLine{292     print(\textcolor{stringliteral}{"done!"})}
+\DoxyCodeLine{293 }
+\DoxyCodeLine{294     \textcolor{keywordflow}{return} test\_conditions}
+\DoxyCodeLine{295 }
+\DoxyCodeLine{296 \textcolor{keyword}{def }secondsToStr(elapsed=None):}
+\DoxyCodeLine{297 }
+\DoxyCodeLine{298     \textcolor{stringliteral}{""" Converts seconds to strings}}
+\DoxyCodeLine{299 \textcolor{stringliteral}{}}
+\DoxyCodeLine{300 \textcolor{stringliteral}{    """}}
+\DoxyCodeLine{301 }
+\DoxyCodeLine{302     \textcolor{keywordflow}{if} elapsed \textcolor{keywordflow}{is} \textcolor{keywordtype}{None}:}
+\DoxyCodeLine{303         \textcolor{keywordflow}{return} strftime(\textcolor{stringliteral}{"\%Y-\%m-\%d \%H:\%M:\%S"}, localtime())}
+\DoxyCodeLine{304     \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{305         \textcolor{keywordflow}{return} str(timedelta(seconds=elapsed))}
+\DoxyCodeLine{306 }
+\DoxyCodeLine{307 \textcolor{keyword}{def }log(s, elapsed=None):}
+\DoxyCodeLine{308 }
+\DoxyCodeLine{309     \textcolor{stringliteral}{""" start logging of elapsed time}}
+\DoxyCodeLine{310 \textcolor{stringliteral}{}}
+\DoxyCodeLine{311 \textcolor{stringliteral}{    """}}
+\DoxyCodeLine{312 }
+\DoxyCodeLine{313     line = \textcolor{stringliteral}{"="}*40}
+\DoxyCodeLine{314     print(line)}
+\DoxyCodeLine{315     print(secondsToStr(), \textcolor{stringliteral}{'-'}, s)}
+\DoxyCodeLine{316     ss = secondsToStr() + \textcolor{stringliteral}{' - '} + s}
+\DoxyCodeLine{317     \textcolor{keywordflow}{if} elapsed:}
+\DoxyCodeLine{318         print(\textcolor{stringliteral}{"Elapsed time:"}, elapsed)}
+\DoxyCodeLine{319     print(line)}
+\DoxyCodeLine{320     print()}
+\DoxyCodeLine{321     \textcolor{keywordflow}{return} ss}
+\DoxyCodeLine{322 }
+\DoxyCodeLine{323 \textcolor{keyword}{def }endlog():}
+\DoxyCodeLine{324 }
+\DoxyCodeLine{325     \textcolor{stringliteral}{""" end log of elapsed time}}
+\DoxyCodeLine{326 \textcolor{stringliteral}{}}
+\DoxyCodeLine{327 \textcolor{stringliteral}{    """}}
+\DoxyCodeLine{328 }
+\DoxyCodeLine{329     end = time()}
+\DoxyCodeLine{330     elapsed = end-start}
+\DoxyCodeLine{331     log(\textcolor{stringliteral}{"End Program"}, secondsToStr(elapsed))}
+\DoxyCodeLine{332 }
+\DoxyCodeLine{333 }
+\DoxyCodeLine{334 \textcolor{keywordflow}{if} \_\_name\_\_ == \textcolor{stringliteral}{"\_\_main\_\_"}:}
+\DoxyCodeLine{335 }
+\DoxyCodeLine{336     start = time()}
+\DoxyCodeLine{337     \textcolor{comment}{\# atexit.register(endlog) \# print end time at program termination}}
+\DoxyCodeLine{338     starttime = log(\textcolor{stringliteral}{"Start Program"})}
+\DoxyCodeLine{339 }
+\DoxyCodeLine{340     \textcolor{comment}{\# PERFORM TEST}}
+\DoxyCodeLine{341     test\_conditions = \mbox{\hyperlink{namespacemain}{main}}()}
+\DoxyCodeLine{342 }
+\DoxyCodeLine{343     ensemble\_name = test\_conditions[\textcolor{stringliteral}{'ensemble\_name'}]}
+\DoxyCodeLine{344     ensemble\_directory = test\_conditions[\textcolor{stringliteral}{'ensemble\_directory'}]}
+\DoxyCodeLine{345 }
+\DoxyCodeLine{346     \textcolor{comment}{\# PRINT TEST INFO TO TERMINAL}}
+\DoxyCodeLine{347     print()}
+\DoxyCodeLine{348     line = \textcolor{stringliteral}{"*"}*40}
+\DoxyCodeLine{349     print(line)}
+\DoxyCodeLine{350     \textcolor{keywordflow}{for} condition, value \textcolor{keywordflow}{in} test\_conditions.items():}
+\DoxyCodeLine{351         print(condition, \textcolor{stringliteral}{': '}, value)}
+\DoxyCodeLine{352     print(line)}
+\DoxyCodeLine{353     print()}
+\DoxyCodeLine{354 }
+\DoxyCodeLine{355     \textcolor{comment}{\# display starttime at the end as well as beginning}}
+\DoxyCodeLine{356     line = \textcolor{stringliteral}{"="}*40}
+\DoxyCodeLine{357     print(line)}
+\DoxyCodeLine{358     print(starttime)}
+\DoxyCodeLine{359     print(line)}
+\DoxyCodeLine{360     print()}
+\DoxyCodeLine{361 }
+\DoxyCodeLine{362     end = time() \textcolor{comment}{\# print end time at end of simulation}}
+\DoxyCodeLine{363     elapsed = end-start}
+\DoxyCodeLine{364     elapsedstr = secondsToStr(elapsed)}
+\DoxyCodeLine{365     endtime = log(\textcolor{stringliteral}{"End Program"}, elapsedstr)}
+\DoxyCodeLine{366 }
+\DoxyCodeLine{367     save\_test\_info\_to\_txt(ensemble\_name, test\_conditions, ensemble\_directory, starttime, endtime, elapsedstr)}
+\DoxyCodeLine{368 }
+\end{DoxyCodeInclude}
+ 

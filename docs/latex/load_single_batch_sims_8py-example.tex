@@ -12,7 +12,7 @@
 \DoxyCodeLine{9 }
 \DoxyCodeLine{10 \textcolor{keyword}{import} os.path}
 \DoxyCodeLine{11 \textcolor{keyword}{import} sys}
-\DoxyCodeLine{12 sys.path.append(os.path.join(os.path.dirname(\_\_file\_\_), \textcolor{stringliteral}{'..'}))}
+\DoxyCodeLine{12 sys.path.append(os.path.join(os.path.dirname(\_\_file\_\_), \textcolor{stringliteral}{'../../'}))}
 \DoxyCodeLine{13 }
 \DoxyCodeLine{14 \textcolor{keyword}{import} os}
 \DoxyCodeLine{15 \textcolor{keyword}{import} pandas \textcolor{keyword}{as} pd}
@@ -33,83 +33,82 @@
 \DoxyCodeLine{30 }
 \DoxyCodeLine{31     \textcolor{comment}{\# loads desired batches within a single ensemble which the user specifies}}
 \DoxyCodeLine{32 }
-\DoxyCodeLine{33     dim = 2}
-\DoxyCodeLine{34 }
-\DoxyCodeLine{35     nagents = 2}
-\DoxyCodeLine{36     ntargets = 2}
-\DoxyCodeLine{37 }
-\DoxyCodeLine{38     agent\_model = \textcolor{stringliteral}{'Double\_Integrator'}}
-\DoxyCodeLine{39     target\_model = \textcolor{stringliteral}{'Double\_Integrator'}}
-\DoxyCodeLine{40 \textcolor{comment}{\#     ensemble\_name = 'ensemble\_0\_'+str(dim)+'D\_'+str(nagents)+'v'+str(ntargets)+'\_'+\(\backslash\)}}
-\DoxyCodeLine{41 \textcolor{comment}{\#             'identical\_'+agent\_model+'\_LQR\_LQR\_2019\_07\_31\_14\_06\_36'}}
-\DoxyCodeLine{42 }
-\DoxyCodeLine{43     \textcolor{comment}{\# agent\_model = 'Linearized\_Quadcopter'}}
-\DoxyCodeLine{44     \textcolor{comment}{\# target\_model = 'Linearized\_Quadcopter'}}
-\DoxyCodeLine{45     ensemble\_name = \textcolor{stringliteral}{'ensemble\_0\_'}+str(dim)+\textcolor{stringliteral}{'D\_'}+str(nagents)+\textcolor{stringliteral}{'v'}+str(ntargets)+\textcolor{stringliteral}{'\_'}+\(\backslash\)}
-\DoxyCodeLine{46             \textcolor{stringliteral}{'identical\_'}+agent\_model+\textcolor{stringliteral}{'\_LQR\_LQR\_2019\_08\_23\_14\_06\_58'}}
-\DoxyCodeLine{47 }
-\DoxyCodeLine{48     root\_directory = \textcolor{stringliteral}{'/Users/koray/Documents/GradSchool/research/gorodetsky/draper/sandbox/targetingmdp/'}}
-\DoxyCodeLine{49     ensemble\_directory = root\_directory + ensemble\_name}
-\DoxyCodeLine{50 }
-\DoxyCodeLine{51 \textcolor{comment}{\# .\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}
-\DoxyCodeLine{52 }
-\DoxyCodeLine{53     \textcolor{comment}{\# get number of batches}}
-\DoxyCodeLine{54     batch\_dirs = [x[0] \textcolor{keywordflow}{for} x \textcolor{keywordflow}{in} os.walk(ensemble\_directory)]}
-\DoxyCodeLine{55     nbatches = len(batch\_dirs[1:])}
-\DoxyCodeLine{56 }
-\DoxyCodeLine{57     \textcolor{comment}{\# load batches and plot}}
-\DoxyCodeLine{58     sim\_name\_list = [\textcolor{stringliteral}{'AssignmentDyn'}, \textcolor{stringliteral}{'AssignmentEMD'}]}
-\DoxyCodeLine{59 }
-\DoxyCodeLine{60     \textcolor{comment}{\# \# load and plot every batch within ensemble}}
-\DoxyCodeLine{61     \textcolor{comment}{\# for ii in range(nbatches):}}
-\DoxyCodeLine{62     \textcolor{comment}{\#     batch\_name = 'batch\_\{0\}'.format(ii)}}
-\DoxyCodeLine{63     \textcolor{comment}{\#     loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}}
-\DoxyCodeLine{64     \textcolor{comment}{\#     post\_process.plot\_batch\_performance\_metrics(loaded\_batch)}}
-\DoxyCodeLine{65 }
-\DoxyCodeLine{66     \textcolor{comment}{\# load and plot a specific batch}}
-\DoxyCodeLine{67     batch\_num = 0}
-\DoxyCodeLine{68     batch\_name = \textcolor{stringliteral}{'batch\_\{0\}'}.format(batch\_num)}
-\DoxyCodeLine{69     loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}
-\DoxyCodeLine{70     post\_process.plot\_batch\_performance\_metrics(loaded\_batch)}
-\DoxyCodeLine{71 }
-\DoxyCodeLine{72     \textcolor{comment}{\# \# cost histogram}}
-\DoxyCodeLine{73     \textcolor{comment}{\# ensemble\_metrics = []}}
-\DoxyCodeLine{74     \textcolor{comment}{\# for ii in range(nbatches):}}
-\DoxyCodeLine{75     \textcolor{comment}{\#     batch\_name = 'batch\_\{0\}'.format(ii)}}
-\DoxyCodeLine{76     \textcolor{comment}{\#     loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}}
-\DoxyCodeLine{77     \textcolor{comment}{\#     ensemble\_metrics.append(loaded\_batch)}}
-\DoxyCodeLine{78     \textcolor{comment}{\# post\_process.plot\_ensemble\_histograms(ensemble\_metrics)}}
-\DoxyCodeLine{79 }
-\DoxyCodeLine{80     \textcolor{comment}{\# \# ensemble metrics 2 - save ensemble [dyn final costs, emd final\_cost, switches]}}
-\DoxyCodeLine{81     \textcolor{comment}{\# ensemble\_metrics = []}}
-\DoxyCodeLine{82     \textcolor{comment}{\# for ii in range(nbatches):}}
-\DoxyCodeLine{83     \textcolor{comment}{\#     batch\_name = 'batch\_\{0\}'.format(ii)}}
-\DoxyCodeLine{84     \textcolor{comment}{\#     loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}}
-\DoxyCodeLine{85     \textcolor{comment}{\#     ensemble\_metrics.append(loaded\_batch)}}
-\DoxyCodeLine{86     \textcolor{comment}{\# post\_process.save\_ensemble\_metrics(ensemble\_metrics, ensemble\_name)}}
-\DoxyCodeLine{87 }
-\DoxyCodeLine{88     }
-\DoxyCodeLine{89 }
-\DoxyCodeLine{90     \textcolor{comment}{\# load and plot a specific batch}}
-\DoxyCodeLine{91     batch\_num = 0}
-\DoxyCodeLine{92     batch\_name = \textcolor{stringliteral}{'batch\_\{0\}'}.format(batch\_num)}
-\DoxyCodeLine{93     loaded\_batch\_diagnostics = log.load\_batch\_diagnostics(ensemble\_directory, batch\_name, sim\_name\_list)}
-\DoxyCodeLine{94     post\_process.plot\_batch\_diagnostics(loaded\_batch\_diagnostics)}
-\DoxyCodeLine{95 }
-\DoxyCodeLine{96     \textcolor{comment}{\# \# diagnostics}}
-\DoxyCodeLine{97     \textcolor{comment}{\# ensemble\_diagnostics = []}}
-\DoxyCodeLine{98     \textcolor{comment}{\# for ii in range(nbatches):}}
-\DoxyCodeLine{99     \textcolor{comment}{\#     batch\_name = 'batch\_\{0\}'.format(ii)}}
-\DoxyCodeLine{100     \textcolor{comment}{\#     loaded\_batch\_diagnostics = log.load\_batch\_diagnostics(ensemble\_directory, batch\_name, sim\_name\_list)}}
-\DoxyCodeLine{101     \textcolor{comment}{\#     ensemble\_diagnostics.append(loaded\_batch\_diagnostics)}}
-\DoxyCodeLine{102     \textcolor{comment}{\# post\_process.plot\_ensemble\_diagnostics(ensemble\_diagnostics)}}
-\DoxyCodeLine{103 }
-\DoxyCodeLine{104     print(\textcolor{stringliteral}{'finished plotting!'})}
-\DoxyCodeLine{105 }
-\DoxyCodeLine{106     plt.show()}
-\DoxyCodeLine{107     print(\textcolor{stringliteral}{'done!'})}
+\DoxyCodeLine{33     \textcolor{comment}{\# EDIT the following set of parameters used in the desired ensemble test folder}}
+\DoxyCodeLine{34     dim = 3}
+\DoxyCodeLine{35 }
+\DoxyCodeLine{36     nagents = 10}
+\DoxyCodeLine{37     ntargets = 10}
+\DoxyCodeLine{38 }
+\DoxyCodeLine{39     agent\_model = \textcolor{stringliteral}{'Double\_Integrator'}}
+\DoxyCodeLine{40     target\_model = \textcolor{stringliteral}{'Double\_Integrator'}}
+\DoxyCodeLine{41 }
+\DoxyCodeLine{42     \textcolor{comment}{\# EDIT the date here to match the ensemble test folder, you would like to load}}
+\DoxyCodeLine{43     ensemble\_name = \textcolor{stringliteral}{'ensemble\_0\_'}+str(dim)+\textcolor{stringliteral}{'D\_'}+str(nagents)+\textcolor{stringliteral}{'v'}+str(ntargets)+\textcolor{stringliteral}{'\_'}+\(\backslash\)}
+\DoxyCodeLine{44             \textcolor{stringliteral}{'identical\_'}+agent\_model+\textcolor{stringliteral}{'\_LQR\_LQR\_DOUBLE\_INTEGRATOR\_3D\_EXAMPLE'}}
+\DoxyCodeLine{45 }
+\DoxyCodeLine{46     \textcolor{comment}{\# EDIT the root directory path here to where the ensemble test folder is located}}
+\DoxyCodeLine{47     root\_directory = os.getcwd() + \textcolor{stringliteral}{'/'}}
+\DoxyCodeLine{48     ensemble\_directory = root\_directory + ensemble\_name}
+\DoxyCodeLine{49 }
+\DoxyCodeLine{50 \textcolor{comment}{\# .\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}
+\DoxyCodeLine{51 }
+\DoxyCodeLine{52     \textcolor{comment}{\# get number of batches}}
+\DoxyCodeLine{53     batch\_dirs = [x[0] \textcolor{keywordflow}{for} x \textcolor{keywordflow}{in} os.walk(ensemble\_directory)]}
+\DoxyCodeLine{54     nbatches = len(batch\_dirs[1:])}
+\DoxyCodeLine{55 }
+\DoxyCodeLine{56     \textcolor{comment}{\# load batches and plot}}
+\DoxyCodeLine{57     sim\_name\_list = [\textcolor{stringliteral}{'AssignmentDyn'}, \textcolor{stringliteral}{'AssignmentEMD'}]}
+\DoxyCodeLine{58 }
+\DoxyCodeLine{59     \textcolor{comment}{\# \# load and plot every batch within ensemble}}
+\DoxyCodeLine{60     \textcolor{comment}{\# for ii in range(nbatches):}}
+\DoxyCodeLine{61     \textcolor{comment}{\#     batch\_name = 'batch\_\{0\}'.format(ii)}}
+\DoxyCodeLine{62     \textcolor{comment}{\#     loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}}
+\DoxyCodeLine{63     \textcolor{comment}{\#     post\_process.plot\_batch\_performance\_metrics(loaded\_batch)}}
+\DoxyCodeLine{64 }
+\DoxyCodeLine{65     \textcolor{comment}{\# load and plot a specific batch}}
+\DoxyCodeLine{66     batch\_num = 0}
+\DoxyCodeLine{67     batch\_name = \textcolor{stringliteral}{'batch\_\{0\}'}.format(batch\_num)}
+\DoxyCodeLine{68     loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}
+\DoxyCodeLine{69     \mbox{\hyperlink{namespacepost__process_aa4445a673ad2b57be4e22fe0e1cf2413}{post\_process.plot\_batch\_performance\_metrics}}(loaded\_batch)}
+\DoxyCodeLine{70 }
+\DoxyCodeLine{71     \textcolor{comment}{\# \# cost histogram}}
+\DoxyCodeLine{72     \textcolor{comment}{\# ensemble\_metrics = []}}
+\DoxyCodeLine{73     \textcolor{comment}{\# for ii in range(nbatches):}}
+\DoxyCodeLine{74     \textcolor{comment}{\#     batch\_name = 'batch\_\{0\}'.format(ii)}}
+\DoxyCodeLine{75     \textcolor{comment}{\#     loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}}
+\DoxyCodeLine{76     \textcolor{comment}{\#     ensemble\_metrics.append(loaded\_batch)}}
+\DoxyCodeLine{77     \textcolor{comment}{\# post\_process.plot\_ensemble\_histograms(ensemble\_metrics)}}
+\DoxyCodeLine{78 }
+\DoxyCodeLine{79     \textcolor{comment}{\# \# ensemble metrics 2 - save ensemble [dyn final costs, emd final\_cost, switches]}}
+\DoxyCodeLine{80     \textcolor{comment}{\# ensemble\_metrics = []}}
+\DoxyCodeLine{81     \textcolor{comment}{\# for ii in range(nbatches):}}
+\DoxyCodeLine{82     \textcolor{comment}{\#     batch\_name = 'batch\_\{0\}'.format(ii)}}
+\DoxyCodeLine{83     \textcolor{comment}{\#     loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}}
+\DoxyCodeLine{84     \textcolor{comment}{\#     ensemble\_metrics.append(loaded\_batch)}}
+\DoxyCodeLine{85     \textcolor{comment}{\# post\_process.save\_ensemble\_metrics(ensemble\_metrics, ensemble\_name)}}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87     }
+\DoxyCodeLine{88 }
+\DoxyCodeLine{89     \textcolor{comment}{\# load and plot a specific batch}}
+\DoxyCodeLine{90     batch\_num = 0}
+\DoxyCodeLine{91     batch\_name = \textcolor{stringliteral}{'batch\_\{0\}'}.format(batch\_num)}
+\DoxyCodeLine{92     loaded\_batch\_diagnostics = log.load\_batch\_diagnostics(ensemble\_directory, batch\_name, sim\_name\_list)}
+\DoxyCodeLine{93     \mbox{\hyperlink{namespacepost__process_ad0319250940975f4989aef2f6e3a96b7}{post\_process.plot\_batch\_diagnostics}}(loaded\_batch\_diagnostics)}
+\DoxyCodeLine{94 }
+\DoxyCodeLine{95     \textcolor{comment}{\# \# diagnostics}}
+\DoxyCodeLine{96     \textcolor{comment}{\# ensemble\_diagnostics = []}}
+\DoxyCodeLine{97     \textcolor{comment}{\# for ii in range(nbatches):}}
+\DoxyCodeLine{98     \textcolor{comment}{\#     batch\_name = 'batch\_\{0\}'.format(ii)}}
+\DoxyCodeLine{99     \textcolor{comment}{\#     loaded\_batch\_diagnostics = log.load\_batch\_diagnostics(ensemble\_directory, batch\_name, sim\_name\_list)}}
+\DoxyCodeLine{100     \textcolor{comment}{\#     ensemble\_diagnostics.append(loaded\_batch\_diagnostics)}}
+\DoxyCodeLine{101     \textcolor{comment}{\# post\_process.plot\_ensemble\_diagnostics(ensemble\_diagnostics)}}
+\DoxyCodeLine{102 }
+\DoxyCodeLine{103     print(\textcolor{stringliteral}{'finished plotting!'})}
+\DoxyCodeLine{104 }
+\DoxyCodeLine{105     plt.show()}
+\DoxyCodeLine{106     print(\textcolor{stringliteral}{'done!'})}
+\DoxyCodeLine{107 }
 \DoxyCodeLine{108 }
 \DoxyCodeLine{109 }
-\DoxyCodeLine{110 }
 \end{DoxyCodeInclude}
  

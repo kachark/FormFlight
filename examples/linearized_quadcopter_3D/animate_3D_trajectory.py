@@ -1,6 +1,6 @@
 
 ## @include .
-## @example animate_3D_trajectory.py
+## @example ./examples/linearized_quadcopter_3D/animate_3D_trajectory.py
 # An Example of how to plot an animation in 3D.
 # See the SETUP section for an example of loading the simulation
 # Adjust 'batch_num' to select the desired batch to load within the ensemble folder

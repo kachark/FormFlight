@@ -1,6 +1,6 @@
 
 ## @include .
-## @example load_ensembles.py
+## @example ./examples/linearized_quadcopter_3D/load_ensembles.py
 # An Example of how to load and plot results from multiple ensembles useful in generating histograms from mutiple Monte Carlo tests (ensembles).
 # Additionally, simulation diagnostics are also loaded and plotted.
 # See the SETUP section

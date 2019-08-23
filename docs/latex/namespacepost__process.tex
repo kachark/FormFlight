@@ -1,0 +1,292 @@
+\hypertarget{namespacepost__process}{}\section{post\+\_\+process Namespace Reference}
+\label{namespacepost__process}\index{post\_process@{post\_process}}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{namespacepost__process_a2009d5938a8919bd33d7d274148e5263}{post\+\_\+process\+\_\+batch\+\_\+simulation}} (batch\+\_\+results)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a5b319220652a268ee1dcbb710f38b420}{post\+\_\+process\+\_\+batch\+\_\+diagnostics}} (batch\+\_\+diagnostics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_aed2ed4226d6805a549be6b3e9c9ec72d}{post\+\_\+process\+\_\+homogeneous\+\_\+identical}} (parameters, sim\+\_\+results)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a11b9639a84b126d743bb26abe37ad8bc}{post\+\_\+process\+\_\+homogeneous\+\_\+nonidentical}} (parameters, sim\+\_\+results)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a03fb7a7f49933480f1162e53995ca131}{post\+\_\+process\+\_\+heterogeneous}} (parameters, sim\+\_\+results)
+\item 
+def \mbox{\hyperlink{namespacepost__process_ac12d2839c57449ae1f8c071818ed5755}{unpack\+\_\+performance\+\_\+metrics}} (batch\+\_\+performance\+\_\+metrics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a5b5b5271b7f2487e85d72afcc40903e7}{unpack\+\_\+performance\+\_\+metrics\+\_\+\+O\+L\+D\+\_\+2}} (batch\+\_\+performance\+\_\+metrics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_ab8236930ba1c5b6ecb3de8daacd16a8c}{unpack\+\_\+performance\+\_\+metrics\+\_\+\+O\+LD}} (batch\+\_\+performance\+\_\+metrics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_ac0513ae17e16904513842075429d02f1}{unpack\+\_\+batch\+\_\+diagnostics}} (batch\+\_\+diagnostics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a1b8d2e30b28ec59e357e3b79a4deccca}{compute\+\_\+controls}} (dx, du, yout, tout, assignments, nagents, poltargets, polagents)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a1192f5e66dab82fd1c9a577784853d38}{find\+\_\+switches}} (tout, yout, nagents, ntargets, agent\+\_\+config\+\_\+size, target\+\_\+config\+\_\+size)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a390cea7e2e66550ffd937f5e22d641cb}{index\+\_\+at\+\_\+time}} (tout, time)
+\item 
+def \mbox{\hyperlink{namespacepost__process_ad2fef35161f61e0f47770ae31d9c7cc6}{collision\+\_\+time}} (tout, yout)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a548242fe2603aa0646c36a3c976978eb}{agent\+\_\+agent\+\_\+collisions}} (unpacked)
+\item 
+def \mbox{\hyperlink{namespacepost__process_aa4445a673ad2b57be4e22fe0e1cf2413}{plot\+\_\+batch\+\_\+performance\+\_\+metrics}} (batch\+\_\+performance\+\_\+metrics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a37ffa7064da3200fff3a6dda3a5787d5}{plot\+\_\+ensemble\+\_\+histograms}} (ensemble\+\_\+performance\+\_\+metrics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_ad0319250940975f4989aef2f6e3a96b7}{plot\+\_\+batch\+\_\+diagnostics}} (batch\+\_\+diagnostics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a32f70cf0b6377a438888111e013d4ca2}{plot\+\_\+ensemble\+\_\+diagnostics}} (ensemble\+\_\+diagnostics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a10e87205bfefad170e33d3b2aa386598}{save\+\_\+ensemble\+\_\+metrics}} (ensemble\+\_\+performance\+\_\+metrics, ensemble\+\_\+name)
+\item 
+def \mbox{\hyperlink{namespacepost__process_a1c9f01d3b7c28ba49dfc907d77a129e0}{plot\+\_\+ensemble\+\_\+metric\+\_\+comparisons}} (ensemble\+\_\+performance\+\_\+metrics)
+\item 
+def \mbox{\hyperlink{namespacepost__process_ac6e21bb76233fe218be2b64d33122a0b}{plot\+\_\+ensemble\+\_\+diagnostic\+\_\+comparison}} (ensemble\+\_\+diagnostics)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}@file post_process.py
+\end{DoxyVerb}
+ 
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{namespacepost__process_a548242fe2603aa0646c36a3c976978eb}\label{namespacepost__process_a548242fe2603aa0646c36a3c976978eb}} 
+\index{post\_process@{post\_process}!agent\_agent\_collisions@{agent\_agent\_collisions}}
+\index{agent\_agent\_collisions@{agent\_agent\_collisions}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{agent\_agent\_collisions()}{agent\_agent\_collisions()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+agent\+\_\+agent\+\_\+collisions (\begin{DoxyParamCaption}\item[{}]{unpacked }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Returns a list of agent indices corresponding to agent-agent collisions
+
+Input: time history, trajectories, assignments, agent statesize
+Output: agents that collided with eachother\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_ad2fef35161f61e0f47770ae31d9c7cc6}\label{namespacepost__process_ad2fef35161f61e0f47770ae31d9c7cc6}} 
+\index{post\_process@{post\_process}!collision\_time@{collision\_time}}
+\index{collision\_time@{collision\_time}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{collision\_time()}{collision\_time()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+collision\+\_\+time (\begin{DoxyParamCaption}\item[{}]{tout,  }\item[{}]{yout }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Returns the time at which all agents have collided
+
+Input: time history, trajectories, assignments
+Output: time for all agents to be collided\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a1b8d2e30b28ec59e357e3b79a4deccca}\label{namespacepost__process_a1b8d2e30b28ec59e357e3b79a4deccca}} 
+\index{post\_process@{post\_process}!compute\_controls@{compute\_controls}}
+\index{compute\_controls@{compute\_controls}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{compute\_controls()}{compute\_controls()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+compute\+\_\+controls (\begin{DoxyParamCaption}\item[{}]{dx,  }\item[{}]{du,  }\item[{}]{yout,  }\item[{}]{tout,  }\item[{}]{assignments,  }\item[{}]{nagents,  }\item[{}]{poltargets,  }\item[{}]{polagents }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Recreate the agent swarm member control inputs\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a1192f5e66dab82fd1c9a577784853d38}\label{namespacepost__process_a1192f5e66dab82fd1c9a577784853d38}} 
+\index{post\_process@{post\_process}!find\_switches@{find\_switches}}
+\index{find\_switches@{find\_switches}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{find\_switches()}{find\_switches()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+find\+\_\+switches (\begin{DoxyParamCaption}\item[{}]{tout,  }\item[{}]{yout,  }\item[{}]{nagents,  }\item[{}]{ntargets,  }\item[{}]{agent\+\_\+config\+\_\+size,  }\item[{}]{target\+\_\+config\+\_\+size }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Returns time indices at which there is an assignment switch\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a390cea7e2e66550ffd937f5e22d641cb}\label{namespacepost__process_a390cea7e2e66550ffd937f5e22d641cb}} 
+\index{post\_process@{post\_process}!index\_at\_time@{index\_at\_time}}
+\index{index\_at\_time@{index\_at\_time}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{index\_at\_time()}{index\_at\_time()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+index\+\_\+at\+\_\+time (\begin{DoxyParamCaption}\item[{}]{tout,  }\item[{}]{time }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Returns the index in data at a time point
+
+Input: time history, time point
+Output: index in data of time point\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_ad0319250940975f4989aef2f6e3a96b7}\label{namespacepost__process_ad0319250940975f4989aef2f6e3a96b7}} 
+\index{post\_process@{post\_process}!plot\_batch\_diagnostics@{plot\_batch\_diagnostics}}
+\index{plot\_batch\_diagnostics@{plot\_batch\_diagnostics}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{plot\_batch\_diagnostics()}{plot\_batch\_diagnostics()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+plot\+\_\+batch\+\_\+diagnostics (\begin{DoxyParamCaption}\item[{}]{batch\+\_\+diagnostics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Function which unpacks batch diagnostics and calls relevant plotting utilities
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_aa4445a673ad2b57be4e22fe0e1cf2413}\label{namespacepost__process_aa4445a673ad2b57be4e22fe0e1cf2413}} 
+\index{post\_process@{post\_process}!plot\_batch\_performance\_metrics@{plot\_batch\_performance\_metrics}}
+\index{plot\_batch\_performance\_metrics@{plot\_batch\_performance\_metrics}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{plot\_batch\_performance\_metrics()}{plot\_batch\_performance\_metrics()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+plot\+\_\+batch\+\_\+performance\+\_\+metrics (\begin{DoxyParamCaption}\item[{}]{batch\+\_\+performance\+\_\+metrics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Function which unpacks batch metrics and calls relevant plotting utilities
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_ac6e21bb76233fe218be2b64d33122a0b}\label{namespacepost__process_ac6e21bb76233fe218be2b64d33122a0b}} 
+\index{post\_process@{post\_process}!plot\_ensemble\_diagnostic\_comparison@{plot\_ensemble\_diagnostic\_comparison}}
+\index{plot\_ensemble\_diagnostic\_comparison@{plot\_ensemble\_diagnostic\_comparison}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{plot\_ensemble\_diagnostic\_comparison()}{plot\_ensemble\_diagnostic\_comparison()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+plot\+\_\+ensemble\+\_\+diagnostic\+\_\+comparison (\begin{DoxyParamCaption}\item[{}]{ensemble\+\_\+diagnostics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Function to parse ensemble of batch simulation diagnostics and call relevant plotting utilities
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a32f70cf0b6377a438888111e013d4ca2}\label{namespacepost__process_a32f70cf0b6377a438888111e013d4ca2}} 
+\index{post\_process@{post\_process}!plot\_ensemble\_diagnostics@{plot\_ensemble\_diagnostics}}
+\index{plot\_ensemble\_diagnostics@{plot\_ensemble\_diagnostics}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{plot\_ensemble\_diagnostics()}{plot\_ensemble\_diagnostics()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+plot\+\_\+ensemble\+\_\+diagnostics (\begin{DoxyParamCaption}\item[{}]{ensemble\+\_\+diagnostics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Function which unpacks ensemble of batch simulations diagnostics and calls relevant plotting utilities
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a37ffa7064da3200fff3a6dda3a5787d5}\label{namespacepost__process_a37ffa7064da3200fff3a6dda3a5787d5}} 
+\index{post\_process@{post\_process}!plot\_ensemble\_histograms@{plot\_ensemble\_histograms}}
+\index{plot\_ensemble\_histograms@{plot\_ensemble\_histograms}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{plot\_ensemble\_histograms()}{plot\_ensemble\_histograms()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+plot\+\_\+ensemble\+\_\+histograms (\begin{DoxyParamCaption}\item[{}]{ensemble\+\_\+performance\+\_\+metrics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Function which unpacks ensemble of batch simulations metrics and calls relevant plotting utilities
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a1c9f01d3b7c28ba49dfc907d77a129e0}\label{namespacepost__process_a1c9f01d3b7c28ba49dfc907d77a129e0}} 
+\index{post\_process@{post\_process}!plot\_ensemble\_metric\_comparisons@{plot\_ensemble\_metric\_comparisons}}
+\index{plot\_ensemble\_metric\_comparisons@{plot\_ensemble\_metric\_comparisons}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{plot\_ensemble\_metric\_comparisons()}{plot\_ensemble\_metric\_comparisons()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+plot\+\_\+ensemble\+\_\+metric\+\_\+comparisons (\begin{DoxyParamCaption}\item[{}]{ensemble\+\_\+performance\+\_\+metrics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Function to parse ensemble of batch simulation metrics and call relevant plotting utilities
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a5b319220652a268ee1dcbb710f38b420}\label{namespacepost__process_a5b319220652a268ee1dcbb710f38b420}} 
+\index{post\_process@{post\_process}!post\_process\_batch\_diagnostics@{post\_process\_batch\_diagnostics}}
+\index{post\_process\_batch\_diagnostics@{post\_process\_batch\_diagnostics}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{post\_process\_batch\_diagnostics()}{post\_process\_batch\_diagnostics()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+post\+\_\+process\+\_\+batch\+\_\+diagnostics (\begin{DoxyParamCaption}\item[{}]{batch\+\_\+diagnostics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Calls utilities to parse diagnostics and package into pandas DataFrame
+
+Input:
+- batch_diagnostics:            dict of simulation parameters and results (np.array)
+
+Output:
+- packed_batch_diagnostics:     dict containing DataFrames simulation runtime diagnostics per simulation in batch\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a2009d5938a8919bd33d7d274148e5263}\label{namespacepost__process_a2009d5938a8919bd33d7d274148e5263}} 
+\index{post\_process@{post\_process}!post\_process\_batch\_simulation@{post\_process\_batch\_simulation}}
+\index{post\_process\_batch\_simulation@{post\_process\_batch\_simulation}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{post\_process\_batch\_simulation()}{post\_process\_batch\_simulation()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+post\+\_\+process\+\_\+batch\+\_\+simulation (\begin{DoxyParamCaption}\item[{}]{batch\+\_\+results }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Calls utilities to parse results and package into pandas DataFrame
+
+Input:
+- batch_results:            dict of simulation parameters and results (np.array)
+
+Output:
+- batch_performance_metrics:dict containing DataFrames simulation parameters, results, costs per simulation within
+batch\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a03fb7a7f49933480f1162e53995ca131}\label{namespacepost__process_a03fb7a7f49933480f1162e53995ca131}} 
+\index{post\_process@{post\_process}!post\_process\_heterogeneous@{post\_process\_heterogeneous}}
+\index{post\_process\_heterogeneous@{post\_process\_heterogeneous}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{post\_process\_heterogeneous()}{post\_process\_heterogeneous()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+post\+\_\+process\+\_\+heterogeneous (\begin{DoxyParamCaption}\item[{}]{parameters,  }\item[{}]{sim\+\_\+results }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Post-process and package simulation parameters, results, and post-processed data (costs)
+
+Post-process and packing function for homogeneous non-identical agent and target swarms
+Heterogeneous implies that the agent and targets have different dynamic models and each member may have different dynamic models
+
+Input:
+- parameters:           dict containing simulation parameters
+- sim_results:          dict containing simulaton results
+
+Output:
+- return_df:            pandas Dataframe with simulation parameters, results, costs\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_aed2ed4226d6805a549be6b3e9c9ec72d}\label{namespacepost__process_aed2ed4226d6805a549be6b3e9c9ec72d}} 
+\index{post\_process@{post\_process}!post\_process\_homogeneous\_identical@{post\_process\_homogeneous\_identical}}
+\index{post\_process\_homogeneous\_identical@{post\_process\_homogeneous\_identical}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{post\_process\_homogeneous\_identical()}{post\_process\_homogeneous\_identical()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+post\+\_\+process\+\_\+homogeneous\+\_\+identical (\begin{DoxyParamCaption}\item[{}]{parameters,  }\item[{}]{sim\+\_\+results }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Post-process and package simulation parameters, results, and post-processed data (costs)
+
+Post-process and packing function for homogeneous identical agent/target swarms
+
+Input:
+- parameters:           dict containing simulation parameters
+- sim_results:          dict containing simulaton results
+
+Output:
+- return_df:            pandas Dataframe with simulation parameters, results, costs\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a11b9639a84b126d743bb26abe37ad8bc}\label{namespacepost__process_a11b9639a84b126d743bb26abe37ad8bc}} 
+\index{post\_process@{post\_process}!post\_process\_homogeneous\_nonidentical@{post\_process\_homogeneous\_nonidentical}}
+\index{post\_process\_homogeneous\_nonidentical@{post\_process\_homogeneous\_nonidentical}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{post\_process\_homogeneous\_nonidentical()}{post\_process\_homogeneous\_nonidentical()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+post\+\_\+process\+\_\+homogeneous\+\_\+nonidentical (\begin{DoxyParamCaption}\item[{}]{parameters,  }\item[{}]{sim\+\_\+results }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Post-process and package simulation parameters, results, and post-processed data (costs)
+
+Post-process and packing function for homogeneous non-identical agent and target swarms
+Homogeneous Non-identical implies that the agent and targets have different dynamic models, but are uniform
+within their respective swarms
+
+Input:
+- parameters:           dict containing simulation parameters
+- sim_results:          dict containing simulaton results
+
+Output:
+- return_df:            pandas Dataframe with simulation parameters, results, costs\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a10e87205bfefad170e33d3b2aa386598}\label{namespacepost__process_a10e87205bfefad170e33d3b2aa386598}} 
+\index{post\_process@{post\_process}!save\_ensemble\_metrics@{save\_ensemble\_metrics}}
+\index{save\_ensemble\_metrics@{save\_ensemble\_metrics}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{save\_ensemble\_metrics()}{save\_ensemble\_metrics()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+save\+\_\+ensemble\+\_\+metrics (\begin{DoxyParamCaption}\item[{}]{ensemble\+\_\+performance\+\_\+metrics,  }\item[{}]{ensemble\+\_\+name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Function to parse and repack ensemble of batch simulation metrics and save
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_ac0513ae17e16904513842075429d02f1}\label{namespacepost__process_ac0513ae17e16904513842075429d02f1}} 
+\index{post\_process@{post\_process}!unpack\_batch\_diagnostics@{unpack\_batch\_diagnostics}}
+\index{unpack\_batch\_diagnostics@{unpack\_batch\_diagnostics}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{unpack\_batch\_diagnostics()}{unpack\_batch\_diagnostics()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+unpack\+\_\+batch\+\_\+diagnostics (\begin{DoxyParamCaption}\item[{}]{batch\+\_\+diagnostics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Unpacks batch diagnostics DataFrame into a python standard dictionary
+
+Targets old data storage schematic
+
+Input:
+- batch_diagnostics:                    pandas DataFrame
+
+Output:
+- unpack_batch_diagnostics:             dict containing simulation runtime diagnostics\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_ac12d2839c57449ae1f8c071818ed5755}\label{namespacepost__process_ac12d2839c57449ae1f8c071818ed5755}} 
+\index{post\_process@{post\_process}!unpack\_performance\_metrics@{unpack\_performance\_metrics}}
+\index{unpack\_performance\_metrics@{unpack\_performance\_metrics}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{unpack\_performance\_metrics()}{unpack\_performance\_metrics()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+unpack\+\_\+performance\+\_\+metrics (\begin{DoxyParamCaption}\item[{}]{batch\+\_\+performance\+\_\+metrics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Unpacks batch performance metrics DataFrame into a python standard dictionary
+
+Input:
+- batch_performance_metrics:           pandas DataFrame
+
+Output:
+- unpacked_batch_metrics:              dict containing simulation parameters, results, post-processed results (costs)\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_ab8236930ba1c5b6ecb3de8daacd16a8c}\label{namespacepost__process_ab8236930ba1c5b6ecb3de8daacd16a8c}} 
+\index{post\_process@{post\_process}!unpack\_performance\_metrics\_OLD@{unpack\_performance\_metrics\_OLD}}
+\index{unpack\_performance\_metrics\_OLD@{unpack\_performance\_metrics\_OLD}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{unpack\_performance\_metrics\_OLD()}{unpack\_performance\_metrics\_OLD()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+unpack\+\_\+performance\+\_\+metrics\+\_\+\+O\+LD (\begin{DoxyParamCaption}\item[{}]{batch\+\_\+performance\+\_\+metrics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Unpacks batch performance metrics DataFrame into a python standard dictionary
+
+Targets old data storage schematic PRIOR TO JULY 25, 2019
+
+Input:
+- batch_performance_metrics:           pandas DataFrame
+
+Output:
+- unpacked_batch_metrics:              dict containing simulation parameters, results, post-processed results (costs)\end{DoxyVerb}
+ \mbox{\Hypertarget{namespacepost__process_a5b5b5271b7f2487e85d72afcc40903e7}\label{namespacepost__process_a5b5b5271b7f2487e85d72afcc40903e7}} 
+\index{post\_process@{post\_process}!unpack\_performance\_metrics\_OLD\_2@{unpack\_performance\_metrics\_OLD\_2}}
+\index{unpack\_performance\_metrics\_OLD\_2@{unpack\_performance\_metrics\_OLD\_2}!post\_process@{post\_process}}
+\subsubsection{\texorpdfstring{unpack\_performance\_metrics\_OLD\_2()}{unpack\_performance\_metrics\_OLD\_2()}}
+{\footnotesize\ttfamily def post\+\_\+process.\+unpack\+\_\+performance\+\_\+metrics\+\_\+\+O\+L\+D\+\_\+2 (\begin{DoxyParamCaption}\item[{}]{batch\+\_\+performance\+\_\+metrics }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Unpacks batch performance metrics DataFrame into a python standard dictionary
+
+Targets old data storage schematic PRIOR TO AUGUST 13, 2019, AFTER JULY 25, 2019
+
+Input:
+- batch_performance_metrics:           pandas DataFrame
+
+Output:
+- unpacked_batch_metrics:              dict containing simulation parameters, results, post-processed results (costs)\end{DoxyVerb}
+ 

@@ -1,6 +1,6 @@
 
 ## @include .
-## @example load_single_batch_sims.py
+## @example ./examples/double_integrator_3D/load_single_batch_sims.py
 # An Example of how to load and plot results from a single batch within an ensemble.
 # Additionally, simulation diagnostics are also loaded and plotted.
 # See the SETUP section

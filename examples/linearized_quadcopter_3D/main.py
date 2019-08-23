@@ -1,5 +1,5 @@
 ## @include .
-## @example linearized_quadcopter_3D.py
+## @example ./examples/linearized_quadcopter_3D/main.py
 # An Example of how to setup two swarms in 3D.
 # Both the agent and targets swarm are operating with a homogenous set of linearized quadcopter dynamic models with the linear quadratic regulator/tracker (LQR) controls.
 # The agents are initialized in a uniform distribution, targets are in a fibonacci sphere and the terminal locations are in a circle

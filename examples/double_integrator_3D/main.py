@@ -1,5 +1,5 @@
 ## @include .
-## @example double_integrator_2D.py
+## @example ./examples/double_integrator_3D/main.py
 # An Example of how to setup two swarms in 2D.
 # Both the agent swarm and target swarms are operating with a homogenous set of double integrator dynamic models with the linear quadratic regulator/tracker (LQR) controls.
 # The agents are initialized in a uniform distribution, targets are in a fibonacci sphere and the terminal locations are in a circle
