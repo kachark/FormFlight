@@ -19,7 +19,7 @@ import matplotlib.animation as animation
 import matplotlib.ticker as ticker
 
 from DOT_assignment import log
-from DOT_assignment import post_process
+from DOT_assignment.post_process import post_process
 
 ### TEST ANIMATION
 

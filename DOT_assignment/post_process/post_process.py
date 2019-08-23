@@ -7,8 +7,8 @@ import pandas as pd
 import copy
 import os
 
-# DOT_assignment
-from DOT_assignment import plot
+# DOT_assignment.post_process
+from . import plot
 
 def post_process_batch_simulation(batch_results):
 

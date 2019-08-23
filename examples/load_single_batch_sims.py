@@ -16,7 +16,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from DOT_assignment import post_process
+from DOT_assignment.post_process import post_process
 from DOT_assignment import log
 
 if __name__ == "__main__":
