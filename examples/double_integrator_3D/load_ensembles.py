@@ -8,7 +8,7 @@
 
 import os.path
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
 import os
 import pandas as pd
@@ -24,20 +24,28 @@ if __name__ == "__main__":
 # .########################################################################
 
     # loads all ensembles within a desired directory
+
+    # EDIT the following set of parameters used in the desired ensemble test folder
     dim = 3
 
     # get list of ensemble tests
-    root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'
+
+    # EDIT the root directory path here to where the ensemble test folders are located
+    # DON'T FORGET THE '/' at the end!
+    root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/sandbox/targetingmdp/'
     # elements = [x[0] for x in os.walk(ensemble_directory)] # recursively get (root, dirs, files)
+
     dirs = next(os.walk(root_directory))[1]
     ensembles = []
     for d in dirs:
         if 'ensemble_0' in d:
             ensembles.append(d)
 
+    # EDIT the type of ensemble you'd like to load
     # ensemble engagement scenarios that are loaded. loads 5v5, 10v10, 20v20 agent-target engagements
-    desired_conditions = ['5v5', '10v10', '20v20']
+    # desired_conditions = ['5v5', '10v10', '20v20']
     # desired_conditions = ['5v5', '10v10']
+    desired_conditions = ['10v10']
 
 # .########################################################################
 

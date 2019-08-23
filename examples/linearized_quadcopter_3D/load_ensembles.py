@@ -1,36 +1,53 @@
+
+## @include .
+## @example load_ensembles.py
+# An Example of how to load and plot results from multiple ensembles useful in generating histograms from mutiple Monte Carlo tests (ensembles).
+# Additionally, simulation diagnostics are also loaded and plotted.
+# See the SETUP section
+
+
 import os.path
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from DOT_assignment import post_process
+from DOT_assignment.post_process import post_process
 from DOT_assignment import log
 
 if __name__ == "__main__":
 
 # SETUP
-#########################################################################
+# .########################################################################
+
+    # loads all ensembles within a desired directory
+
+    # EDIT the following set of parameters used in the desired ensemble test folder
     dim = 3
 
     # get list of ensemble tests
+
+    # EDIT the root directory path here to where the ensemble test folders are located
+    # DON'T FORGET THE '/' at the end!
     root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'
     # elements = [x[0] for x in os.walk(ensemble_directory)] # recursively get (root, dirs, files)
+
     dirs = next(os.walk(root_directory))[1]
     ensembles = []
     for d in dirs:
         if 'ensemble_0' in d:
             ensembles.append(d)
 
+    # EDIT the type of ensemble you'd like to load
     # ensemble engagement scenarios that are loaded. loads 5v5, 10v10, 20v20 agent-target engagements
-    desired_conditions = ['5v5', '10v10', '20v20']
+    # desired_conditions = ['5v5', '10v10', '20v20']
     # desired_conditions = ['5v5', '10v10']
+    desired_conditions = ['10v10']
 
-#########################################################################
-
+# .########################################################################
 
     ensembles_to_load = []
     for ensemble in ensembles:

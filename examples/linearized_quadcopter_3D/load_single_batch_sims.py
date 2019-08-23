@@ -1,13 +1,22 @@
+
+## @include .
+## @example load_single_batch_sims.py
+# An Example of how to load and plot results from a single batch within an ensemble.
+# Additionally, simulation diagnostics are also loaded and plotted.
+# See the SETUP section
+# Adjust 'batch_num' to select the desired batch to load within the ensemble folder
+
+
 import os.path
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from DOT_assignment import post_process
+from DOT_assignment.post_process import post_process
 from DOT_assignment import log
 
 if __name__ == "__main__":
@@ -17,26 +26,29 @@ if __name__ == "__main__":
     ensembles = [x[0] for x in os.walk('./')]
 
 # SETUP
-#########################################################################
+# .########################################################################
+
+    # loads desired batches within a single ensemble which the user specifies
+
+    # EDIT the following set of parameters used in the desired ensemble test folder
     dim = 3
 
     nagents = 5
     ntargets = 5
 
-#     agent_model = 'Double_Integrator'
-#     target_model = 'Double_Integrator'
-#     ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-#             'identical_'+agent_model+'_LQR_LQR_2019_07_31_14_06_36'
-
     agent_model = 'Linearized_Quadcopter'
     target_model = 'Linearized_Quadcopter'
-    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_'+agent_model+'_LQR_LQR_2019_08_22_16_47_21'
 
-    root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'
+    # EDIT the date here to match the ensemble test folder, you would like to load
+    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
+            'identical_'+agent_model+'_LQR_LQR_2019_08_23_15_05_40'
+
+    # EDIT the root directory path here to where the ensemble test folder is located
+    # DON'T FORGET THE '/' at the end!
+    root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/sandbox/targetingmdp/'
     ensemble_directory = root_directory + ensemble_name
 
-#########################################################################
+# .########################################################################
 
     # get number of batches
     batch_dirs = [x[0] for x in os.walk(ensemble_directory)]

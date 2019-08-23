@@ -19,7 +19,7 @@
 \DoxyCodeLine{16 \textcolor{keyword}{import} numpy \textcolor{keyword}{as} np}
 \DoxyCodeLine{17 \textcolor{keyword}{import} matplotlib.pyplot \textcolor{keyword}{as} plt}
 \DoxyCodeLine{18 }
-\DoxyCodeLine{19 \textcolor{keyword}{from} DOT\_assignment \textcolor{keyword}{import} post\_process}
+\DoxyCodeLine{19 \textcolor{keyword}{from} DOT\_assignment.post\_process \textcolor{keyword}{import} post\_process}
 \DoxyCodeLine{20 \textcolor{keyword}{from} DOT\_assignment \textcolor{keyword}{import} log}
 \DoxyCodeLine{21 }
 \DoxyCodeLine{22 \textcolor{keywordflow}{if} \_\_name\_\_ == \textcolor{stringliteral}{"\_\_main\_\_"}:}
@@ -33,22 +33,22 @@
 \DoxyCodeLine{30 }
 \DoxyCodeLine{31     \textcolor{comment}{\# loads desired batches within a single ensemble which the user specifies}}
 \DoxyCodeLine{32 }
-\DoxyCodeLine{33     dim = 3}
+\DoxyCodeLine{33     dim = 2}
 \DoxyCodeLine{34 }
-\DoxyCodeLine{35     nagents = 5}
-\DoxyCodeLine{36     ntargets = 5}
+\DoxyCodeLine{35     nagents = 2}
+\DoxyCodeLine{36     ntargets = 2}
 \DoxyCodeLine{37 }
-\DoxyCodeLine{38 \textcolor{comment}{\#     agent\_model = 'Double\_Integrator'}}
-\DoxyCodeLine{39 \textcolor{comment}{\#     target\_model = 'Double\_Integrator'}}
+\DoxyCodeLine{38     agent\_model = \textcolor{stringliteral}{'Double\_Integrator'}}
+\DoxyCodeLine{39     target\_model = \textcolor{stringliteral}{'Double\_Integrator'}}
 \DoxyCodeLine{40 \textcolor{comment}{\#     ensemble\_name = 'ensemble\_0\_'+str(dim)+'D\_'+str(nagents)+'v'+str(ntargets)+'\_'+\(\backslash\)}}
 \DoxyCodeLine{41 \textcolor{comment}{\#             'identical\_'+agent\_model+'\_LQR\_LQR\_2019\_07\_31\_14\_06\_36'}}
 \DoxyCodeLine{42 }
-\DoxyCodeLine{43     agent\_model = \textcolor{stringliteral}{'Linearized\_Quadcopter'}}
-\DoxyCodeLine{44     target\_model = \textcolor{stringliteral}{'Linearized\_Quadcopter'}}
+\DoxyCodeLine{43     \textcolor{comment}{\# agent\_model = 'Linearized\_Quadcopter'}}
+\DoxyCodeLine{44     \textcolor{comment}{\# target\_model = 'Linearized\_Quadcopter'}}
 \DoxyCodeLine{45     ensemble\_name = \textcolor{stringliteral}{'ensemble\_0\_'}+str(dim)+\textcolor{stringliteral}{'D\_'}+str(nagents)+\textcolor{stringliteral}{'v'}+str(ntargets)+\textcolor{stringliteral}{'\_'}+\(\backslash\)}
-\DoxyCodeLine{46             \textcolor{stringliteral}{'identical\_'}+agent\_model+\textcolor{stringliteral}{'\_LQR\_LQR\_2019\_08\_22\_16\_47\_21'}}
+\DoxyCodeLine{46             \textcolor{stringliteral}{'identical\_'}+agent\_model+\textcolor{stringliteral}{'\_LQR\_LQR\_2019\_08\_23\_14\_06\_58'}}
 \DoxyCodeLine{47 }
-\DoxyCodeLine{48     root\_directory = \textcolor{stringliteral}{'/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'}}
+\DoxyCodeLine{48     root\_directory = \textcolor{stringliteral}{'/Users/koray/Documents/GradSchool/research/gorodetsky/draper/sandbox/targetingmdp/'}}
 \DoxyCodeLine{49     ensemble\_directory = root\_directory + ensemble\_name}
 \DoxyCodeLine{50 }
 \DoxyCodeLine{51 \textcolor{comment}{\# .\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}

@@ -1,12 +1,12 @@
 ## @include .
-## @example linearized_quadcopter_3D.py
-# An Example of how to setup two swarms in 3D.
-# Both the agent and targets swarm are operating with a homogenous set of linearized quadcopter dynamic models with the linear quadratic regulator/tracker (LQR) controls.
+## @example double_integrator_2D.py
+# An Example of how to setup two swarms in 2D.
+# Both the agent swarm and target swarms are operating with a homogenous set of double integrator dynamic models with the linear quadratic regulator/tracker (LQR) controls.
 # The agents are initialized in a uniform distribution, targets are in a fibonacci sphere and the terminal locations are in a circle
 
 import os.path
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 
 import os
 import atexit
@@ -27,6 +27,7 @@ from DOT_assignment.post_process.post_process import (
 from DOT_assignment.log import (
         save_batch_metrics_to_csv,
         save_batch_diagnostics_to_csv,
+        save_test_info_to_txt
 )
 
 
@@ -50,7 +51,7 @@ def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_mod
 
 def main():
 
-    """ Linearized quadcopter agent and target swarms in 3D
+    """ Double Integrator agent and target swarms in 2D
 
     Setup ensemble, batch, and individual simulation parameters
     Create new directory to store ensemble, batch, and individual simulation results
@@ -77,17 +78,17 @@ def main():
     batch_simulation = []
     nbatches = 1
 
-    ## @code
+    ## @code{.py}
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
     maxtime = 5
     dim = 3
-    nagents = 2
-    ntargets = 2
-    agent_model = "Linearized_Quadcopter"
-    target_model = "Linearized_Quadcopter"
+    nagents = 10
+    ntargets = 10
+    agent_model = "Double_Integrator"
+    target_model = "Double_Integrator"
     collisions = True
-    collision_tol = 1e-2
+    collision_tol = 1e-1
     agent_control_policy = "LQR"
     target_control_policy = "LQR"
     assignment_epoch = 10
@@ -288,6 +289,7 @@ def main():
     print("done!")
 
     return test_conditions
+
 
 def secondsToStr(elapsed=None):
 

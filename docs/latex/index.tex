@@ -44,6 +44,8 @@ The available agent and target swarm controllers\+:
 
 Some demonstrations are available in the examples folder.
 
+Documentation can be loaded by opening\+: docs/html/index.\+html
+
 \subsubsection*{Built With}
 
 
@@ -92,7 +94,14 @@ To download this package from the online git repository (currently not publicall
 
 \subsection*{Usage}
 
-\subsubsection*{Running simulations}
+The workflow for D\+O\+T\+\_\+assignment is as follows
+\begin{DoxyEnumerate}
+\item setup simulation parameters in main.\+py
+\item run simulation
+\item load and plot results
+\end{DoxyEnumerate}
+
+\subsubsection*{Simulation setup}
 
 main.\+py is the primary entry point for tweaking simulation parameters. Simulations are organized together in batches that aim to keep constant initial states operating over different assignment policies. Multiple batches can be grouped together within an ensemble to perform Monte Carlo simulations.
 
@@ -136,7 +145,11 @@ Define simulation parameters constant across a batch, such as initial swarm form
 \end{DoxyCode}
 
 
-Create simulation profile to be run within a batch 
+Create simulation profile to be run within a batch
+
+The available assignment algorithms are \textquotesingle{}Assignment\+E\+MD\textquotesingle{} and \textquotesingle{}Assignment\+Dyn\textquotesingle{}
+
+
 \begin{DoxyCode}{0}
 \DoxyCodeLine{dt = dt}
 \DoxyCodeLine{asst = 'AssignmentDyn'}
@@ -148,9 +161,19 @@ Create simulation profile to be run within a batch
 \end{DoxyCode}
 
 
+See the Examples page for example simulation setups
+
+\subsubsection*{Run simulation}
+
+By default, simulation batches are organized into ensembles and produce results that are stored in named folders at the root of the directory. Ensemble test folder names consist of the dimension of the simulation (2D/3D), scenario (agents V targets), dynamics model used by the agents and targets, the type of agent and target controllers and the date and time of the test.
+
+Within each ensemble test folder will be folders named by batch number, ordered sequentially by the time they were performed. Each of these batch folders contain the individual simulation results (.csv) and diagnostics (.csv) for each simulation profile that was used.
+
+A sim\+\_\+info.\+txt file is automatically provided in each ensemble folder which gives the details of all the ensemble -\/level test parameters used in the simulations along with general information.
+
 Run the ensemble of simulations 
 \begin{DoxyCode}{0}
-\DoxyCodeLine{python -m DOT\_assignment}
+\DoxyCodeLine{python main.py}
 \end{DoxyCode}
 
 
@@ -160,14 +183,14 @@ N\+O\+TE\+: python commands are run from the root of the directory
 
 load\+\_\+sims.\+py will load saved test data and plot the results.
 
-N\+O\+TE\+: the dimension of the test and agent and target dynamic models to correctly load the files. This information is readily available in each batch folder within the sim\+\_\+info.\+txt.
-
-load\+\_\+sims.\+py will load single or all batches within an ensemble folder which is specified. In addition to the raw simulation data and post-\/processed results, simulation diagnostics are also plotted.
+All loading files must first be edited with the desired test folder to load from (ensemble\+\_\+directory) and overall root directory (root\+\_\+directory). Additionally, the number of agents, number of targets, agent model, target model, and dimension of the test must be editted in, similarly to was described above.
 
 load\+\_\+sims.\+py 
 \begin{DoxyCode}{0}
 \DoxyCodeLine{\# SETUP}
 \DoxyCodeLine{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+\DoxyCodeLine{}
+\DoxyCodeLine{\# EDIT the following set of parameters used in the desired ensemble test folder}
 \DoxyCodeLine{dim = 3}
 \DoxyCodeLine{}
 \DoxyCodeLine{nagents = 5}
@@ -175,9 +198,13 @@ load\+\_\+sims.\+py
 \DoxyCodeLine{}
 \DoxyCodeLine{agent\_model = 'Double\_Integrator'}
 \DoxyCodeLine{target\_model = 'Double\_Integrator'}
+\DoxyCodeLine{}
+\DoxyCodeLine{\# EDIT the date here to match the ensemble test folder, you would like to load }
 \DoxyCodeLine{ensemble\_name = 'ensemble\_0\_'+str(dim)+'D\_'+str(nagents)+'v'+str(ntargets)+'\_'+\(\backslash\)}
 \DoxyCodeLine{         'identical\_'+agent\_model+'\_LQR\_LQR\_2019\_07\_31\_14\_06\_36'}
 \DoxyCodeLine{}
+\DoxyCodeLine{\# EDIT the root directory path here to where the ensemble test folder is located}
+\DoxyCodeLine{\# DON'T FORGET THE '/' at the end!}
 \DoxyCodeLine{root\_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'}
 \DoxyCodeLine{ensemble\_directory = root\_directory + ensemble\_name}
 \DoxyCodeLine{}
@@ -185,19 +212,21 @@ load\+\_\+sims.\+py
 \end{DoxyCode}
 
 
+load\+\_\+sims.\+py will load single or all batches within an ensemble folder which is specified. In addition to the raw simulation data and post-\/processed results, simulation diagnostics are also plotted.
+
 Load and plot simulations 
 \begin{DoxyCode}{0}
-\DoxyCodeLine{python DOT\_assignment/load\_sims.py}
+\DoxyCodeLine{python load\_sims.py}
 \end{DoxyCode}
 
 
-Additional visualizations include\+:
+Additional possible visualizations include\+:
 \begin{DoxyItemize}
-\item animate\+\_\+trajectories.\+py \+: loads and plots a 3-\/dimensional animation of the agent and target swarms evolving over time.
-\item load\+\_\+ensembles.\+py \+: loads and plots histograms using data from all ensembles in a given directory. N\+O\+TE\+: must specify the \textquotesingle{}agent\textquotesingle{}V\textquotesingle{}target\textquotesingle{} scenarios of the ensembles being loaded
+\item 3-\/dimensional animation of the agent and target swarms evolving over time.
+\item Histograms using data from all ensembles in a given directory. N\+O\+TE\+: must specify the \textquotesingle{}agent\textquotesingle{}V\textquotesingle{}target\textquotesingle{} scenarios of the ensembles being loaded
 \end{DoxyItemize}
 
-\+\_\+\+For more examples, please refer to the Examples page.
+\+\_\+\+For examples, please refer to the Examples page.
 
 \subsubsection*{Tests}
 
@@ -208,6 +237,39 @@ In order to run tests\+:
 \DoxyCodeLine{python -m pytest -v tests}
 \end{DoxyCode}
 
+
+\subsubsection*{Examples}
+
+The Examples page showcases some basic simulation configurations and loading files that can be used to guide customization of main.\+py and the load\+\_\+\+\_\+sims.\+py, load\+\_\+ensembles.\+py, and animate\+\_\+trajectory.\+py files to suit specific usecases.
+
+The simulation setups offered are\+:
+\begin{DoxyItemize}
+\item Double Integrator in 3D
+\item Linearized Quadcopter in 3D
+\end{DoxyItemize}
+
+The example loading and plotting utilities offered are\+:
+\begin{DoxyItemize}
+\item load\+\_\+single\+\_\+batch\+\_\+sims.\+py
+\item load\+\_\+ensembles.\+py
+\item animate\+\_\+3\+D\+\_\+trajectory.\+py
+\end{DoxyItemize}
+
+To run a simulation setup simply run 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{python examples/double\_integrator\_3D/main.py}
+\end{DoxyCode}
+
+
+After making necessary edits, load and plot an example simulation 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{python examples/double\_integrator\_3D/load\_single\_batch\_sims.py}
+\end{DoxyCode}
+
+
+N\+O\+TE\+: the dimension of the test and agent and target dynamic models to correctly load the files. This information is readily available in each batch folder within the sim\+\_\+info.\+txt. See \textquotesingle{}Loading and plotting data\textquotesingle{}
+
+N\+O\+TE\+: animate\+\_\+3\+D\+\_\+trajectory will only work with 3-\/Dimensional tests.
 
 \subsection*{Roadmap}
 
