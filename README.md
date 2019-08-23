@@ -171,7 +171,9 @@ load_sims.py will load saved test data and plot the results.
 All loading files must first be edited with the desired test folder to load from (ensemble_directory) and
 overall root directory (root_directory). Additionally, the number of agents, number of targets, agent model, target model, and dimension of the test must be editted in, similarly to was described above.
 
-load_sims.py
+In the load_sims.py, make the following edits
+
+#### Edit the simulation parameters for the folder to be loaded
 ```python
 # SETUP
 #########################################################################
@@ -184,19 +186,25 @@ ntargets = 5
 
 agent_model = 'Double_Integrator'
 target_model = 'Double_Integrator'
+```
 
+#### Enter the correct date of the ensemble test folder
+```python
 # EDIT the date here to match the ensemble test folder, you would like to load 
 ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
          'identical_'+agent_model+'_LQR_LQR_2019_07_31_14_06_36'
+```
 
+#### Enter the path of the root directory
+```python
 # EDIT the root directory path here to where the ensemble test folder is located
 # DON'T FORGET THE '/' at the end!
 root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'
-ensemble_directory = root_directory + ensemble_name
+
 
 #########################################################################
-
 ```
+
 
 load_sims.py will load single or all batches within an ensemble folder which is specified. In addition to the raw simulation data and post-processed results, simulation diagnostics are also plotted. 
 
@@ -240,7 +248,7 @@ To run a simulation setup simply run
 python examples/double_integrator_3D/main.py
 ```
 
-After making necessary edits, load and plot an example simulation
+After making necessary edits, load and plot an example simulation. See 'Loading and plotting data' for details.
 ```python
 python examples/double_integrator_3D/load_single_batch_sims.py
 ```

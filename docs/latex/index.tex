@@ -185,7 +185,9 @@ load\+\_\+sims.\+py will load saved test data and plot the results.
 
 All loading files must first be edited with the desired test folder to load from (ensemble\+\_\+directory) and overall root directory (root\+\_\+directory). Additionally, the number of agents, number of targets, agent model, target model, and dimension of the test must be editted in, similarly to was described above.
 
-load\+\_\+sims.\+py 
+In the load\+\_\+sims.\+py, make the following edits
+
+\#\#\#\# Edit the simulation parameters for the folder to be loaded 
 \begin{DoxyCode}{0}
 \DoxyCodeLine{\# SETUP}
 \DoxyCodeLine{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
@@ -198,15 +200,23 @@ load\+\_\+sims.\+py
 \DoxyCodeLine{}
 \DoxyCodeLine{agent\_model = 'Double\_Integrator'}
 \DoxyCodeLine{target\_model = 'Double\_Integrator'}
-\DoxyCodeLine{}
+\end{DoxyCode}
+
+
+\#\#\#\# Enter the correct date of the ensemble test folder 
+\begin{DoxyCode}{0}
 \DoxyCodeLine{\# EDIT the date here to match the ensemble test folder, you would like to load }
 \DoxyCodeLine{ensemble\_name = 'ensemble\_0\_'+str(dim)+'D\_'+str(nagents)+'v'+str(ntargets)+'\_'+\(\backslash\)}
 \DoxyCodeLine{         'identical\_'+agent\_model+'\_LQR\_LQR\_2019\_07\_31\_14\_06\_36'}
-\DoxyCodeLine{}
+\end{DoxyCode}
+
+
+\#\#\#\# Enter the path of the root directory 
+\begin{DoxyCode}{0}
 \DoxyCodeLine{\# EDIT the root directory path here to where the ensemble test folder is located}
 \DoxyCodeLine{\# DON'T FORGET THE '/' at the end!}
 \DoxyCodeLine{root\_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'}
-\DoxyCodeLine{ensemble\_directory = root\_directory + ensemble\_name}
+\DoxyCodeLine{}
 \DoxyCodeLine{}
 \DoxyCodeLine{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
 \end{DoxyCode}
@@ -261,7 +271,7 @@ To run a simulation setup simply run
 \end{DoxyCode}
 
 
-After making necessary edits, load and plot an example simulation 
+After making necessary edits, load and plot an example simulation. See \textquotesingle{}Loading and plotting data\textquotesingle{} for details. 
 \begin{DoxyCode}{0}
 \DoxyCodeLine{python examples/double\_integrator\_3D/load\_single\_batch\_sims.py}
 \end{DoxyCode}
