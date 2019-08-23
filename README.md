@@ -139,7 +139,7 @@ sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_mode
 
 Run the ensemble of simulations
 ```sh
-python -m DOT_assignment
+python main.py
 ```
 
 NOTE: python commands are run from the root of the directory

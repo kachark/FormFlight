@@ -67,7 +67,7 @@ def main():
 
     ensemble_simulation = []
     batch_simulation = []
-    nbatches = 2
+    nbatches = 1
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01

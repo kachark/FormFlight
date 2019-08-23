@@ -371,7 +371,7 @@ ntargets = 5
 agent_model = 'Linearized_Quadcopter'
 target_model = 'Linearized_Quadcopter'
 ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-        'identical_'+agent_model+'_LQR_LQR_2019_08_22_16_47_21'
+        'identical_'+agent_model+'_LQR_LQR_2019_08_23_11_15_08'
 
 root_directory = '/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/'
 ensemble_directory = root_directory + ensemble_name
