@@ -1,0 +1,67 @@
+\hypertarget{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn}{}\section{D\+O\+T\+\_\+assignment.\+dynamics.\+L\+T\+I\+Dyn Class Reference}
+\label{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn}\index{DOT\_assignment.dynamics.LTIDyn@{DOT\_assignment.dynamics.LTIDyn}}
+
+
+Linear Dynamics.  
+
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_ae9fd78b382de1c3b12fe9b66ef493135}{\+\_\+\+\_\+init\+\_\+\+\_\+}} (self, A, B)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_a0dc3f0dfdbdc223af24ca048858ec02e}{rhs}} (self, t, x, u)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_ae114e0e285737ce44939e97a940c8b07}\label{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_ae114e0e285737ce44939e97a940c8b07}} 
+{\bfseries A}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_a153320385ebcf731bcbc66fa456d0d09}\label{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_a153320385ebcf731bcbc66fa456d0d09}} 
+{\bfseries B}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Linear Dynamics. 
+
+\begin{DoxyVerb}Class representing linear time-invariant dynamics
+\end{DoxyVerb}
+ 
+
+\subsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_ae9fd78b382de1c3b12fe9b66ef493135}\label{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_ae9fd78b382de1c3b12fe9b66ef493135}} 
+\index{DOT\_assignment.dynamics.LTIDyn@{DOT\_assignment.dynamics.LTIDyn}!\_\_init\_\_@{\_\_init\_\_}}
+\index{\_\_init\_\_@{\_\_init\_\_}!DOT\_assignment.dynamics.LTIDyn@{DOT\_assignment.dynamics.LTIDyn}}
+\subsubsection{\texorpdfstring{\_\_init\_\_()}{\_\_init\_\_()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+dynamics.\+L\+T\+I\+Dyn.\+\_\+\+\_\+init\+\_\+\+\_\+ (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{A,  }\item[{}]{B }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}LTIDyn constructor
+
+Input:
+- A:            state matrix
+- B:            control input matrix\end{DoxyVerb}
+ 
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_a0dc3f0dfdbdc223af24ca048858ec02e}\label{class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn_a0dc3f0dfdbdc223af24ca048858ec02e}} 
+\index{DOT\_assignment.dynamics.LTIDyn@{DOT\_assignment.dynamics.LTIDyn}!rhs@{rhs}}
+\index{rhs@{rhs}!DOT\_assignment.dynamics.LTIDyn@{DOT\_assignment.dynamics.LTIDyn}}
+\subsubsection{\texorpdfstring{rhs()}{rhs()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+dynamics.\+L\+T\+I\+Dyn.\+rhs (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{t,  }\item[{}]{x,  }\item[{}]{u }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Computes the right-hand side of the LTI system
+
+Input:
+- t:            time
+- x:            state vector
+- u:            control input vector
+
+Output:
+- \dot{x} = Ax + Bu\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+D\+O\+T\+\_\+assignment/dynamics.\+py\end{DoxyCompactItemize}

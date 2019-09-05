@@ -1,0 +1,100 @@
+\hypertarget{namespace_d_o_t__assignment_1_1log}{}\section{D\+O\+T\+\_\+assignment.\+log Namespace Reference}
+\label{namespace_d_o_t__assignment_1_1log}\index{DOT\_assignment.log@{DOT\_assignment.log}}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1log_ab59d5c33559471fa2b12e4cec9729c33}{save\+\_\+test\+\_\+info\+\_\+to\+\_\+txt}} (test\+\_\+name, test\+\_\+conditions, test\+\_\+directory, starttime, endtime, elapsedtime)
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1log_a0db41021d90343a12b794eb06ccf6bc2}{save\+\_\+batch\+\_\+metrics\+\_\+to\+\_\+csv}} (batch\+\_\+performance\+\_\+metrics, ensemble\+\_\+directory, batch\+\_\+name)
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1log_a5acdb4dd21c8075f05ff8c11f000e3c5}{save\+\_\+batch\+\_\+diagnostics\+\_\+to\+\_\+csv}} (packed\+\_\+batch\+\_\+diagnostics, ensemble\+\_\+directory, batch\+\_\+name)
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1log_a8d9bed4ad94f6b0b8126c8c0305603dc}{load\+\_\+batch\+\_\+metrics}} (ensemble\+\_\+directory, batch\+\_\+name, sim\+\_\+name\+\_\+list)
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1log_aee27c0ef6405589fba965574a59e74d2}{load\+\_\+batch\+\_\+diagnostics}} (ensemble\+\_\+directory, batch\+\_\+name, sim\+\_\+name\+\_\+list)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}@file log.py
+\end{DoxyVerb}
+ 
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{namespace_d_o_t__assignment_1_1log_aee27c0ef6405589fba965574a59e74d2}\label{namespace_d_o_t__assignment_1_1log_aee27c0ef6405589fba965574a59e74d2}} 
+\index{DOT\_assignment.log@{DOT\_assignment.log}!load\_batch\_diagnostics@{load\_batch\_diagnostics}}
+\index{load\_batch\_diagnostics@{load\_batch\_diagnostics}!DOT\_assignment.log@{DOT\_assignment.log}}
+\subsubsection{\texorpdfstring{load\_batch\_diagnostics()}{load\_batch\_diagnostics()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+log.\+load\+\_\+batch\+\_\+diagnostics (\begin{DoxyParamCaption}\item[{}]{ensemble\+\_\+directory,  }\item[{}]{batch\+\_\+name,  }\item[{}]{sim\+\_\+name\+\_\+list }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Loads DataFrames representing batch of simulations metrics to .csv
+
+Creates directory for each batch within the ensemble
+Saves each simulation within a batch to .csv
+
+Input:
+- ensemble_directory:           directory containing ensemble of batch simulations
+- batch_name:                   name of batch
+- sim_name_list:                list of strings to identify simulations diagnostics to load
+
+Output:\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_d_o_t__assignment_1_1log_a8d9bed4ad94f6b0b8126c8c0305603dc}\label{namespace_d_o_t__assignment_1_1log_a8d9bed4ad94f6b0b8126c8c0305603dc}} 
+\index{DOT\_assignment.log@{DOT\_assignment.log}!load\_batch\_metrics@{load\_batch\_metrics}}
+\index{load\_batch\_metrics@{load\_batch\_metrics}!DOT\_assignment.log@{DOT\_assignment.log}}
+\subsubsection{\texorpdfstring{load\_batch\_metrics()}{load\_batch\_metrics()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+log.\+load\+\_\+batch\+\_\+metrics (\begin{DoxyParamCaption}\item[{}]{ensemble\+\_\+directory,  }\item[{}]{batch\+\_\+name,  }\item[{}]{sim\+\_\+name\+\_\+list }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Loads DataFrames representing batch of simulations metrics to .csv
+
+Creates directory for each batch within the ensemble
+Saves each simulation within a batch to .csv
+
+Input:
+- ensemble_directory:           directory containing ensemble of batch simulations
+- batch_name:                   name of batch
+- sim_name_list:                list of strings to identify simulations metrics to load
+
+Output:\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_d_o_t__assignment_1_1log_a5acdb4dd21c8075f05ff8c11f000e3c5}\label{namespace_d_o_t__assignment_1_1log_a5acdb4dd21c8075f05ff8c11f000e3c5}} 
+\index{DOT\_assignment.log@{DOT\_assignment.log}!save\_batch\_diagnostics\_to\_csv@{save\_batch\_diagnostics\_to\_csv}}
+\index{save\_batch\_diagnostics\_to\_csv@{save\_batch\_diagnostics\_to\_csv}!DOT\_assignment.log@{DOT\_assignment.log}}
+\subsubsection{\texorpdfstring{save\_batch\_diagnostics\_to\_csv()}{save\_batch\_diagnostics\_to\_csv()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+log.\+save\+\_\+batch\+\_\+diagnostics\+\_\+to\+\_\+csv (\begin{DoxyParamCaption}\item[{}]{packed\+\_\+batch\+\_\+diagnostics,  }\item[{}]{ensemble\+\_\+directory,  }\item[{}]{batch\+\_\+name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Saves DataFrames representing batch of simulations metrics to .csv
+
+Creates directory for each batch within the ensemble
+Saves each simulation within a batch to .csv
+
+Input:
+- packed_batch_diagnostics:     python dict containing pandas DataFrames of individual simulation diagnostics
+- ensemble_directory:           directory containing ensemble of batch simulations
+- batch_name:                   name of batch
+
+Output:\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_d_o_t__assignment_1_1log_a0db41021d90343a12b794eb06ccf6bc2}\label{namespace_d_o_t__assignment_1_1log_a0db41021d90343a12b794eb06ccf6bc2}} 
+\index{DOT\_assignment.log@{DOT\_assignment.log}!save\_batch\_metrics\_to\_csv@{save\_batch\_metrics\_to\_csv}}
+\index{save\_batch\_metrics\_to\_csv@{save\_batch\_metrics\_to\_csv}!DOT\_assignment.log@{DOT\_assignment.log}}
+\subsubsection{\texorpdfstring{save\_batch\_metrics\_to\_csv()}{save\_batch\_metrics\_to\_csv()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+log.\+save\+\_\+batch\+\_\+metrics\+\_\+to\+\_\+csv (\begin{DoxyParamCaption}\item[{}]{batch\+\_\+performance\+\_\+metrics,  }\item[{}]{ensemble\+\_\+directory,  }\item[{}]{batch\+\_\+name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Saves DataFrames representing batch of simulations metrics to .csv
+
+Creates directory for each batch within the ensemble
+Saves each simulation within a batch to .csv
+
+Input:
+- batch_performance_metrics:    python dict containing pandas DataFrames of individual simulation metrics
+- ensemble_directory:           directory containing ensemble of batch simulations
+- batch_name:                   name of batch
+
+Output:\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_d_o_t__assignment_1_1log_ab59d5c33559471fa2b12e4cec9729c33}\label{namespace_d_o_t__assignment_1_1log_ab59d5c33559471fa2b12e4cec9729c33}} 
+\index{DOT\_assignment.log@{DOT\_assignment.log}!save\_test\_info\_to\_txt@{save\_test\_info\_to\_txt}}
+\index{save\_test\_info\_to\_txt@{save\_test\_info\_to\_txt}!DOT\_assignment.log@{DOT\_assignment.log}}
+\subsubsection{\texorpdfstring{save\_test\_info\_to\_txt()}{save\_test\_info\_to\_txt()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+log.\+save\+\_\+test\+\_\+info\+\_\+to\+\_\+txt (\begin{DoxyParamCaption}\item[{}]{test\+\_\+name,  }\item[{}]{test\+\_\+conditions,  }\item[{}]{test\+\_\+directory,  }\item[{}]{starttime,  }\item[{}]{endtime,  }\item[{}]{elapsedtime }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Saves text info to .txt
+\end{DoxyVerb}
+ 

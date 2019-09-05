@@ -1,0 +1,63 @@
+\hypertarget{namespace_d_o_t__assignment_1_1setup}{}\section{D\+O\+T\+\_\+assignment.\+setup Namespace Reference}
+\label{namespace_d_o_t__assignment_1_1setup}\index{DOT\_assignment.setup@{DOT\_assignment.setup}}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1setup_ab207d233471df2264b7906939e447e2f}{setup\+\_\+simulation}} (sim\+\_\+profile)
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1setup_af7f0dc8b8fe1bf260616c7184ff94ddf}{circle}} (dim, radius, nsamples, sample)
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1setup_a7e2f8ba24cedf939649b3cd695c303f4}{fibonacci\+\_\+sphere}} (r, nsamples, sample)
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1setup_a8beda6cfa86fe6bed2f106b9a340637b}{generate\+\_\+initial\+\_\+conditions}} (dim, initial\+\_\+formation\+\_\+params)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}@file setup.py
+\end{DoxyVerb}
+ 
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{namespace_d_o_t__assignment_1_1setup_af7f0dc8b8fe1bf260616c7184ff94ddf}\label{namespace_d_o_t__assignment_1_1setup_af7f0dc8b8fe1bf260616c7184ff94ddf}} 
+\index{DOT\_assignment.setup@{DOT\_assignment.setup}!circle@{circle}}
+\index{circle@{circle}!DOT\_assignment.setup@{DOT\_assignment.setup}}
+\subsubsection{\texorpdfstring{circle()}{circle()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+setup.\+circle (\begin{DoxyParamCaption}\item[{}]{dim,  }\item[{}]{radius,  }\item[{}]{nsamples,  }\item[{}]{sample }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Computes the x,y,z position on a circle for a given number of points
+r: radius of circle
+ntargets: total number of points on circle
+target: nth point along the circle
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_d_o_t__assignment_1_1setup_a7e2f8ba24cedf939649b3cd695c303f4}\label{namespace_d_o_t__assignment_1_1setup_a7e2f8ba24cedf939649b3cd695c303f4}} 
+\index{DOT\_assignment.setup@{DOT\_assignment.setup}!fibonacci\_sphere@{fibonacci\_sphere}}
+\index{fibonacci\_sphere@{fibonacci\_sphere}!DOT\_assignment.setup@{DOT\_assignment.setup}}
+\subsubsection{\texorpdfstring{fibonacci\_sphere()}{fibonacci\_sphere()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+setup.\+fibonacci\+\_\+sphere (\begin{DoxyParamCaption}\item[{}]{r,  }\item[{}]{nsamples,  }\item[{}]{sample }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Computes the x,y,z positions on a sphere for a given number of points
+http://blog.marmakoide.org/?p=1
+
+r: radius of sphere / scaling factor
+nsamples: total number of points on sphere
+sample: nth point along the sphere
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_d_o_t__assignment_1_1setup_a8beda6cfa86fe6bed2f106b9a340637b}\label{namespace_d_o_t__assignment_1_1setup_a8beda6cfa86fe6bed2f106b9a340637b}} 
+\index{DOT\_assignment.setup@{DOT\_assignment.setup}!generate\_initial\_conditions@{generate\_initial\_conditions}}
+\index{generate\_initial\_conditions@{generate\_initial\_conditions}!DOT\_assignment.setup@{DOT\_assignment.setup}}
+\subsubsection{\texorpdfstring{generate\_initial\_conditions()}{generate\_initial\_conditions()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+setup.\+generate\+\_\+initial\+\_\+conditions (\begin{DoxyParamCaption}\item[{}]{dim,  }\item[{}]{initial\+\_\+formation\+\_\+params }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Returns initial states for agents, targets, and target terminal locations\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_d_o_t__assignment_1_1setup_ab207d233471df2264b7906939e447e2f}\label{namespace_d_o_t__assignment_1_1setup_ab207d233471df2264b7906939e447e2f}} 
+\index{DOT\_assignment.setup@{DOT\_assignment.setup}!setup\_simulation@{setup\_simulation}}
+\index{setup\_simulation@{setup\_simulation}!DOT\_assignment.setup@{DOT\_assignment.setup}}
+\subsubsection{\texorpdfstring{setup\_simulation()}{setup\_simulation()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+setup.\+setup\+\_\+simulation (\begin{DoxyParamCaption}\item[{}]{sim\+\_\+profile }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Returns dictionary of controls, dynamics, decision-making policy, and initial state parameters
+
+Input: Standard python dict containing descriptors outlining simulation requirements
+Output: Standard python dict containing controls, dynamics, assignment, etc. data structures\end{DoxyVerb}
+ 

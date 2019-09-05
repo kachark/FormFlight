@@ -1,0 +1,65 @@
+\hypertarget{namespace_d_o_t__assignment_1_1simple__3danim}{}\section{D\+O\+T\+\_\+assignment.\+simple\+\_\+3danim Namespace Reference}
+\label{namespace_d_o_t__assignment_1_1simple__3danim}\index{DOT\_assignment.simple\_3danim@{DOT\_assignment.simple\_3danim}}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{namespace_d_o_t__assignment_1_1simple__3danim_a2d1d08581cfa014bb8a90131d4510545}{Gen\+\_\+\+Rand\+Line}} (length, dims=2)
+\item 
+\mbox{\Hypertarget{namespace_d_o_t__assignment_1_1simple__3danim_abded04df9371380e0f66653bd7bf7561}\label{namespace_d_o_t__assignment_1_1simple__3danim_abded04df9371380e0f66653bd7bf7561}} 
+def {\bfseries update\+\_\+lines} (num, data\+Lines, lines)
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{namespace_d_o_t__assignment_1_1simple__3danim_aa9ce42134d722adef275b8965ab96b70}\label{namespace_d_o_t__assignment_1_1simple__3danim_aa9ce42134d722adef275b8965ab96b70}} 
+{\bfseries fig} = plt.\+figure()
+\item 
+\mbox{\Hypertarget{namespace_d_o_t__assignment_1_1simple__3danim_a0b6b3f2b61040c3688dd30b15eaba855}\label{namespace_d_o_t__assignment_1_1simple__3danim_a0b6b3f2b61040c3688dd30b15eaba855}} 
+{\bfseries ax} = p3.\+Axes3D(fig)
+\item 
+\mbox{\Hypertarget{namespace_d_o_t__assignment_1_1simple__3danim_a22db4e804340ee3bded612e17803a88d}\label{namespace_d_o_t__assignment_1_1simple__3danim_a22db4e804340ee3bded612e17803a88d}} 
+list {\bfseries data} = \mbox{[}\mbox{\hyperlink{namespace_d_o_t__assignment_1_1simple__3danim_a2d1d08581cfa014bb8a90131d4510545}{Gen\+\_\+\+Rand\+Line}}(25, 3) for index in range(50)\mbox{]}
+\item 
+\mbox{\Hypertarget{namespace_d_o_t__assignment_1_1simple__3danim_a0a2428b22663a69280a744555f083d65}\label{namespace_d_o_t__assignment_1_1simple__3danim_a0a2428b22663a69280a744555f083d65}} 
+list {\bfseries lines} = \mbox{[}ax.\+plot(dat\mbox{[}0, 0\+:1\mbox{]}, dat\mbox{[}1, 0\+:1\mbox{]}, dat\mbox{[}2, 0\+:1\mbox{]})\mbox{[}0\mbox{]} for dat in data\mbox{]}
+\item 
+{\bfseries line\+\_\+ani}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}============
+3D animation
+============
+
+An animated plot in 3D.
+\end{DoxyVerb}
+ 
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{namespace_d_o_t__assignment_1_1simple__3danim_a2d1d08581cfa014bb8a90131d4510545}\label{namespace_d_o_t__assignment_1_1simple__3danim_a2d1d08581cfa014bb8a90131d4510545}} 
+\index{DOT\_assignment.simple\_3danim@{DOT\_assignment.simple\_3danim}!Gen\_RandLine@{Gen\_RandLine}}
+\index{Gen\_RandLine@{Gen\_RandLine}!DOT\_assignment.simple\_3danim@{DOT\_assignment.simple\_3danim}}
+\subsubsection{\texorpdfstring{Gen\_RandLine()}{Gen\_RandLine()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+simple\+\_\+3danim.\+Gen\+\_\+\+Rand\+Line (\begin{DoxyParamCaption}\item[{}]{length,  }\item[{}]{dims = {\ttfamily 2} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Create a line using a random walk algorithm
+
+length is the number of points for the line.
+dims is the number of dimensions the line has.
+\end{DoxyVerb}
+ 
+
+\subsection{Variable Documentation}
+\mbox{\Hypertarget{namespace_d_o_t__assignment_1_1simple__3danim_a7028bc1636c725008f8f643bfa731941}\label{namespace_d_o_t__assignment_1_1simple__3danim_a7028bc1636c725008f8f643bfa731941}} 
+\index{DOT\_assignment.simple\_3danim@{DOT\_assignment.simple\_3danim}!line\_ani@{line\_ani}}
+\index{line\_ani@{line\_ani}!DOT\_assignment.simple\_3danim@{DOT\_assignment.simple\_3danim}}
+\subsubsection{\texorpdfstring{line\_ani}{line\_ani}}
+{\footnotesize\ttfamily D\+O\+T\+\_\+assignment.\+simple\+\_\+3danim.\+line\+\_\+ani}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 =  animation.FuncAnimation(fig, update\_lines, 25, fargs=(data, lines),}
+\DoxyCodeLine{2                                    interval=50, blit=\textcolor{keyword}{False})}
+
+\end{DoxyCode}

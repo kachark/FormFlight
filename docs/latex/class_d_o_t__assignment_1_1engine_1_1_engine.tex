@@ -1,0 +1,113 @@
+\hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine}{}\section{D\+O\+T\+\_\+assignment.\+engine.\+Engine Class Reference}
+\label{class_d_o_t__assignment_1_1engine_1_1_engine}\index{DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}}
+
+
+Game \mbox{\hyperlink{class_d_o_t__assignment_1_1engine_1_1_engine}{Engine}}.  
+
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1engine_1_1_engine_a015280d12f0cd3f5bf517dd662383474}{\+\_\+\+\_\+init\+\_\+\+\_\+}} (self, dim, dt=0.\+1, maxtime=10, collisions=False, collision\+\_\+tol=0.\+25)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1engine_1_1_engine_a982ebd173ac561463636cb188056eda4}{log}} (self, newdf)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1engine_1_1_engine_a683369c41802adb71bc6fcf1c60a6439}{log\+\_\+diagnostics}} (self, diag\+\_\+df)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1engine_1_1_engine_a965e2f0ced03f6e896b1fbb754c4d5fd}{apriori\+\_\+collisions}} (self, current\+\_\+state, agents, targets, time)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1engine_1_1_engine_ae7c65ec5d3ca05e3e23de9cdf8927639}{run}} (self, x0, system)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_ab691fb9c0c5832cb6d25f5ee6fc214c3}\label{class_d_o_t__assignment_1_1engine_1_1_engine_ab691fb9c0c5832cb6d25f5ee6fc214c3}} 
+{\bfseries dim}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_ab0baafb52c15b816e70c4a0d36d68b64}\label{class_d_o_t__assignment_1_1engine_1_1_engine_ab0baafb52c15b816e70c4a0d36d68b64}} 
+{\bfseries dt}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_ab084eb559db7b143682a358163345ab7}\label{class_d_o_t__assignment_1_1engine_1_1_engine_ab084eb559db7b143682a358163345ab7}} 
+{\bfseries maxtime}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_a9110744915ac317d1f58a2303605bef7}\label{class_d_o_t__assignment_1_1engine_1_1_engine_a9110744915ac317d1f58a2303605bef7}} 
+{\bfseries df}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_abf7d1d85bda9cf9e195b3ed991b03582}\label{class_d_o_t__assignment_1_1engine_1_1_engine_abf7d1d85bda9cf9e195b3ed991b03582}} 
+{\bfseries diagnostics}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_abfb753eb2a6f0aa3dcf6bee61bea1fb6}\label{class_d_o_t__assignment_1_1engine_1_1_engine_abfb753eb2a6f0aa3dcf6bee61bea1fb6}} 
+{\bfseries collisions}
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_a30cdf16dbd7d6de134b75ce33f8bb987}\label{class_d_o_t__assignment_1_1engine_1_1_engine_a30cdf16dbd7d6de134b75ce33f8bb987}} 
+{\bfseries collision\+\_\+tol}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Game \mbox{\hyperlink{class_d_o_t__assignment_1_1engine_1_1_engine}{Engine}}. 
+
+\subsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_a015280d12f0cd3f5bf517dd662383474}\label{class_d_o_t__assignment_1_1engine_1_1_engine_a015280d12f0cd3f5bf517dd662383474}} 
+\index{DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}!\_\_init\_\_@{\_\_init\_\_}}
+\index{\_\_init\_\_@{\_\_init\_\_}!DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}}
+\subsubsection{\texorpdfstring{\_\_init\_\_()}{\_\_init\_\_()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+engine.\+Engine.\+\_\+\+\_\+init\+\_\+\+\_\+ (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{dim,  }\item[{}]{dt = {\ttfamily 0.1},  }\item[{}]{maxtime = {\ttfamily 10},  }\item[{}]{collisions = {\ttfamily False},  }\item[{}]{collision\+\_\+tol = {\ttfamily 0.25} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Engine constructor
+
+Input:
+- dim:          simulation dimension (2D/3D)
+- dt:           engine tick size
+- maxtime:      simulation time
+- collisions:   collisions on/off
+- collision_tol:collitions tolerance
+
+Output:\end{DoxyVerb}
+ 
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_a965e2f0ced03f6e896b1fbb754c4d5fd}\label{class_d_o_t__assignment_1_1engine_1_1_engine_a965e2f0ced03f6e896b1fbb754c4d5fd}} 
+\index{DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}!apriori\_collisions@{apriori\_collisions}}
+\index{apriori\_collisions@{apriori\_collisions}!DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}}
+\subsubsection{\texorpdfstring{apriori\_collisions()}{apriori\_collisions()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+engine.\+Engine.\+apriori\+\_\+collisions (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{current\+\_\+state,  }\item[{}]{agents,  }\item[{}]{targets,  }\item[{}]{time }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}computes apriori collisions between agents and targets in 2D/3D
+
+# implements apriori (continuous) collision detection
+# use bounding circles/spheres around each particle
+    # easy to calculate distances for circles
+    # more complicated shapes - use gilbert-johnson-keerthi algorithm (GJK)\end{DoxyVerb}
+ \mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_a982ebd173ac561463636cb188056eda4}\label{class_d_o_t__assignment_1_1engine_1_1_engine_a982ebd173ac561463636cb188056eda4}} 
+\index{DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}!log@{log}}
+\index{log@{log}!DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}}
+\subsubsection{\texorpdfstring{log()}{log()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+engine.\+Engine.\+log (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{newdf }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}logs simulation updates after each tick
+\end{DoxyVerb}
+ \mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_a683369c41802adb71bc6fcf1c60a6439}\label{class_d_o_t__assignment_1_1engine_1_1_engine_a683369c41802adb71bc6fcf1c60a6439}} 
+\index{DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}!log\_diagnostics@{log\_diagnostics}}
+\index{log\_diagnostics@{log\_diagnostics}!DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}}
+\subsubsection{\texorpdfstring{log\_diagnostics()}{log\_diagnostics()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+engine.\+Engine.\+log\+\_\+diagnostics (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{diag\+\_\+df }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}logs simulation diagnostic updates after each tick
+\end{DoxyVerb}
+ \mbox{\Hypertarget{class_d_o_t__assignment_1_1engine_1_1_engine_ae7c65ec5d3ca05e3e23de9cdf8927639}\label{class_d_o_t__assignment_1_1engine_1_1_engine_ae7c65ec5d3ca05e3e23de9cdf8927639}} 
+\index{DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}!run@{run}}
+\index{run@{run}!DOT\_assignment.engine.Engine@{DOT\_assignment.engine.Engine}}
+\subsubsection{\texorpdfstring{run()}{run()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+engine.\+Engine.\+run (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{x0,  }\item[{}]{system }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Main simulation loop
+
+Input:
+- x0:           initial agent, target, target terminal states
+- system:       System which encapsulates the agent-target engagement\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+D\+O\+T\+\_\+assignment/engine.\+py\end{DoxyCompactItemize}

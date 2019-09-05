@@ -1,0 +1,98 @@
+\hypertarget{load_ensembles_8py-example}{}\section{load\+\_\+ensembles.\+py}
+
+\begin{DoxyCodeInclude}{0}
+\end{DoxyCodeInclude}
+ Example of how to load and plot results from multiple ensembles useful in generating histograms from mutiple Monte Carlo tests (ensembles). Additionally, simulation diagnostics are also loaded and plotted. See the S\+E\+T\+UP section
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{2 }
+\DoxyCodeLine{7 }
+\DoxyCodeLine{8 }
+\DoxyCodeLine{9 \textcolor{keyword}{import} os.path}
+\DoxyCodeLine{10 \textcolor{keyword}{import} sys}
+\DoxyCodeLine{11 sys.path.append(os.path.join(os.path.dirname(\_\_file\_\_), \textcolor{stringliteral}{'../..'}))}
+\DoxyCodeLine{12 }
+\DoxyCodeLine{13 \textcolor{keyword}{import} os}
+\DoxyCodeLine{14 \textcolor{keyword}{import} pandas \textcolor{keyword}{as} pd}
+\DoxyCodeLine{15 \textcolor{keyword}{import} numpy \textcolor{keyword}{as} np}
+\DoxyCodeLine{16 \textcolor{keyword}{import} matplotlib.pyplot \textcolor{keyword}{as} plt}
+\DoxyCodeLine{17 }
+\DoxyCodeLine{18 \textcolor{keyword}{from} DOT\_assignment.post\_process \textcolor{keyword}{import} post\_process}
+\DoxyCodeLine{19 \textcolor{keyword}{from} DOT\_assignment \textcolor{keyword}{import} log}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{keywordflow}{if} \_\_name\_\_ == \textcolor{stringliteral}{"\_\_main\_\_"}:}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{comment}{\# SETUP}}
+\DoxyCodeLine{24 \textcolor{comment}{\# .\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}
+\DoxyCodeLine{25 }
+\DoxyCodeLine{26     \textcolor{comment}{\# loads all ensembles within a desired directory}}
+\DoxyCodeLine{27 }
+\DoxyCodeLine{28     \textcolor{comment}{\# EDIT the following set of parameters used in the desired ensemble test folder}}
+\DoxyCodeLine{29     dim = 3}
+\DoxyCodeLine{30 }
+\DoxyCodeLine{31     \textcolor{comment}{\# get list of ensemble tests}}
+\DoxyCodeLine{32 }
+\DoxyCodeLine{33     root\_directory = os.getcwd() + \textcolor{stringliteral}{'/'}}
+\DoxyCodeLine{34     \textcolor{comment}{\# elements = [x[0] for x in os.walk(ensemble\_directory)] \# recursively get (root, dirs, files)}}
+\DoxyCodeLine{35 }
+\DoxyCodeLine{36     dirs = next(os.walk(root\_directory))[1]}
+\DoxyCodeLine{37     ensembles = []}
+\DoxyCodeLine{38     \textcolor{keywordflow}{for} d \textcolor{keywordflow}{in} dirs:}
+\DoxyCodeLine{39         \textcolor{keywordflow}{if} \textcolor{stringliteral}{'ensemble\_0'} \textcolor{keywordflow}{in} d:}
+\DoxyCodeLine{40             ensembles.append(d)}
+\DoxyCodeLine{41 }
+\DoxyCodeLine{42     \textcolor{comment}{\# EDIT the type of ensemble you'd like to load}}
+\DoxyCodeLine{43     \textcolor{comment}{\# ensemble engagement scenarios that are loaded. loads 5v5, 10v10, 20v20 agent-target engagements}}
+\DoxyCodeLine{44     \textcolor{comment}{\# desired\_conditions = ['5v5', '10v10', '20v20']}}
+\DoxyCodeLine{45     \textcolor{comment}{\# desired\_conditions = ['5v5', '10v10']}}
+\DoxyCodeLine{46     desired\_conditions = [\textcolor{stringliteral}{'10v10'}]}
+\DoxyCodeLine{47 }
+\DoxyCodeLine{48 \textcolor{comment}{\# .\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}
+\DoxyCodeLine{49 }
+\DoxyCodeLine{50     ensembles\_to\_load = []}
+\DoxyCodeLine{51     \textcolor{keywordflow}{for} ensemble \textcolor{keywordflow}{in} ensembles:}
+\DoxyCodeLine{52         \textcolor{keywordflow}{for} condition \textcolor{keywordflow}{in} desired\_conditions:}
+\DoxyCodeLine{53             \textcolor{keywordflow}{if} condition \textcolor{keywordflow}{in} ensemble:}
+\DoxyCodeLine{54                 ensembles\_to\_load.append(ensemble)}
+\DoxyCodeLine{55 }
+\DoxyCodeLine{56     \textcolor{comment}{\# load ensembles and plot}}
+\DoxyCodeLine{57     sim\_name\_list = [\textcolor{stringliteral}{'AssignmentDyn'}, \textcolor{stringliteral}{'AssignmentEMD'}]}
+\DoxyCodeLine{58     loaded\_ensemble\_metrics = \{\}}
+\DoxyCodeLine{59     loaded\_ensemble\_diagnostics = \{\}}
+\DoxyCodeLine{60     \textcolor{keywordflow}{for} ensemble\_name \textcolor{keywordflow}{in} ensembles\_to\_load:}
+\DoxyCodeLine{61 }
+\DoxyCodeLine{62         ensemble\_directory = root\_directory + ensemble\_name}
+\DoxyCodeLine{63 }
+\DoxyCodeLine{64         \textcolor{comment}{\# get number of batches}}
+\DoxyCodeLine{65         batch\_dirs = [x[0] \textcolor{keywordflow}{for} x \textcolor{keywordflow}{in} os.walk(ensemble\_directory)]}
+\DoxyCodeLine{66         nbatches = len(batch\_dirs[1:])}
+\DoxyCodeLine{67 }
+\DoxyCodeLine{68         \textcolor{comment}{\# metrics}}
+\DoxyCodeLine{69         ensemble\_metrics = []}
+\DoxyCodeLine{70         \textcolor{keywordflow}{for} ii \textcolor{keywordflow}{in} range(nbatches):}
+\DoxyCodeLine{71             batch\_name = \textcolor{stringliteral}{'batch\_\{0\}'}.format(ii)}
+\DoxyCodeLine{72             loaded\_batch = log.load\_batch\_metrics(ensemble\_directory, batch\_name, sim\_name\_list)}
+\DoxyCodeLine{73             ensemble\_metrics.append(loaded\_batch)}
+\DoxyCodeLine{74         loaded\_ensemble\_metrics.update(\{ensemble\_name: ensemble\_metrics\})}
+\DoxyCodeLine{75 }
+\DoxyCodeLine{76         \textcolor{comment}{\# \# diagnostics}}
+\DoxyCodeLine{77         \textcolor{comment}{\# ensemble\_diagnostics = []}}
+\DoxyCodeLine{78         \textcolor{comment}{\# for ii in range(nbatches):}}
+\DoxyCodeLine{79         \textcolor{comment}{\#     batch\_name = 'batch\_\{0\}'.format(ii)}}
+\DoxyCodeLine{80         \textcolor{comment}{\#     loaded\_batch\_diagnostics = log.load\_batch\_diagnostics(ensemble\_directory, batch\_name, sim\_name\_list)}}
+\DoxyCodeLine{81         \textcolor{comment}{\#     ensemble\_diagnostics.append(loaded\_batch\_diagnostics)}}
+\DoxyCodeLine{82         \textcolor{comment}{\# loaded\_ensemble\_diagnostics.update(\{ensemble\_name: ensemble\_diagnostics\})}}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{84     \mbox{\hyperlink{namespacepost__process_a1c9f01d3b7c28ba49dfc907d77a129e0}{post\_process.plot\_ensemble\_metric\_comparisons}}(loaded\_ensemble\_metrics)}
+\DoxyCodeLine{85     \textcolor{comment}{\# post\_process.plot\_ensemble\_diagnostic\_comparison(loaded\_ensemble\_diagnostics)}}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87     print(\textcolor{stringliteral}{'finished plotting!'})}
+\DoxyCodeLine{88 }
+\DoxyCodeLine{89     plt.show()}
+\DoxyCodeLine{90     print(\textcolor{stringliteral}{'done!'})}
+\DoxyCodeLine{91 }
+\DoxyCodeLine{92 }
+\end{DoxyCodeInclude}
+ 
