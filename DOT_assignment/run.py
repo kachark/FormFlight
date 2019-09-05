@@ -219,7 +219,10 @@ def run_identical_linearized_quadcopter_3D(dx, du, statespace, x0, ltidyn, dyn_t
     agents = [ag.TrackingAgent(dx, du, statespace, dim, ltidyn, poltrack) for ii in range(nagents)]
     targets = [ag.Agent(dx, du, statespace, dim, dyn_target, poltarget) for ii, poltarget in enumerate(poltargets)]
 
-    sys = systems.OneVOne(agents, targets, apol, assignment_epoch)
+    # sys = systems.OneVOne(agents, targets, apol, assignment_epoch)
+    # TODO
+    # TEST FORMATION SYSTEM
+    sys = systems.OneVOneFormation(agents, targets, apol, assignment_epoch)
     eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
 
     # TODO time the simulation

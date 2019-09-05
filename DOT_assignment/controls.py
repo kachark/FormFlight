@@ -141,6 +141,26 @@ class LinearFeedbackConstTracker:
     def get_xss(self):
         return self.xss
 
+    def set_const(self, const):
+        self.g = np.dot(self.A, const)
+
+        self.p = -np.linalg.solve(self.A.T - np.dot(self.P, self.BRBt), np.dot(self.P, self.g))
+        self.const = copy.deepcopy(const)
+
+        # Closed loop is
+        # \dot{x} = A_cl x + g_cl
+        self.Acl = self.A - np.dot(self.B, self.K)
+
+        self.g_cl = np.dot(self.B, np.dot(self.K, self.const)) - np.dot(self.B,
+                np.dot(np.linalg.inv(self.R), np.dot(self.B.T, self.p)))
+
+        self.tracking = None
+
+        # steady-state
+        self.xss = np.dot(self.BRBt, self.p) - self.g
+        self.xss = np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), self.xss)
+
+
 class LinearFeedbackAugmented(LinearFeedbackConstTracker):
 
     """ Class representing the linear quadtratic tracker for tracking non-constant states

@@ -22,15 +22,15 @@ if __name__ == "__main__":
     # EDIT the following set of parameters used in the desired ensemble test folder
     dim = 3
 
-    nagents = 5
-    ntargets = 5
+    nagents = 8
+    ntargets = 8
 
     agent_model = 'Linearized_Quadcopter'
     target_model = 'Linearized_Quadcopter'
 
     # EDIT the date here to match the ensemble test folder, you would like to load
     ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_'+agent_model+'_LQR_LQR_2019_08_23_15_05_40'
+            'identical_'+agent_model+'_LQR_LQR_2019_09_04_15_40_32'
 
     # the path where the ensemble test folder is located
     root_directory = os.getcwd() + '/'

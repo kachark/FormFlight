@@ -71,16 +71,16 @@ def main():
 
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
-    maxtime = 5
+    maxtime = 10
     dim = 3
-    nagents = 5
-    ntargets = 5
+    nagents = 15
+    ntargets = 15
     # agent_model = "Double_Integrator"
     # target_model = "Double_Integrator"
     agent_model = "Linearized_Quadcopter"
     target_model = "Linearized_Quadcopter"
-    collisions = True
-    collision_tol = 1e-2
+    collisions = False
+    collision_tol = 1e-1
     agent_control_policy = "LQR"
     target_control_policy = "LQR"
     assignment_epoch = 10
