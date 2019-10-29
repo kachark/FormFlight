@@ -1,0 +1,53 @@
+\hypertarget{class_d_o_t__assignment_1_1assignments_1_1_assignment_custom}{}\section{D\+O\+T\+\_\+assignment.\+assignments.\+Assignment\+Custom Class Reference}
+\label{class_d_o_t__assignment_1_1assignments_1_1_assignment_custom}\index{DOT\_assignment.assignments.AssignmentCustom@{DOT\_assignment.assignments.AssignmentCustom}}
+Inheritance diagram for D\+O\+T\+\_\+assignment.\+assignments.\+Assignment\+Custom\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{class_d_o_t__assignment_1_1assignments_1_1_assignment_custom}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1assignments_1_1_assignment_custom_acab10eeb9d00b8e4194d2e3cefebbe22}{assignment}} (self, t, ref\+\_\+states, target\+\_\+states)
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}Class representing dynamics-based assignment policy
+\end{DoxyVerb}
+ 
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1assignments_1_1_assignment_custom_acab10eeb9d00b8e4194d2e3cefebbe22}\label{class_d_o_t__assignment_1_1assignments_1_1_assignment_custom_acab10eeb9d00b8e4194d2e3cefebbe22}} 
+\index{DOT\_assignment.assignments.AssignmentCustom@{DOT\_assignment.assignments.AssignmentCustom}!assignment@{assignment}}
+\index{assignment@{assignment}!DOT\_assignment.assignments.AssignmentCustom@{DOT\_assignment.assignments.AssignmentCustom}}
+\subsubsection{\texorpdfstring{assignment()}{assignment()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+assignments.\+Assignment\+Custom.\+assignment (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{t,  }\item[{}]{ref\+\_\+states,  }\item[{}]{target\+\_\+states }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}ref_states and target_states are lists of tuples
+each tuple is (state <np.array>, agent/target <Agent>).
+
+For the nearest neighbor EMD assignment, the information
+about the Agent is unnecessary. However, for other distances
+or other costs, this information should be extracted
+from the agents.
+
+Input:
+- t:                    time
+- ref_states:           list of tuples constructed as (state at time <np.array>, agent <Agent class>)
+- target_states:        list of tuples constructed as (state at time <np.array>, target <Agent class>
+
+Output:
+- assignment:           numpy array which maps each column (agent index) to an integer representing target index
+- cost:                 discrete optimal transport cost\end{DoxyVerb}
+ 
+
+Reimplemented from \mbox{\hyperlink{class_d_o_t__assignment_1_1assignments_1_1_assignment}{D\+O\+T\+\_\+assignment.\+assignments.\+Assignment}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+D\+O\+T\+\_\+assignment/assignments.\+py\end{DoxyCompactItemize}

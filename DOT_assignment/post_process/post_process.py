@@ -39,18 +39,18 @@ def post_process_batch_simulation(batch_results):
         # post-process each sim within batch
         # NOTE assumes agent/target homogeneity
         if parameters['dim'] == 2:
-            if parameters['agent_model'] == 'Double_Integrator' and parameters['target_model'] == 'Double_Integrator':
+            if parameters['agent_model'] == 'Double_Integrator':
                 post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
 
-            if parameters['agent_model'] == 'Linearized_Quadcopter' and parameters['target_model'] == 'Linearized_Quadcopter':
+            if parameters['agent_model'] == 'Linearized_Quadcopter':
                 post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
 
         # NOTE assumes agent/target homogeneity
         if parameters['dim'] == 3:
-            if parameters['agent_model'] == 'Double_Integrator' and parameters['target_model'] == 'Double_Integrator':
+            if parameters['agent_model'] == 'Double_Integrator':
                 post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
 
-            if parameters['agent_model'] == 'Linearized_Quadcopter' and parameters['target_model'] == 'Linearized_Quadcopter':
+            if parameters['agent_model'] == 'Linearized_Quadcopter':
                 post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
 
         # collect post-processed performance metrics
@@ -108,7 +108,6 @@ def post_process_homogeneous_identical(parameters, sim_results):
 
     df = sim_results['data']
     poltrack = sim_results['tracking_policy']
-    poltargets = sim_results['target_pol']
     nagents = sim_results['nagents']
     ntargets = sim_results['ntargets']
     ot_costs = sim_results['asst_cost']
@@ -152,20 +151,18 @@ def post_process_homogeneous_identical(parameters, sim_results):
         # yout, assignments, nagents, dx, poltargets, polagents,
         controls = np.zeros((yout.shape[0], du))
         for ii in range(yout.shape[0]): # compute controls
-            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
 
-            # AUGMENTED TRACKER
+            # Get assigned-to target id for agent zz at time index ii
             asst_ii = assignments[ii] # assignments at time ii
             sigma_i = asst_ii[zz] # target assigned-to agent zz
-            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
 
-            # NEW
-            # Get agent policy in correct tracking state for P, Q, p at time ii
-            Acl = poltargets[sigma_i].get_closed_loop_A()
-            gcl = poltargets[sigma_i].get_closed_loop_g()
-            polagents[zz].track(ii, sigma_i, Acl, gcl)
+            # y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
+            y_target = yout[ii, (sigma_i+nagents)*dx:(sigma_i+nagents+1)*dx]
 
-            controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
+            # CONST STATE TRACKER
+            polagents[zz].set_const(tout[ii], sigma_i, y_target)
+
+            controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :])
 
         # COSTS
 
@@ -175,9 +172,7 @@ def post_process_homogeneous_identical(parameters, sim_results):
         # Get agent policy in correct tracking state for P, Q, p at t=0
         asst_0 = assignments[0] # assignments at time ii
         sigma_i = asst_0[zz] # target assigned-to agent zz
-        Acl_0 = poltargets[sigma_i].get_closed_loop_A()
-        gcl_0 = poltargets[sigma_i].get_closed_loop_g()
-        polagents[zz].track(0, sigma_i, Acl_0, gcl_0)
+        polagents[zz].set_const(0, sigma_i, y_target)
 
         R = polagents[zz].get_R()
         Q_0 = polagents[zz].get_Q()
@@ -186,23 +181,21 @@ def post_process_homogeneous_identical(parameters, sim_results):
 
         uss_0 = polagents[zz].get_uss()
         Xss_0 = polagents[zz].get_xss()
-        X_0 = np.hstack((y_agent[0, :], y_target))
-        xp[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
+        error_state_0 = y_agent[0, :] - y_target
+        xp[0, zz] = np.dot(error_state_0, np.dot(P_0, error_state_0)) + 2*np.dot(p_0, error_state_0) -\
             (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
 
-        stage_cost[0, zz] = np.dot(X_0, np.dot(Q_0, X_0)) + np.dot(controls[0, :], np.dot(R, controls[0, :])) -\
+        stage_cost[0, zz] = np.dot(error_state_0, np.dot(Q_0, error_state_0)) + np.dot(controls[0, :], np.dot(R, controls[0, :])) -\
             (np.dot(Xss_0, np.dot(Q_0, Xss_0)) + np.dot(uss_0, np.dot(R, uss_0)))
 
         # optimal cost (ie. DYN)
         opt_asst_y_target = yout[0, (opt_asst[zz]+nagents)*dx:(opt_asst[zz]+nagents+1)*dx]
-        X_0 = np.hstack((y_agent[0, :], opt_asst_y_target))
+        opt_error_state_0 = y_agent[0, :] - opt_asst_y_target
 
         # Get agent policy in correct tracking state for P, Q, p at t=0
         optasst_0 = opt_asst # assignments at time ii
         optasst_sigma_i = asst_0[zz] # target assigned-to agent zz
-        optasst_Acl_0 = poltargets[optasst_sigma_i].get_closed_loop_A()
-        optasst_gcl_0 = poltargets[optasst_sigma_i].get_closed_loop_g()
-        polagents[zz].track(0, optasst_sigma_i, optasst_Acl_0, optasst_gcl_0)
+        polagents[zz].set_const(0, optasst_sigma_i, opt_asst_y_target)
 
         R = polagents[zz].get_R()
         optasst_Q_0 = polagents[zz].get_Q()
@@ -211,25 +204,23 @@ def post_process_homogeneous_identical(parameters, sim_results):
 
         optasst_uss_0 = polagents[zz].get_uss()
         optasst_Xss_0 = polagents[zz].get_xss()
-        optimal_cost[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
-            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
+        optimal_cost[0, zz] = np.dot(opt_error_state_0, np.dot(optasst_P_0, opt_error_state_0)) + 2*np.dot(optasst_p_0, opt_error_state_0) - (np.dot(optasst_Xss_0, np.dot(optasst_P_0, optasst_Xss_0)) + 2*np.dot(optasst_p_0.T, optasst_Xss_0))
 
         # continue post-processing for rest of time points
         for ii in range(1, yout.shape[0]):
-            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
 
-            # TEST
+            # Get assigned-to target id for agent zz at time index ii
             asst_ii = assignments[ii] # assignments at time ii
             sigma_i = asst_ii[zz] # target assigned-to agent zz
-            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
-            X = np.hstack((y_agent[ii, :], y_target))
 
-            # Get agent policy in correct tracking state for P, Q, p at time ii
-            asst_ii = assignments[ii] # assignments at time ii
-            sigma_i = asst_ii[zz] # target assigned-to agent zz
-            Acl = poltargets[sigma_i].get_closed_loop_A()
-            gcl = poltargets[sigma_i].get_closed_loop_g()
-            polagents[zz].track(ii, sigma_i, Acl, gcl)
+            # y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
+            y_target = yout[ii, (sigma_i+nagents)*dx:(sigma_i+nagents+1)*dx]
+            error_state = y_agent[ii, :] - y_target
+
+            # CONST STATE TRACKER
+            polagents[zz].set_const(tout[ii], sigma_i, y_target)
+
+            controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :])
 
             R = polagents[zz].get_R()
             Q = polagents[zz].get_Q()
@@ -241,11 +232,11 @@ def post_process_homogeneous_identical(parameters, sim_results):
             Xss = polagents[zz].get_xss()
 
             # STAGE COST
-            stage_cost[ii, zz] = np.dot(X, np.dot(Q, X)) + np.dot(controls[ii, :], np.dot(R, controls[ii, :])) -\
+            stage_cost[ii, zz] = np.dot(error_state, np.dot(Q, error_state)) + np.dot(controls[ii, :], np.dot(R, controls[ii, :])) -\
                 (np.dot(Xss, np.dot(Q, Xss)) + np.dot(uss, np.dot(R, uss)))
 
             # COST-TO-GO
-            xp[ii, zz] = np.dot(X, np.dot(P, X)) + 2*np.dot(p, X) -\
+            xp[ii, zz] = np.dot(error_state, np.dot(P, error_state)) + 2*np.dot(p, error_state) -\
                 (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
 
         for ii in range(tout.shape[0]):
@@ -297,12 +288,14 @@ def post_process_homogeneous_identical(parameters, sim_results):
     oc_df = pd.DataFrame(optimal_cost)
     costs_df = pd.concat([fc_df, sc_df, ctg_df, oc_df], axis=1)
 
-    cities = np.zeros((1, ntargets*dx))
-    for jj in range(ntargets):
-        cities[0, jj*dx:(jj+1)*dx] = poltargets[jj].const
-    stationary_states_df = pd.DataFrame(cities)
+    formations = np.zeros((1, ntargets*dx))
+    # TODO remove this field from data spec
+    # for jj in range(ntargets):
+    #     cities[0, jj*dx:(jj+1)*dx] = poltargets[jj].const
+    stationary_states_df = pd.DataFrame(formations)
 
-    controls_df = pd.DataFrame(compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents))
+    # controls_df = pd.DataFrame(compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents))
+    controls_df = pd.DataFrame(compute_controls(dx, du, yout, tout, assignments, nagents, polagents))
 
     outputs_df = pd.concat([df, stationary_states_df, controls_df], axis=1)
 
@@ -861,7 +854,7 @@ def unpack_batch_diagnostics(batch_diagnostics):
     return unpack_batch_diagnostics
 
 # COMPUTE CONTROLS
-def compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents):
+def compute_controls(dx, du, yout, tout, assignments, nagents, polagents):
 
     """ Recreate the agent swarm member control inputs
 
@@ -873,20 +866,18 @@ def compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polag
 
         agent_zz_controls = np.zeros((yout.shape[0], du))
         for ii in range(yout.shape[0]): # compute controls
-            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
 
-            # AUGMENTED TRACKER
+            # Get assigned-to target id for agent zz at time index ii
             asst_ii = assignments[ii] # assignments at time ii
             sigma_i = asst_ii[zz] # target assigned-to agent zz
-            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
 
-            # NEW
-            # Get agent policy in correct tracking state for P, Q, p at time ii
-            Acl = poltargets[sigma_i].get_closed_loop_A()
-            gcl = poltargets[sigma_i].get_closed_loop_g()
-            polagents[zz].track(ii, sigma_i, Acl, gcl)
+            # y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
+            y_target = yout[ii, (sigma_i+nagents)*dx:(sigma_i+nagents+1)*dx]
 
-            agent_zz_controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
+            # CONST STATE TRACKER
+            polagents[zz].set_const(tout[ii], sigma_i, y_target)
+
+            agent_zz_controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :])
 
         agent_controls[:, zz*du:(zz+1)*du] = agent_zz_controls
 
@@ -1009,10 +1000,10 @@ def plot_batch_performance_metrics(batch_performance_metrics):
     """
 
     unpacked = unpack_performance_metrics(batch_performance_metrics)
-    # unpacked = unpack_performance_metrics_OLD2(batch_performance_metrics)
-    # unpacked = unpack_performance_metrics_OLD(batch_performance_metrics)
 
-    plot.plot_costs(unpacked)
+    # TODO REMOVE
+    # plot.plot_costs(unpacked)
+
     plot.plot_assignments(unpacked)
     plot.plot_trajectory(unpacked)
 

@@ -4,10 +4,39 @@
 
 import copy
 
+
+class Point:
+
+    """ Class representing a general point in statespace
+    """
+
+    def __init__(self, dx, du, statespace, dim):
+
+        """ Agent class constructor
+
+        Input:
+        - dx:                   state size
+        - du:                   control input size
+        - statespace:           dict containing descriptions of the components of an agent/target state
+        - dim:                  int representing the dimension the Agent acts within (2D/3D)
+
+        """
+
+        self.dx = dx
+        self.du = du
+        self.statespace = statespace
+        self.dim = dim
+
+    def state_size(self):
+        return self.dx
+
+    def get_statespace(self):
+        return self.statespace
+
 #################################
 ### Agents
 ################################
-class Agent:
+class Agent(Point):
 
     """ Class representing a member of agent or target swarm
     """
@@ -28,24 +57,15 @@ class Agent:
 
         """
 
-        self.dx = dx
-        self.du = du
-        self.statespace = statespace
-        self.dim = dim
         self.dyn = copy.deepcopy(dyn)
         self.pol = copy.deepcopy(pol)
+        super(Agent, self).__init__(dx, du, statespace, dim)
 
     def get_pol(self):
         return self.pol
 
     def update_pol(self, pol):
         self.pol = copy.deepcopy(pol)
-
-    def state_size(self):
-        return self.dx
-
-    def get_statespace(self):
-        return self.statespace
 
     def get_dim(self):
         return self.dim

@@ -174,15 +174,11 @@ class Engine:
 
         # SYSTEM PREPROCESSOR
         if self.collisions:
-            # collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
             collisions, updated_state = self.apriori_collisions(current_state, system.agents, system.targets, time)
         else:
-            # collisions = set()
-            # collisions, updated_state = set()
             collisions = set()
             updated_state = current_state
 
-        # system.pre_process(time, current_state, collisions)
         system.pre_process(time, updated_state, collisions)
 
         # RUN THE SYSTEM
@@ -190,18 +186,13 @@ class Engine:
 
             tick = time / self.dt
 
-            # print("Time: {0:3.2E}".format(time))
             if self.collisions:
-                # collisions = self.apriori_collisions(current_state, system.agents, system.targets, time)
                 collisions, updated_state = self.apriori_collisions(current_state, system.agents, system.targets, time)
 
             else:
-                # collisions = set()
-                # collisions, updated_state = set()
                 collisions = set()
                 updated_state = current_state
 
-            # thist, state_hist, assign_hist, diagnostics = system.update(time, current_state, collisions, self.dt, tick)
             thist, state_hist, assign_hist, diagnostics = system.update(time, updated_state, collisions, self.dt, tick)
 
             newdf = pd.DataFrame(np.hstack((thist[:, np.newaxis],

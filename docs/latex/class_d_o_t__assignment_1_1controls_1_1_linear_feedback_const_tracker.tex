@@ -1,18 +1,9 @@
 \hypertarget{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker}{}\section{D\+O\+T\+\_\+assignment.\+controls.\+Linear\+Feedback\+Const\+Tracker Class Reference}
 \label{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker}\index{DOT\_assignment.controls.LinearFeedbackConstTracker@{DOT\_assignment.controls.LinearFeedbackConstTracker}}
-Inheritance diagram for D\+O\+T\+\_\+assignment.\+controls.\+Linear\+Feedback\+Const\+Tracker\+:\begin{figure}[H]
-\begin{center}
-\leavevmode
-\includegraphics[height=2.000000cm]{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker}
-\end{center}
-\end{figure}
 \subsection*{Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
-def \mbox{\hyperlink{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_a5673a5219e7675de2bf80ea945aa33f1}{\+\_\+\+\_\+init\+\_\+\+\_\+}} (self, \mbox{\hyperlink{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_ae6ca89f8631d4f212e60a7bcdd1a1c7f}{A}}, B, Q, R, const, g=None)
-\item 
-\mbox{\Hypertarget{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_a908d3677c55220bf818562dc142a363b}\label{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_a908d3677c55220bf818562dc142a363b}} 
-def {\bfseries track} (self, time, jj)
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_a5673a5219e7675de2bf80ea945aa33f1}{\+\_\+\+\_\+init\+\_\+\+\_\+}} (self, A, B, Q, R, const, g=None)
 \item 
 \mbox{\Hypertarget{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_a268f5fdaf81ea651387a3faa157698d2}\label{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_a268f5fdaf81ea651387a3faa157698d2}} 
 def {\bfseries evaluate} (self, time, state)
@@ -40,13 +31,18 @@ def {\bfseries get\+\_\+uss} (self)
 \item 
 \mbox{\Hypertarget{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_abb47f2907bb06b2c3546c2a484a6a2b9}\label{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_abb47f2907bb06b2c3546c2a484a6a2b9}} 
 def {\bfseries get\+\_\+xss} (self)
+\item 
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_a3253c2d3d9faf407f2287d272ea36b62}\label{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_a3253c2d3d9faf407f2287d272ea36b62}} 
+def {\bfseries set\+\_\+const} (self, time, target\+\_\+id, const)
+\item 
+def \mbox{\hyperlink{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_ab3b7206cce744da499d83896c1c2dc27}{cost\+\_\+to\+\_\+go}} (self, time, state1, const\+\_\+state)
 \end{DoxyCompactItemize}
 \subsection*{Public Attributes}
 \begin{DoxyCompactItemize}
 \item 
 \mbox{\Hypertarget{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_ae6ca89f8631d4f212e60a7bcdd1a1c7f}\label{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_ae6ca89f8631d4f212e60a7bcdd1a1c7f}} 
-\mbox{\hyperlink{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_ae6ca89f8631d4f212e60a7bcdd1a1c7f}{A}}
-\begin{DoxyCompactList}\small\item\em D\+E\+B\+UG print(\char`\"{}\textbackslash{}n\textbackslash{}n\textbackslash{}n\textbackslash{}n\textbackslash{}n\char`\"{}) print(\char`\"{}\+A = \char`\"{}) print(\+A) print(\char`\"{}\+B = \char`\"{}) print(\+B) print(\char`\"{}\+Q = \char`\"{}) print(\+Q) print(\char`\"{}\+R = \char`\"{}) print(\+R) \end{DoxyCompactList}\item 
+{\bfseries A}
+\item 
 \mbox{\Hypertarget{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_ae1fb3b13eca8607104c74088e2190c1b}\label{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_ae1fb3b13eca8607104c74088e2190c1b}} 
 {\bfseries B}
 \item 
@@ -120,9 +116,16 @@ Input:
 - g:            state to track in error dynamics system\end{DoxyVerb}
  
 
-Reimplemented in \mbox{\hyperlink{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_augmented_adaa4957b87782b3bd7df59ff4ab36080}{D\+O\+T\+\_\+assignment.\+controls.\+Linear\+Feedback\+Augmented}}.
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_ab3b7206cce744da499d83896c1c2dc27}\label{class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker_ab3b7206cce744da499d83896c1c2dc27}} 
+\index{DOT\_assignment.controls.LinearFeedbackConstTracker@{DOT\_assignment.controls.LinearFeedbackConstTracker}!cost\_to\_go@{cost\_to\_go}}
+\index{cost\_to\_go@{cost\_to\_go}!DOT\_assignment.controls.LinearFeedbackConstTracker@{DOT\_assignment.controls.LinearFeedbackConstTracker}}
+\subsubsection{\texorpdfstring{cost\_to\_go()}{cost\_to\_go()}}
+{\footnotesize\ttfamily def D\+O\+T\+\_\+assignment.\+controls.\+Linear\+Feedback\+Const\+Tracker.\+cost\+\_\+to\+\_\+go (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{time,  }\item[{}]{state1,  }\item[{}]{const\+\_\+state }\end{DoxyParamCaption})}
 
-
+\begin{DoxyVerb}Computes cost_to_go for a agent/target to track a single agent/target
+\end{DoxyVerb}
+ 
 
 The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
 \item 

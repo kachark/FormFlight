@@ -60,17 +60,6 @@ class LinearFeedbackConstTracker:
 
         """
 
-        ##DEBUG
-        #print("\n\n\n\n\n")
-        #print("A = ")
-        #print(A)
-        #print("B = ")
-        #print(B)
-        #print("Q = ")
-        #print(Q)
-        #print("R = ")
-        #print(R)
-
         self.A = A
         self.B = B
         self.Q = Q
@@ -106,10 +95,7 @@ class LinearFeedbackConstTracker:
 
         # steady-state optimal control
         # self.uss = self.evaluate(0, self.xss)
-        self.uss = None
-
-    def track(self, time, jj):
-        self.tracking = jj
+        self.uss = -np.dot(self.RBt, np.dot(self.P, self.xss) + self.p)
 
     def evaluate(self, time, state):
         # print("TIME: ", time, " STATE: ", state.T)
@@ -141,7 +127,9 @@ class LinearFeedbackConstTracker:
     def get_xss(self):
         return self.xss
 
-    def set_const(self, const):
+    def set_const(self, time, target_id, const):
+        self.tracking = target_id
+
         self.g = np.dot(self.A, const)
 
         self.p = -np.linalg.solve(self.A.T - np.dot(self.P, self.BRBt), np.dot(self.P, self.g))
@@ -160,157 +148,34 @@ class LinearFeedbackConstTracker:
         self.xss = np.dot(self.BRBt, self.p) - self.g
         self.xss = np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), self.xss)
 
+        self.uss = -np.dot(self.RBt, np.dot(self.P, self.xss) + self.p)
 
-class LinearFeedbackAugmented(LinearFeedbackConstTracker):
-
-    """ Class representing the linear quadtratic tracker for tracking non-constant states
-    """
-
-    def __init__(self, A, B, Q, R, Fcl, g):
-
-        """ LinearFeedbackConstTracker constructor
-
-        Input:
-        - A:            linear time-invariant state matrix of the agent/target doing the tracking
-        - B:            linear time-invariant input matrix of the agent/target doing the tracking
-        - Q:            control weighting matrix for state
-        - R:            control weighting matrix for control inputs
-        - Fcl:          closed-loop state matrix of system being tracked
-        - g:            state to track in error dynamics system
-
-        """
-
-        # Top
-        self.pre_augmented_A = A
-        self.pre_augmented_B = B
-        self.pre_augmented_Q = Q
-
-        self.nstates = A.shape[0] + Fcl.shape[0]
-        const = np.zeros((self.nstates))
-
-        Aconcat, Bconcat, Qconcat, gconcat = self.augment(A, B, Q, R, Fcl, g)
-
-        super(LinearFeedbackAugmented, self).__init__(Aconcat, Bconcat, Qconcat, R, const, g=gconcat)
-
-    def augment(self, A, B, Q, R, Fcl, g):
-
-        """ Computes augmented matrices
-        """
-
-        # compute augmented matrices
-        nstates = A.shape[0] + Fcl.shape[0]
-        Aconcat = np.zeros((nstates, nstates))
-        Aconcat[:A.shape[0], :A.shape[0]] = copy.deepcopy(A)
-        Aconcat[A.shape[0]:, A.shape[0]:] = copy.deepcopy(Fcl)
-
-        ncontrol = B.shape[1]
-        Bconcat = np.zeros((nstates, ncontrol))
-        Bconcat[:A.shape[0], :] = copy.deepcopy(B)
-
-        Qconcat = np.zeros((nstates, nstates))
-        Qconcat[:A.shape[0], :A.shape[0]] = copy.deepcopy(Q)
-        Qconcat[A.shape[0]:, A.shape[0]:] = copy.deepcopy(Q)
-        Qconcat[:A.shape[0], A.shape[0]:] = -copy.deepcopy(Q)
-        Qconcat[A.shape[0]:, :A.shape[0]] = -copy.deepcopy(Q)
-
-        gconcat = np.zeros((nstates))
-        gconcat[A.shape[0]:] = copy.deepcopy(g)
-
-        return Aconcat, Bconcat, Qconcat, gconcat
-
-    # Recreate the augmented matrices for new tracking assignments
-    def track(self, time, jj, Fcl, g): # systems.py line 64: precompute AUG LQ Tracker Policy
-
-        """ Checks if tracker needs to be updated due to assignment change
-        """
-
-        if time == 0: # initial assignment
-            self.tracking = jj
-            Fcl = copy.deepcopy(Fcl)
-            self.nstates = self.pre_augmented_A.shape[0] + Fcl.shape[0]
-            const = np.zeros((self.nstates))
-
-            g = copy.deepcopy(g)
-            self.A, self.B, self.Q, self.g = self.augment(self.pre_augmented_A, self.pre_augmented_B,
-                                                          self.pre_augmented_Q, self.R, Fcl, g)
-            self.P = care(self.A, self.B, self.Q, self.R)
-
-            self.p = -np.linalg.solve(self.A.T - np.dot(self.P, self.BRBt), np.dot(self.P, self.g))
-
-            # steady-state
-            self.xss = np.dot(self.BRBt, self.p) - self.g
-            self.xss = np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), self.xss)
-
-            # steady-state optimal control
-            self.uss = super(LinearFeedbackAugmented, self).evaluate(0, self.xss) # subtracts const inside this function
-
-        # TEST
-        if time > 0 and self.tracking != jj: # recompute P for LQ TRACKER if assignment changes
-
-            self.tracking = jj
-            Fcl = copy.deepcopy(Fcl)
-            self.nstates = self.pre_augmented_A.shape[0] + Fcl.shape[0]
-            const = np.zeros((self.nstates))
-
-            g = copy.deepcopy(g)
-            self.A, self.B, self.Q, self.g = self.augment(self.pre_augmented_A, self.pre_augmented_B,
-                                                          self.pre_augmented_Q, self.R, Fcl, g)
-            self.P = care(self.A, self.B, self.Q, self.R)
-
-            self.Bt = copy.deepcopy(self.B.T)
-            self.RBt = np.dot(np.linalg.inv(self.R), self.Bt)
-            self.BRBt = np.dot(self.B, self.RBt)
-            self.p = -np.linalg.solve(self.A.T - np.dot(self.P, self.BRBt), np.dot(self.P, self.g))
-
-            # steady-state
-            self.xss = np.dot(self.BRBt, self.p) - self.g
-            self.xss = np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), self.xss)
-
-            # steady-state optimal control
-            self.uss = super(LinearFeedbackAugmented, self).evaluate(time, self.xss)
-
-        else:
-            return
-
-    def evaluate(self, time, state1, state2, feedforward=0):
-
-        """ Computes control input
-        """
-
-        # print("state = ", state)
-
-        aug_state = np.hstack((copy.deepcopy(state1), copy.deepcopy(state2)))
-        control = super(LinearFeedbackAugmented, self).evaluate(time, aug_state)
-        return control
-
-    # for the aug system, cost-to-go is coupled with state2 and it's dynamics
-    # thus, must re-compute P and p
-    def aug_cost_to_go(self, time, state1, state2, Fcl, g):
+    def cost_to_go(self, time, state1, const_state):
 
         """ Computes cost_to_go for a agent/target to track a single agent/target
         """
 
-        aug_state = np.hstack((copy.deepcopy(state1), copy.deepcopy(state2)))
+        error_state = state1 - const_state
 
-        Aconcat, Bconcat, Qconcat, gconcat = self.augment(self.pre_augmented_A, self.pre_augmented_B,
-                                                          self.pre_augmented_Q, self.R, Fcl, g)
+        g = np.dot(self.A, const_state)
 
-        P = care(Aconcat, Bconcat, Qconcat, self.R)
+        p = -np.linalg.solve(self.A.T - np.dot(self.P, self.BRBt), np.dot(self.P, g))
 
-        Bt = copy.deepcopy(Bconcat.T)
-        RBt = np.dot(np.linalg.inv(self.R), Bt)
-        BRBt = np.dot(Bconcat, RBt)
-        p = -np.linalg.solve(Aconcat.T - np.dot(P, BRBt), np.dot(P, gconcat))
+        g_cl = np.dot(self.B, np.dot(self.K, const_state)) - np.dot(self.B, np.dot(np.linalg.inv(self.R),
+            np.dot(self.B.T, p)))
+
+        self.tracking = None
 
         # steady-state
-        xss = np.dot(BRBt, p) - gconcat
-        xss = np.dot(np.linalg.inv(Aconcat - np.dot(BRBt.T, P)), xss)
+        xss = np.dot(self.BRBt, p) - g
+        xss = np.dot(np.linalg.inv(self.A - np.dot(self.BRBt.T, self.P)), xss)
 
         # steady-state optimal control
-        self.uss = super(LinearFeedbackAugmented, self).evaluate(time, xss)
+        # self.uss = self.evaluate(0, self.xss)
+        uss = -np.dot(self.RBt, np.dot(self.P, self.xss) + self.p)
 
-        cost_to_go = np.dot(aug_state, np.dot(P, aug_state)) + 2*np.dot(p.T, aug_state) -\
-            np.dot(xss, np.dot(P, xss)) + 2*np.dot(p.T, xss)
+        cost_to_go = np.dot(error_state, np.dot(self.P, error_state)) + 2*np.dot(p.T, error_state) -\
+            np.dot(xss, np.dot(self.P, xss)) + 2*np.dot(p.T, xss)
 
         return cost_to_go
 

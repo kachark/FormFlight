@@ -1,7 +1,6 @@
 var searchData=
 [
   ['linearfeedback',['LinearFeedback',['../class_d_o_t__assignment_1_1controls_1_1_linear_feedback.html',1,'DOT_assignment::controls']]],
-  ['linearfeedbackaugmented',['LinearFeedbackAugmented',['../class_d_o_t__assignment_1_1controls_1_1_linear_feedback_augmented.html',1,'DOT_assignment::controls']]],
   ['linearfeedbackconsttracker',['LinearFeedbackConstTracker',['../class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker.html',1,'DOT_assignment::controls']]],
   ['load_5fbatch_5fdiagnostics',['load_batch_diagnostics',['../namespace_d_o_t__assignment_1_1log.html#aee27c0ef6405589fba965574a59e74d2',1,'DOT_assignment::log']]],
   ['load_5fbatch_5fmetrics',['load_batch_metrics',['../namespace_d_o_t__assignment_1_1log.html#a8d9bed4ad94f6b0b8126c8c0305603dc',1,'DOT_assignment::log']]],

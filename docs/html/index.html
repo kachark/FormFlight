@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.15"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>DOT_Assignment: Discrete Optimal Transport for Dynamic Decision-Making</title>
+<title>FormFlight: FormFlight</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">DOT_Assignment
+   <div id="projectname">FormFlight
    &#160;<span id="projectnumber">0.1.0</span>
    </div>
   </td>
@@ -63,7 +63,7 @@ $(function() {
 
 <div class="PageDoc"><div class="header">
   <div class="headertitle">
-<div class="title">Discrete Optimal Transport for Dynamic Decision-Making </div>  </div>
+<div class="title">FormFlight </div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><h2>Table of Contents</h2>
@@ -84,14 +84,14 @@ $(function() {
 <li><a href="#acknowledgements">Acknowledgements</a></li>
 </ul>
 <h2>About The Project</h2>
-<p>This library provides a first-look at the potential that optimal transport has in the areas of task assignment, resource allocation, flight formation, and more by offering a simulation framework from which to test these scenarios. Packaged into this library are examples focused on task assignment, specifically centered around the canonical target assignment problem.</p>
-<p>The examples provided generate a scenario where an agent swarm is tasked to rendezvous with a dynamically evolving target swarm of equal size which is attempting to terminate at locations in space. A dynamic decision-maker leverages discrete optimal transport to perform the optimal assignment of agent members to target members. Comparisons are given with a standard nearest-neighbor method.</p>
-<p>The following initial formations are availble for the agent, target, and terminal state distributions:</p><ul>
+<p>This library provides a first-look at the potential that optimal transport has in the areas of task assignment, resource allocation, flight formation, and more by offering a simulation framework from which to test these scenarios. Packaged into this library are examples focused on formation flight.</p>
+<p>The examples provided generate a scenario where an agent swarm is tasked to maneuver into a stationary formation. A dynamic decision-maker leverages discrete optimal transport to perform the assignment of agent members to target members. Comparisons are given with a standard nearest-neighbor method.</p>
+<p>The following formations are availble for the agent and terminal state distributions:</p><ul>
 <li>Uniform distribution</li>
 <li>Fibonacci sphere</li>
 <li>Circle</li>
 </ul>
-<p>The available agent and target swarm dynamic models availble:</p><ul>
+<p>The available agent swarm dynamic models available:</p><ul>
 <li>Double Integrator (2D/3D)</li>
 <li>Linearized Quadcoptor (2D/3D)</li>
 </ul>
@@ -122,7 +122,7 @@ $(function() {
 <li>Clone the repo <div class="fragment"><div class="line">git clone git@bitbucket.org:goroda/targetingmdp.git</div></div><!-- fragment --></li>
 </ol>
 <h2>Usage</h2>
-<p>The workflow for DOT_assignment is as follows</p><ol type="1">
+<p>The workflow for FormFlight is as follows</p><ol type="1">
 <li>setup simulation parameters in main.py</li>
 <li>run simulation</li>
 <li>load and plot results</li>
@@ -131,28 +131,28 @@ $(function() {
 <h3>Simulation setup</h3>
 <p>main.py is the primary entry point for tweaking simulation parameters.</p>
 <p>Simulations are organized together in batches that aim to keep constant initial states operating over different assignment policies. Multiple batches can be grouped together within an ensemble to perform Monte Carlo simulations.</p>
-<p>Define number of batches </p><div class="fragment"><div class="line">nbatches = 1</div></div><!-- fragment --><p>Define simulation parameters that are constant across an ensemble of tests </p><div class="fragment"><div class="line">dt = 0.01</div><div class="line">maxtime = 5</div><div class="line">dim = 3</div><div class="line">nagents = 5</div><div class="line">ntargets = 5</div><div class="line">agent_model = &quot;Linearized_Quadcopter&quot;</div><div class="line">target_model = &quot;Linearized_Quadcopter&quot;</div><div class="line">collisions = True</div><div class="line">collision_tol = 1e-2</div><div class="line">agent_control_policy = &quot;LQR&quot;</div><div class="line">target_control_policy = &quot;LQR&quot;</div><div class="line">assignment_epoch = 10</div></div><!-- fragment --><p> NOTE: the number of agents (nagents) and number of targets (ntargets) must be equal in release v0.1.0</p>
-<p>Define simulation parameters constant across a batch, such as initial swarm formations </p><div class="fragment"><div class="line"># INITIAL SWARM DISTRIBUTIONS and TERMINAL LOCATION DISTRIBUTION</div><div class="line"># formations: uniform_distribution, circle, fibonacci_sphere</div><div class="line">initial_formation_params = {</div><div class="line">        &#39;nagents&#39;: nagents, </div><div class="line">        &#39;agent_model&#39;: agent_model, </div><div class="line">        &#39;agent_swarm_formation&#39;: &#39;uniform_distribution&#39;,</div><div class="line">        &#39;ntargets&#39;: ntargets, </div><div class="line">        &#39;target_model&#39;: target_model, </div><div class="line">        &#39;target_swarm_formation&#39;: &#39;fibonacci_sphere&#39;,</div><div class="line">        &#39;nstationary_states&#39;: ntargets, </div><div class="line">        &#39;stationary_states_formation&#39;: &#39;circle&#39;</div><div class="line">        }</div></div><!-- fragment --><p>Create simulation profile to be run within a batch</p>
-<p>The available assignment algorithms are 'AssignmentEMD' and 'AssignmentDyn'</p>
-<div class="fragment"><div class="line">dt = dt</div><div class="line">asst = &#39;AssignmentDyn&#39;</div><div class="line">sim_profile_name = &#39;dyn&#39;</div><div class="line">sim_profiles.update({sim_profile_name: {&#39;agent_model&#39;: agent_model, &#39;target_model&#39;: target_model,</div><div class="line">    &#39;agent_control_policy&#39;: agent_control_policy, &#39;target_control_policy&#39;: target_control_policy,</div><div class="line">    &#39;assignment_policy&#39;: asst, &#39;assignment_epoch&#39;: assignment_epoch, &#39;nagents&#39;: nagents, &#39;ntargets&#39;: ntargets,</div><div class="line">    &#39;collisions&#39;: collisions, &#39;collision_tol&#39;: collision_tol, &#39;dim&#39;: dim, &#39;dt&#39;: dt, &#39;maxtime&#39;: maxtime, &#39;initial_conditions&#39;: initial_conditions}})</div></div><!-- fragment --><p>See the Examples page for example simulation setups</p>
+<p>Define number of batches </p><div class="fragment"><div class="line">nbatches = 1</div></div><!-- fragment --><p>Define simulation parameters that are constant across an ensemble of tests </p><div class="fragment"><div class="line">dt = 0.01</div><div class="line">maxtime = 5</div><div class="line">dim = 3</div><div class="line">nagents = 5</div><div class="line">ntargets = 5</div><div class="line">agent_model = &quot;Linearized_Quadcopter&quot;</div><div class="line">collisions = False</div><div class="line">collision_tol = 1e-2</div><div class="line">agent_control_policy = &quot;LQR&quot;</div><div class="line">assignment_epoch = 10</div></div><!-- fragment --><p> NOTE: the number of agents (nagents) and number of targets (ntargets) must be equal in release v0.1.0</p>
+<p>Define simulation parameters constant across a batch, such as initial swarm formations </p><div class="fragment"><div class="line"># INITIAL SWARM DISTRIBUTION and TERMINAL LOCATION DISTRIBUTION</div><div class="line"># formations: uniform_distribution, circle, fibonacci_sphere</div><div class="line">initial_formation_params = {</div><div class="line">            &#39;nagents&#39;: nagents,</div><div class="line">            &#39;agent_model&#39;: agent_model,</div><div class="line">            &#39;agent_swarm_formation&#39;: agent_formation,</div><div class="line">            &#39;ntargets&#39;: ntargets,</div><div class="line">            &#39;target_swarm_formation&#39;: target_formation</div><div class="line">            }</div></div><!-- fragment --><p>Create simulation profile to be run within a batch</p>
+<p>The available assignment algorithms are 'AssignmentEMD' and a template for creating custom assignment policies. See 'AssignmentCustom'.</p>
+<div class="fragment"><div class="line">dt = dt</div><div class="line">asst = &#39;AssignmentEMD&#39;</div><div class="line">sim_profile_name = &#39;emd&#39;</div><div class="line">sim_profiles.update({sim_profile_name: {&#39;agent_model&#39;: agent_model, &#39;agent_control_policy&#39;:</div><div class="line">        agent_control_policy, &#39;agent_formation&#39;: agent_formation, &#39;target_formation&#39;:</div><div class="line">          target_formation, &#39;assignment_policy&#39;: asst, &#39;assignment_epoch&#39;: assignment_epoch,</div><div class="line">          &#39;nagents&#39;: nagents, &#39;ntargets&#39;: ntargets, &#39;collisions&#39;: collisions, &#39;collision_tol&#39;:</div><div class="line">          collision_tol, &#39;dim&#39;: dim, &#39;dt&#39;: dt, &#39;maxtime&#39;: maxtime, &#39;initial_conditions&#39;:</div><div class="line">          initial_conditions}})</div></div><!-- fragment --><p>See the Examples page for example simulation setups</p>
 <h3>Run simulation</h3>
-<p>By default, simulation batches are organized into ensembles and produce results that are stored in named folders at the root of the directory. Ensemble test folder names consist of the dimension of the simulation (2D/3D), scenario (agents V targets), dynamics model used by the agents and targets, the type of agent and target controllers and the date and time of the test.</p>
+<p>By default, simulation batches are organized into ensembles and produce results that are stored in named folders at the root of the directory. Ensemble test folder names consist of the dimension of the simulation (2D/3D), scenario ('formation'), dynamics model used by the agents, the type of agent controllers and the date and time of the test.</p>
 <p>Within each ensemble test folder will be folders named by batch number, ordered sequentially by the time they were performed. Each of these batch folders contain the individual simulation results (.csv) and diagnostics (.csv) for each simulation profile that was used.</p>
-<p>A sim_info.txt file is automatically provided in each ensemble folder which gives the details of all the ensemble -level test parameters used in the simulations along with general information.</p>
+<p>A sim_info.txt file is automatically provided in each ensemble folder which gives the details of all the ensemble-level test parameters used in the simulations along with general information.</p>
 <p>Run the ensemble of simulations </p><div class="fragment"><div class="line">python main.py</div></div><!-- fragment --><p>NOTE: python commands are run from the root of the directory</p>
 <h3>Loading and plotting data</h3>
 <p>load_sims.py will load saved test data and plot the results.</p>
 <p>All loading files must first be edited with the desired test folder to load from (ensemble_directory) and overall root directory (root_directory). Additionally, the number of agents, number of targets, agent model, target model, and dimension of the test must be editted in, similarly to was described above.</p>
 <p>In the load_sims.py, make the following edits</p>
-<p>#### Edit the simulation parameters for the folder to be loaded </p><div class="fragment"><div class="line"># SETUP</div><div class="line">#########################################################################</div><div class="line"></div><div class="line"># EDIT the following set of parameters used in the desired ensemble test folder</div><div class="line">dim = 3</div><div class="line"></div><div class="line">nagents = 5</div><div class="line">ntargets = 5</div><div class="line"></div><div class="line">agent_model = &#39;Double_Integrator&#39;</div><div class="line">target_model = &#39;Double_Integrator&#39;</div></div><!-- fragment --><p>#### Enter the correct date of the ensemble test folder </p><div class="fragment"><div class="line"># EDIT the date here to match the ensemble test folder, you would like to load </div><div class="line">ensemble_name = &#39;ensemble_0_&#39;+str(dim)+&#39;D_&#39;+str(nagents)+&#39;v&#39;+str(ntargets)+&#39;_&#39;+\</div><div class="line">         &#39;identical_&#39;+agent_model+&#39;_LQR_LQR_2019_07_31_14_06_36&#39;</div></div><!-- fragment --><p>#### Enter the path of the root directory </p><div class="fragment"><div class="line"># EDIT the root directory path here to where the ensemble test folder is located</div><div class="line"># DON&#39;T FORGET THE &#39;/&#39; at the end!</div><div class="line">root_directory = &#39;/Users/koray/Documents/GradSchool/research/gorodetsky/draper/devspace/targetingmdp/&#39;</div><div class="line"></div><div class="line"></div><div class="line">#########################################################################</div></div><!-- fragment --><p>load_sims.py will load single or all batches within an ensemble folder which is specified. In addition to the raw simulation data and post-processed results, simulation diagnostics are also plotted.</p>
+<p>#### Edit the simulation parameters for the folder to be loaded </p><div class="fragment"><div class="line"># SETUP</div><div class="line">#########################################################################</div><div class="line"></div><div class="line"># EDIT the following set of parameters used in the desired ensemble test folder</div><div class="line">dim = 3</div><div class="line"></div><div class="line">nagents = 5</div><div class="line">ntargets = 5</div><div class="line"></div><div class="line">agent_model = &#39;Double_Integrator&#39;</div><div class="line">target_model = &#39;Double_Integrator&#39;</div></div><!-- fragment --><p>#### Enter the correct date of the ensemble test folder </p><div class="fragment"><div class="line"># EDIT the date here to match the ensemble test folder, you would like to load </div><div class="line">ensemble_name = &#39;ensemble_0_&#39;+str(dim)+&#39;D_&#39;+str(nagents)+&#39;v&#39;+str(ntargets)+&#39;_&#39;+\</div><div class="line">         &#39;identical_&#39;+agent_model+&#39;_LQR_LQR_2019_07_31_14_06_36&#39;</div></div><!-- fragment --><p>#### Enter the path of the root directory </p><div class="fragment"><div class="line"># EDIT the root directory path here to where the ensemble test folder is located</div><div class="line"># DON&#39;T FORGET THE &#39;/&#39; at the end!</div><div class="line">root_directory = &#39;/Users/foo/my/project/&#39;</div><div class="line"></div><div class="line"></div><div class="line">#########################################################################</div></div><!-- fragment --><p>load_sims.py will load single or all batches within an ensemble folder which is specified. In addition to the raw simulation data and post-processed results, simulation diagnostics are also plotted.</p>
 <p>Load and plot simulations </p><div class="fragment"><div class="line">python load_sims.py</div></div><!-- fragment --><p>Additional possible visualizations include:</p><ul>
-<li>3-dimensional animation of the agent and target swarms evolving over time.</li>
-<li>Histograms using data from all ensembles in a given directory. NOTE: must specify the 'agent'V'target' scenarios of the ensembles being loaded</li>
+<li>3-dimensional animation of the agent swarm evolving over time.</li>
+<li>Histograms using data from all ensembles in a given directory. NOTE: must specify the scenario of the ensembles being loaded</li>
 </ul>
 <p>_For examples, please refer to the Examples page.</p>
-<h3>Tests</h3>
+<h3>Tests (In development)</h3>
 <p>In order to run tests:</p>
-<div class="fragment"><div class="line">python -m pytest -v tests</div></div><!-- fragment --><h3>Examples</h3>
+<div class="fragment"><div class="line">python -m pytest -v tests</div></div><!-- fragment --><h3>Examples (In development)</h3>
 <p>The Examples page showcases some basic simulation configurations and loading files that can be used to guide customization of main.py and the load__sims.py, load_ensembles.py, and animate_trajectory.py files to suit specific usecases.</p>
 <p>The simulation setups offered are:</p><ul>
 <li>Double Integrator in 3D</li>
@@ -167,25 +167,24 @@ $(function() {
 <p>NOTE: animate_3D_trajectory will only work with 3-Dimensional tests.</p>
 <h2>Roadmap</h2>
 <p>Some immediate areas of improvement include the following additions to the target-assignment scenario:</p><ul>
-<li>additional realistic dynamic models</li>
+<li>additional realistic dynamic models, stochastic models</li>
 <li>additional controllers<ul>
 <li>minimum-time intercept</li>
 <li>fuel-optimal orbit injection</li>
 </ul>
 </li>
-<li>additions to the target-assignment scenario, including waves of target swarms (ie. dynamic swarm size over time), stochastic dynamic conditions</li>
+<li>additions to the flight formation scenario, including additional formations, moving formations</li>
 <li>heterogeneous swarms</li>
 </ul>
 <h2>License</h2>
 <p>Distributed under the MIT License. See <code>LICENSE</code> for more information.</p>
-<p>TBD</p>
 <h2>Contact</h2>
 <ul>
 <li>Koray Kachar - <a href="https://www.linkedin.com/in/koray-kachar/">@linkedin</a> - <a href="#" onclick="location.href='mai'+'lto:'+'kka'+'ch'+'ar@'+'um'+'ich'+'.e'+'du'; return false;">kkach<span style="display: none;">.nosp@m.</span>ar@u<span style="display: none;">.nosp@m.</span>mich.<span style="display: none;">.nosp@m.</span>edu</a></li>
-<li>Alex Gorodetsky - <a href="https://www.alexgorodetsky.com">https://www.alexgorodetsky.com</a> - <a href="#" onclick="location.href='mai'+'lto:'+'gor'+'od'+'a@u'+'mi'+'ch.'+'ed'+'u'; return false;">gorod<span style="display: none;">.nosp@m.</span>a@um<span style="display: none;">.nosp@m.</span>ich.e<span style="display: none;">.nosp@m.</span>du</a></li>
 </ul>
 <h2>Acknowledgements</h2>
 <ul>
+<li>Alex Gorodetsky - <a href="https://www.alexgorodetsky.com">https://www.alexgorodetsky.com</a> - <a href="#" onclick="location.href='mai'+'lto:'+'gor'+'od'+'a@u'+'mi'+'ch.'+'ed'+'u'; return false;">gorod<span style="display: none;">.nosp@m.</span>a@um<span style="display: none;">.nosp@m.</span>ich.e<span style="display: none;">.nosp@m.</span>du</a></li>
 <li><a href="https://www.draper.com">Draper Laboratory</a></li>
 <li><a href="https://github.com/rflamary/POT">POT Python Optimal Transport Library</a></li>
 <li><a href="https://aero.engin.umich.edu">University of Michigan</a> </li>

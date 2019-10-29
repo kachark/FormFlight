@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.15"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>DOT_Assignment: DOT_assignment.controls.LinearFeedbackConstTracker Class Reference</title>
+<title>FormFlight: DOT_assignment.controls.LinearFeedbackConstTracker Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">DOT_Assignment
+   <div id="projectname">FormFlight
    &#160;<span id="projectnumber">0.1.0</span>
    </div>
   </td>
@@ -74,23 +74,11 @@ $(function() {
 <div class="title">DOT_assignment.controls.LinearFeedbackConstTracker Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for DOT_assignment.controls.LinearFeedbackConstTracker:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker.png" usemap="#DOT_5Fassignment.controls.LinearFeedbackConstTracker_map" alt=""/>
-  <map id="DOT_5Fassignment.controls.LinearFeedbackConstTracker_map" name="DOT_5Fassignment.controls.LinearFeedbackConstTracker_map">
-<area href="class_d_o_t__assignment_1_1controls_1_1_linear_feedback_augmented.html" alt="DOT_assignment.controls.LinearFeedbackAugmented" shape="rect" coords="0,56,328,80"/>
-  </map>
-</div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a5673a5219e7675de2bf80ea945aa33f1"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker.html#a5673a5219e7675de2bf80ea945aa33f1">__init__</a> (self, <a class="el" href="class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker.html#ae6ca89f8631d4f212e60a7bcdd1a1c7f">A</a>, B, Q, R, const, g=None)</td></tr>
+<tr class="memitem:a5673a5219e7675de2bf80ea945aa33f1"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker.html#a5673a5219e7675de2bf80ea945aa33f1">__init__</a> (self, A, B, Q, R, const, g=None)</td></tr>
 <tr class="separator:a5673a5219e7675de2bf80ea945aa33f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a908d3677c55220bf818562dc142a363b"><td class="memItemLeft" align="right" valign="top"><a id="a908d3677c55220bf818562dc142a363b"></a>
-def&#160;</td><td class="memItemRight" valign="bottom"><b>track</b> (self, time, jj)</td></tr>
-<tr class="separator:a908d3677c55220bf818562dc142a363b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a268f5fdaf81ea651387a3faa157698d2"><td class="memItemLeft" align="right" valign="top"><a id="a268f5fdaf81ea651387a3faa157698d2"></a>
 def&#160;</td><td class="memItemRight" valign="bottom"><b>evaluate</b> (self, time, state)</td></tr>
 <tr class="separator:a268f5fdaf81ea651387a3faa157698d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -118,12 +106,16 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>get_uss</b> (self)</td
 <tr class="memitem:abb47f2907bb06b2c3546c2a484a6a2b9"><td class="memItemLeft" align="right" valign="top"><a id="abb47f2907bb06b2c3546c2a484a6a2b9"></a>
 def&#160;</td><td class="memItemRight" valign="bottom"><b>get_xss</b> (self)</td></tr>
 <tr class="separator:abb47f2907bb06b2c3546c2a484a6a2b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3253c2d3d9faf407f2287d272ea36b62"><td class="memItemLeft" align="right" valign="top"><a id="a3253c2d3d9faf407f2287d272ea36b62"></a>
+def&#160;</td><td class="memItemRight" valign="bottom"><b>set_const</b> (self, time, target_id, const)</td></tr>
+<tr class="separator:a3253c2d3d9faf407f2287d272ea36b62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3b7206cce744da499d83896c1c2dc27"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker.html#ab3b7206cce744da499d83896c1c2dc27">cost_to_go</a> (self, time, state1, const_state)</td></tr>
+<tr class="separator:ab3b7206cce744da499d83896c1c2dc27"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:ae6ca89f8631d4f212e60a7bcdd1a1c7f"><td class="memItemLeft" align="right" valign="top"><a id="ae6ca89f8631d4f212e60a7bcdd1a1c7f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_o_t__assignment_1_1controls_1_1_linear_feedback_const_tracker.html#ae6ca89f8631d4f212e60a7bcdd1a1c7f">A</a></td></tr>
-<tr class="memdesc:ae6ca89f8631d4f212e60a7bcdd1a1c7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">DEBUG print("\n\n\n\n\n") print("A = ") print(A) print("B = ") print(B) print("Q = ") print(Q) print("R = ") print(R) <br /></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>A</b></td></tr>
 <tr class="separator:ae6ca89f8631d4f212e60a7bcdd1a1c7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1fb3b13eca8607104c74088e2190c1b"><td class="memItemLeft" align="right" valign="top"><a id="ae1fb3b13eca8607104c74088e2190c1b"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>B</b></td></tr>
@@ -241,8 +233,48 @@ Input:
 - R:            control weighting matrix for control inputs
 - const:        constant state to track
 - g:            state to track in error dynamics system</pre> 
-<p>Reimplemented in <a class="el" href="class_d_o_t__assignment_1_1controls_1_1_linear_feedback_augmented.html#adaa4957b87782b3bd7df59ff4ab36080">DOT_assignment.controls.LinearFeedbackAugmented</a>.</p>
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="ab3b7206cce744da499d83896c1c2dc27"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3b7206cce744da499d83896c1c2dc27">&#9670;&nbsp;</a></span>cost_to_go()</h2>
 
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def DOT_assignment.controls.LinearFeedbackConstTracker.cost_to_go </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>time</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>state1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>const_state</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Computes cost_to_go for a agent/target to track a single agent/target
+</pre> 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>

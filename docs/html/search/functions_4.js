@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['fibonacci_5fsphere',['fibonacci_sphere',['../namespace_d_o_t__assignment_1_1setup.html#a7e2f8ba24cedf939649b3cd695c303f4',1,'DOT_assignment::setup']]],
-  ['find_5fswitches',['find_switches',['../namespacepost__process.html#a1192f5e66dab82fd1c9a577784853d38',1,'post_process']]]
+  ['generate_5finitial_5fconditions',['generate_initial_conditions',['../namespace_d_o_t__assignment_1_1setup.html#a8beda6cfa86fe6bed2f106b9a340637b',1,'DOT_assignment::setup']]]
 ];

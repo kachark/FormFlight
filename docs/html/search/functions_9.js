@@ -1,27 +1,9 @@
 var searchData=
 [
-  ['plot_5fassignment_5fcomp_5ftime',['plot_assignment_comp_time',['../namespaceplot.html#a4aaddd2ee72a3518cb543c50095c6489',1,'plot']]],
-  ['plot_5fassignments',['plot_assignments',['../namespaceplot.html#adbe4a880d658eef510387e828d07beb7',1,'plot']]],
-  ['plot_5fbatch_5fdiagnostics',['plot_batch_diagnostics',['../namespacepost__process.html#ad0319250940975f4989aef2f6e3a96b7',1,'post_process']]],
-  ['plot_5fbatch_5fperformance_5fmetrics',['plot_batch_performance_metrics',['../namespacepost__process.html#aa4445a673ad2b57be4e22fe0e1cf2413',1,'post_process']]],
-  ['plot_5fcost_5fhistogram',['plot_cost_histogram',['../namespaceplot.html#a68b5e0433f49ae13ceb7df2cc74b9911',1,'plot']]],
-  ['plot_5fcosts',['plot_costs',['../namespaceplot.html#a5f23bc00f5f8588e6c3de940ff5a0b28',1,'plot']]],
-  ['plot_5fensemble_5favg_5fruntime',['plot_ensemble_avg_runtime',['../namespaceplot.html#a5f49d0a04a95306f00e03a27d4c0cdf2',1,'plot']]],
-  ['plot_5fensemble_5favg_5fswitch',['plot_ensemble_avg_switch',['../namespaceplot.html#a27a576db25c863b2ab7d69cf99fe752a',1,'plot']]],
-  ['plot_5fensemble_5fcost_5fhistogram',['plot_ensemble_cost_histogram',['../namespaceplot.html#ac2c45ae26abb51de90367c1c70e32ff2',1,'plot']]],
-  ['plot_5fensemble_5fdiagnostic_5fcomparison',['plot_ensemble_diagnostic_comparison',['../namespacepost__process.html#ac6e21bb76233fe218be2b64d33122a0b',1,'post_process']]],
-  ['plot_5fensemble_5fdiagnostics',['plot_ensemble_diagnostics',['../namespacepost__process.html#a32f70cf0b6377a438888111e013d4ca2',1,'post_process']]],
-  ['plot_5fensemble_5fhistograms',['plot_ensemble_histograms',['../namespacepost__process.html#a37ffa7064da3200fff3a6dda3a5787d5',1,'post_process']]],
-  ['plot_5fensemble_5fmetric_5fcomparisons',['plot_ensemble_metric_comparisons',['../namespacepost__process.html#a1c9f01d3b7c28ba49dfc907d77a129e0',1,'post_process']]],
-  ['plot_5fensemble_5fswitch_5fhistogram',['plot_ensemble_switch_histogram',['../namespaceplot.html#a12a2f66559fa523476ed631c3eb7e30e',1,'plot']]],
-  ['plot_5fruntime_5fhistogram',['plot_runtime_histogram',['../namespaceplot.html#a9d05c6f2e6eef461ec8c439e75431cef',1,'plot']]],
-  ['plot_5fruntimes',['plot_runtimes',['../namespaceplot.html#ac876087b1280d54a7321c131b94a51b4',1,'plot']]],
-  ['plot_5ftrajectory',['plot_trajectory',['../namespaceplot.html#ac25b7a327efbae3be2f6112eb8d73f6e',1,'plot']]],
-  ['plot_5ftrajectory_5fqc',['plot_trajectory_qc',['../namespaceplot.html#aa7cee01861bd94b58f7cd046176da3f9',1,'plot']]],
-  ['post_5fprocess_5fbatch_5fdiagnostics',['post_process_batch_diagnostics',['../namespacepost__process.html#a5b319220652a268ee1dcbb710f38b420',1,'post_process']]],
-  ['post_5fprocess_5fbatch_5fsimulation',['post_process_batch_simulation',['../namespacepost__process.html#a2009d5938a8919bd33d7d274148e5263',1,'post_process']]],
-  ['post_5fprocess_5fheterogeneous',['post_process_heterogeneous',['../namespacepost__process.html#a03fb7a7f49933480f1162e53995ca131',1,'post_process']]],
-  ['post_5fprocess_5fhomogeneous_5fidentical',['post_process_homogeneous_identical',['../namespacepost__process.html#aed2ed4226d6805a549be6b3e9c9ec72d',1,'post_process']]],
-  ['post_5fprocess_5fhomogeneous_5fnonidentical',['post_process_homogeneous_nonidentical',['../namespacepost__process.html#a11b9639a84b126d743bb26abe37ad8bc',1,'post_process']]],
-  ['pre_5fprocess',['pre_process',['../class_d_o_t__assignment_1_1systems_1_1_one_v_one.html#a4056ed3fbb2f274091018b67b9183348',1,'DOT_assignment::systems::OneVOne']]]
+  ['rhs',['rhs',['../class_d_o_t__assignment_1_1dynamics_1_1_l_t_i_dyn.html#a0dc3f0dfdbdc223af24ca048858ec02e',1,'DOT_assignment::dynamics::LTIDyn']]],
+  ['run',['run',['../class_d_o_t__assignment_1_1engine_1_1_engine.html#ae7c65ec5d3ca05e3e23de9cdf8927639',1,'DOT_assignment::engine::Engine']]],
+  ['run_5fidentical_5fdoubleint_5f2d',['run_identical_doubleint_2D',['../namespace_d_o_t__assignment_1_1run.html#ad2a4db4a40619bcf8f16e52cfb8b4bd6',1,'DOT_assignment::run']]],
+  ['run_5fidentical_5fdoubleint_5f3d',['run_identical_doubleint_3D',['../namespace_d_o_t__assignment_1_1run.html#abbf8223c20f4b28e56f84875d66b8a52',1,'DOT_assignment::run']]],
+  ['run_5fidentical_5flinearized_5fquadcopter_5f2d',['run_identical_linearized_quadcopter_2D',['../namespace_d_o_t__assignment_1_1run.html#aa2c67e214eb5e95cc9fb3a874c49da05',1,'DOT_assignment::run']]],
+  ['run_5fidentical_5flinearized_5fquadcopter_5f3d',['run_identical_linearized_quadcopter_3D',['../namespace_d_o_t__assignment_1_1run.html#ab24ec46198cb710a165623079674d8b2',1,'DOT_assignment::run']]]
 ];

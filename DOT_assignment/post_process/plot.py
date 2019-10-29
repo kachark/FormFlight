@@ -62,7 +62,7 @@ def plot_costs(unpacked):
         label = sim_name.split('Assignment', 1)[1]
 
         ### cost plots
-        if sim_name == 'AssignmentDyn':
+        if sim_name == 'AssignmentCustom':
             # axs.plot(tout, summed_opt_cost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching')
             # axs.plot(tout, np.sum(final_cost, axis=1), '--c', label='Cum. Stage Cost'+' '+sim_name)
             # axs.plot(tout, np.sum(cost_to_go, axis=1), '--r', label='Cost-to-go'+' '+sim_name)
@@ -83,8 +83,16 @@ def plot_costs(unpacked):
 
     # reorder the legend terms
     handles, labels = axs.get_legend_handles_labels()
-    labels = [labels[1], labels[0], labels[2], labels[3]]
-    handles = [handles[1], handles[0], handles[2], handles[3]]
+    #TODO hardcoded - fix
+    try:
+        labels = [labels[1], labels[0], labels[2], labels[3]]
+        handles = [handles[1], handles[0], handles[2], handles[3]]
+    except IndexError:
+        # # DYN
+        # labels = [labels[1], labels[0]]
+        # handles = [handles[1], handles[0]]
+        labels = [labels[1], labels[0]]
+        handles = [handles[1], handles[0]]
 
     axs.legend(handles, labels, loc='center right', bbox_to_anchor=(1.0, 0.25), fontsize=fontsize)
 
@@ -245,7 +253,7 @@ def plot_assignments(unpacked):
         #     assigned_to_targets = assignment
         #     # ax.plot(agents, assigned_to_targets, marker='s', label='Assignment{0}'.format(asst_num))
         #     ax.plot(agents, assigned_to_targets, label='Assignment{0}'.format(asst_num))
-        #     # if sim_name != 'AssignmentDyn':
+        #     # if sim_name != 'AssignmentCustom':
         #     #     ax.fill_between(agents, assigned_to_targets, asst_to_plot[1], color='blue')
         # ax.set_xlabel('agents')
         # ax.set_ylabel('targets')
@@ -416,7 +424,7 @@ def plot_trajectory(unpacked):
 
         assignment_switches = post_process.find_switches(tout, yout, nagents, ntargets, dx, dx)
 
-        agent_traj_label = 'Agent Path (Dyn)'
+        agent_traj_label = 'Agent Path (Custom)'
         agent_start_pt_label = 'Agent Start'
         target_start_pt_label = 'Target Start'
         target_traj_label = 'Target Path'
@@ -440,7 +448,7 @@ def plot_trajectory(unpacked):
 
             ### Agent / Target Trajectories
             # optimal trajectories (solid lines)
-            if sim_name == 'AssignmentDyn':
+            if sim_name == 'AssignmentCustom':
 
                 for zz in range(nagents):
 
@@ -542,7 +550,7 @@ def plot_trajectory(unpacked):
         if dim == 3:
 
             # optimal trajectories (solid lines)
-            if sim_name == 'AssignmentDyn':
+            if sim_name == 'AssignmentCustom':
 
                 # agent/target trajectories
                 for zz in range(nagents):
@@ -745,7 +753,7 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
 
         ### Agent / Target Trajectories
         # optimal trajectories (solid lines)
-        if sim_name == 'AssignmentDyn':
+        if sim_name == 'AssignmentCustom':
 
             for zz in range(nagents):
 
@@ -849,7 +857,7 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
     if dim == 3:
 
         # optimal trajectories (solid lines)
-        if sim_name == 'AssignmentDyn':
+        if sim_name == 'AssignmentCustom':
 
             # agent/target trajectories
             for zz in range(nagents):
@@ -1082,7 +1090,7 @@ def plot_runtimes(unpacked_ensemble_diagnostic):
     axs.xaxis.set_tick_params(labelsize=labelsize)
     axs.yaxis.set_tick_params(labelsize=labelsize)
 
-    labels = ['Dyn', 'EMD']
+    labels = ['Custom', 'EMD']
     axs.set_xlabel('Simulation', fontsize=fontsize)
     axs.set_ylabel('Runtime (s)', fontsize=fontsize)
 
