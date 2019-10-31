@@ -31,27 +31,22 @@ from DOT_assignment.log import (
 )
 
 
-def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy):
+def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, agent_control_policy,
+        target_formation):
 
     """ Returns ensemble name
 
     """
 
-    identical = (agent_model==target_model)
-    if identical:
-        ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + '_' +\
-                str(nagents) + 'v' + str(ntargets) + '_identical_' + agent_model + '_' + agent_control_policy + '_' +\
-                target_control_policy + '_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
-    else:
-        ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + \
-                '_' + str(nagents) + 'v' + str(ntargets) + agent_model + '_' + target_model + '_' + agent_control_policy + '_' +\
-                target_control_policy + '_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+    ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + '_' +\
+            str(nagents) + '_' + str(ntargets) + '_' + target_formation + '_' + agent_control_policy + '_' +\
+            '_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
 
     return ensemble_name
 
 def main():
 
-    """ Linearized quadcopter agent and target swarms in 3D
+    """ main function
 
     Setup ensemble, batch, and individual simulation parameters
     Create new directory to store ensemble, batch, and individual simulation results
@@ -78,47 +73,44 @@ def main():
     batch_simulation = []
     nbatches = 1
 
-    ## @code
     # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
     dt = 0.01
     maxtime = 5
     dim = 3
     nagents = 5
     ntargets = 5
+    # agent_model = "Double_Integrator"
     agent_model = "Linearized_Quadcopter"
-    target_model = "Linearized_Quadcopter"
-    collisions = True
-    collision_tol = 1e-2
+    agent_formation = 'uniform_distribution'
+    target_formation = 'circle'
+    collisions = False
+    collision_tol = 1e-1
     agent_control_policy = "LQR"
-    target_control_policy = "LQR"
     assignment_epoch = 10
-    ## @endcode
 
     # Create directory for storage
     nensemble = 0
 
     # TODO ensemble should not default to 'identical'
-    # ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy)
-    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_'+agent_model+'_LQR_LQR_LINEARIZED_QUADCOPTER_3D_EXAMPLE'
+    # ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, agent_control_policy, target_formation)
+    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+agent_formation+'_LQR_LINEARIZED_QUADCOPTER_3D_EXAMPLE'
 
     # root_directory = './'
     root_directory = os.getcwd() + '/'
     ensemble_directory = root_directory + ensemble_name
 
-    # create directory to store ensemble
+#     # create directory to store ensemble
     try:
         os.makedirs(ensemble_directory)
     except FileExistsError:
         # directory already exists
         pass
 
-    # TODO assumes heterogeneous swarms
+    # TODO assumes homogeneous swarms
     # formations: uniform_distribution, circle, fibonacci_sphere
     initial_formation_params = {
-            'nagents': nagents, 'agent_model': agent_model, 'agent_swarm_formation': 'uniform_distribution',
-            'ntargets': ntargets, 'target_model': target_model, 'target_swarm_formation': 'fibonacci_sphere',
-            'nstationary_states': ntargets, 'stationary_states_formation': 'circle'
+            'nagents': nagents, 'agent_model': agent_model, 'agent_swarm_formation': agent_formation,
+            'ntargets': ntargets, 'target_swarm_formation': target_formation
             }
 
     # CONSTRUCT ENSEMBLE OF SIMULATIONS
@@ -138,19 +130,23 @@ def main():
         dt = dt
         asst = 'AssignmentEMD'
         sim_profile_name = 'emd'
-        sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
-            'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
-            'assignment_policy': asst, 'assignment_epoch': assignment_epoch, 'nagents': nagents, 'ntargets': ntargets,
-            'collisions': collisions, 'collision_tol': collision_tol, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
+        sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'agent_control_policy':
+            agent_control_policy, 'agent_formation': agent_formation, 'target_formation':
+            target_formation, 'assignment_policy': asst, 'assignment_epoch': assignment_epoch,
+            'nagents': nagents, 'ntargets': ntargets, 'collisions': collisions, 'collision_tol':
+            collision_tol, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions':
+            initial_conditions}})
 
-        # DYN parameters
+        # Custom Assignment parameters
         dt = dt
-        asst = 'AssignmentDyn'
+        asst = 'AssignmentCustom'
         sim_profile_name = 'dyn'
-        sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'target_model': target_model,
-            'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy,
-            'assignment_policy': asst, 'assignment_epoch': assignment_epoch, 'nagents': nagents, 'ntargets': ntargets,
-            'collisions': collisions, 'collision_tol': collision_tol, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions': initial_conditions}})
+        sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'agent_control_policy':
+            agent_control_policy, 'agent_formation': agent_formation, 'target_formation':
+            target_formation, 'assignment_policy': asst, 'assignment_epoch': assignment_epoch,
+            'nagents': nagents, 'ntargets': ntargets, 'collisions': collisions, 'collision_tol':
+            collision_tol, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions':
+            initial_conditions}})
 
         ########################################
 
@@ -184,9 +180,7 @@ def main():
             statespace = sim["statespace"]
             x0 = sim["x0"]
             ltidyn = sim["agent_dyn"]
-            target_dyn = sim["target_dyns"]
             poltrack = sim["agent_pol"]
-            poltargets = sim["target_pol"]
             assignment_pol = sim["asst_pol"]
             assignment_epoch = sim["asst_epoch"]
             nagents = sim["nagents"]
@@ -195,9 +189,9 @@ def main():
 
             # Other simulation information
             agent_model = sim["agent_model"]
-            target_model = sim["target_model"]
             agent_control_policy = sim["agent_control_policy"]
-            target_control_policy = sim["target_control_policy"]
+            agent_formation = sim["agent_formation"]
+            target_formation = sim["target_formation"]
 
             # run simulation
             results, diagnostics = runner(
@@ -206,9 +200,7 @@ def main():
                 statespace,
                 x0,
                 ltidyn,
-                target_dyn,
                 poltrack,
-                poltargets,
                 assignment_pol,
                 assignment_epoch,
                 nagents,
@@ -225,7 +217,6 @@ def main():
                 "targets",
                 "data",
                 "tracking_policy",
-                "target_pol",
                 "nagents",
                 "ntargets",
                 "asst_cost",
@@ -247,9 +238,7 @@ def main():
                 "du": du,
                 "statespace": statespace,
                 "agent_model": agent_model,
-                "target_model": target_model,
                 "agent_control_policy": agent_control_policy,
-                "target_control_policy": target_control_policy,
                 "collisions": collisions,
                 "collision_tol": collision_tol,
                 "assignment_epoch": assignment_epoch
@@ -276,10 +265,10 @@ def main():
         # collect diagnostics
         packed_batch_diagnostics = post_process_batch_diagnostics(batch_diagnostics) # returns dict
 
-        # # DEBUG
-        # plot_batch_performance_metrics(batch_performance_metrics)
-        # plot_batch_diagnostics(packed_batch_diagnostics)
-        # plt.show()
+#         # DEBUG
+#         plot_batch_performance_metrics(batch_performance_metrics)
+#         plot_batch_diagnostics(packed_batch_diagnostics)
+#         plt.show()
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
         save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, batch_name)
@@ -287,11 +276,17 @@ def main():
         # store batch results (useful for saving multiple ensembles)
         # ensemble_results.update({batch_name: batch_results})
 
-    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim, 'nagents': nagents, 'ntargets': ntargets, 'agent_model': agent_model, 'target_model': target_model, 'collisions': collisions, 'collision_tol': collision_tol, 'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy, 'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name, 'ensemble_directory': ensemble_directory}
+    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim,
+            'nagents': nagents, 'ntargets': ntargets, 'agent_model': agent_model, 'agent_formation':
+            agent_formation, 'target_formation': target_formation, 'collisions': collisions,
+            'collision_tol': collision_tol, 'agent_control_policy': agent_control_policy,
+            'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name,
+            'ensemble_directory': ensemble_directory}
 
     print("done!")
 
     return test_conditions
+
 
 def secondsToStr(elapsed=None):
 

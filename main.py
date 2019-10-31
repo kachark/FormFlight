@@ -68,8 +68,8 @@ def main():
     dt = 0.01
     maxtime = 5
     dim = 3
-    nagents = 2
-    ntargets = 2
+    nagents = 10
+    ntargets = 10
     # agent_model = "Double_Integrator"
     agent_model = "Linearized_Quadcopter"
     agent_formation = 'uniform_distribution'
@@ -266,7 +266,13 @@ def main():
         # store batch results (useful for saving multiple ensembles)
         # ensemble_results.update({batch_name: batch_results})
 
-    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim, 'nagents': nagents, 'ntargets': ntargets, 'agent_model': agent_model, 'target_model': target_model, 'collisions': collisions, 'collision_tol': collision_tol, 'agent_control_policy': agent_control_policy, 'target_control_policy': target_control_policy, 'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name, 'ensemble_directory': ensemble_directory}
+    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim,
+            'nagents': nagents, 'ntargets': ntargets, 'agent_model': agent_model, 'agent_formation':
+            agent_formation, 'target_formation': target_formation, 'collisions': collisions,
+            'collision_tol': collision_tol, 'agent_control_policy': agent_control_policy,
+            'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name,
+            'ensemble_directory': ensemble_directory}
+
 
     print("done!")
 

@@ -15,7 +15,8 @@
 * [Contact](#contact)
 * [Acknowledgements](#acknowledgements)
 
-
+![Quadcopters moving into formation]
+(https://github.com/kachark/FormFlight/tree/master/images/multi_agent_formation.png_)
 
 ## About The Project
 
@@ -32,7 +33,7 @@ The available agent swarm dynamic models available:
 * Double Integrator (2D/3D)
 * Linearized Quadcoptor (2D/3D)
 
-The available agent and target swarm controllers:
+The available agent swarm controllers:
 * Linearized Quadratic Tracker
 
 Some demonstrations are available in the examples folder.
@@ -192,14 +193,15 @@ nagents = 5
 ntargets = 5
 
 agent_model = 'Double_Integrator'
-target_model = 'Double_Integrator'
 ```
 
 #### Enter the correct date of the ensemble test folder
 ```python
 # EDIT the date here to match the ensemble test folder, you would like to load 
-ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-         'identical_'+agent_model+'_LQR_LQR_2019_07_31_14_06_36'
+ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + '_' +\
+        str(nagents) + '_' + str(ntargets) + '_' + target_formation + '_' + agent_control_policy + '_' +\
+        '_' + 2019_07_31_14_06_36'
+
 ```
 
 #### Enter the path of the root directory

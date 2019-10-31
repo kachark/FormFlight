@@ -22,6 +22,7 @@ from DOT_assignment import log
 from DOT_assignment.post_process import post_process
 
 ### TEST ANIMATION
+# TODO CLEANUP
 
 def get_trajectory(unpacked):
 
@@ -78,18 +79,16 @@ def get_trajectory(unpacked):
         # TEST # TODO REMOVE EVENTUALLY
         if dx == 12:
             agent_model = 'Linearized_Quadcopter'
-            target_model = 'Linearized_Quadcopter'
             labels = [agent_traj_label, agent_start_pt_label, target_start_pt_label, target_traj_label, stationary_pt_label]
             get_trajectory_qc(unpacked)
             continue
         if dx == 6:
             agent_model = 'Double_Integrator'
-            target_model = 'Double_Integrator'
 
         if dim == 3:
 
             # optimal trajectories (solid lines)
-            if sim_name == 'AssignmentDyn':
+            if sim_name == 'AssignmentCustom':
 
                 # agent/target trajectories
                 for zz in range(nagents):
@@ -122,17 +121,6 @@ def get_trajectory(unpacked):
                     ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
 
                     targets.append(y_target[:, 0:3])
-
-                ### stationary points
-                for zz in range(ntargets):
-
-                    if zz >= 1:
-                        stationary_pt_label = '__nolabel__'
-
-                    offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
-                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -169,16 +157,6 @@ def get_trajectory(unpacked):
                     ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
                     ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
                     ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
-
-                # stationary locations
-                for zz in range(ntargets):
-                    offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[0], offset[1], offset[2], color='k')
-                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
-                ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-                ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-                ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
 
         # dim = 3
 
@@ -257,13 +235,12 @@ def get_trajectory_qc(unpacked):
         # TEST # TODO REMOVE EVENTUALLY
         if dx == 12:
             agent_model = 'Linearized_Quadcopter'
-            target_model = 'Linearized_Quadcopter'
             labels = [agent_traj_label, agent_start_pt_label, target_start_pt_label, target_traj_label, stationary_pt_label]
 
         if dim == 3:
 
             # optimal trajectories (solid lines)
-            if sim_name == 'AssignmentDyn':
+            if sim_name == 'AssignmentCustom':
 
                 # agent/target trajectories
                 for zz in range(nagents):
@@ -296,17 +273,6 @@ def get_trajectory_qc(unpacked):
                     ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
 
                     targets.append(y_target[:, 0:3])
-
-                ### stationary points
-                for zz in range(ntargets):
-
-                    if zz >= 1:
-                        stationary_pt_label = '__nolabel__'
-
-                    offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
-                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -343,16 +309,6 @@ def get_trajectory_qc(unpacked):
                     ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
                     ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
                     ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
-
-                # stationary locations
-                for zz in range(ntargets):
-                    offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[0], offset[1], offset[2], color='k')
-                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
-                ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-                ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-                ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
 
         # dim = 3
 
@@ -395,11 +351,10 @@ nagents = 5
 ntargets = 5
 
 agent_model = 'Linearized_Quadcopter'
-target_model = 'Linearized_Quadcopter'
+agent_formation = 'uniform_distribution'
 
 # EDIT the date here to match the ensemble test folder, you would like to load
-ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-        'identical_'+agent_model+'_LQR_LQR_LINEARIZED_QUADCOPTER_3D_EXAMPLE'
+ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+agent_formation+'_LQR_LINEARIZED_QUADCOPTER_3D_EXAMPLE'
 
 root_directory = os.getcwd() + '/'
 ensemble_directory = root_directory + ensemble_name
@@ -409,7 +364,7 @@ batch_dirs = [x[0] for x in os.walk(ensemble_directory)]
 nbatches = len(batch_dirs[1:])
 
 # load batches and plot
-sim_name_list = ['AssignmentDyn', 'AssignmentEMD']
+sim_name_list = ['AssignmentCustom', 'AssignmentEMD']
 
 # EDIT select specific batch you want to animate
 # load and plot a specific batch
