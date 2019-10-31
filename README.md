@@ -2,6 +2,8 @@
 
 # FormFlight
 
+<img src="/images/multi_agent_formation.png" width="400">
+
 ## Table of Contents
 
 * [About the Project](#about-the-project)
@@ -15,7 +17,6 @@
 * [Contact](#contact)
 * [Acknowledgements](#acknowledgements)
 
-<img src="/images/multi_agent_formation.png" width="400">
 
 ## About The Project
 
