@@ -15,8 +15,7 @@
 * [Contact](#contact)
 * [Acknowledgements](#acknowledgements)
 
-![Quadcopters moving into formation]
-(https://github.com/kachark/FormFlight/tree/master/images/multi_agent_formation.png_)
+<img src="/images/multi_agent_formation.png" width="400">
 
 ## About The Project
 
