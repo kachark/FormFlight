@@ -1198,7 +1198,7 @@ def save_ensemble_metrics(ensemble_performance_metrics, ensemble_name):
 
     df = pd.DataFrame(unpacked_ensemble_fc_asst)
 
-    root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/final_costs_assignments/'
+    root_directory = '/Users/foo/my/project/'
     directory = root_directory + ensemble_name
 
     try:

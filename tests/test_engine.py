@@ -36,7 +36,7 @@ def sim_params_ex():
     # TODO ensemble should not default to 'identical'
     ensemble_name = 'TEST_ENSEMBLE'
 
-    root_directory = '/Users/koray/Box Sync/test_results/'
+    root_directory = '/Users/foo/my/project/'
     ensemble_directory = root_directory + ensemble_name
 
     # TODO assumes heterogeneous swarms
