@@ -37,11 +37,11 @@ if __name__ == "__main__":
     ntargets = 10
 
     agent_model = 'Double_Integrator'
-    target_model = 'Double_Integrator'
+    agent_formation = 'uniform_distribution'
+    target_formation = 'circle'
 
     # EDIT the date here to match the ensemble test folder, you would like to load
-    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-            'identical_'+agent_model+'_LQR_LQR_DOUBLE_INTEGRATOR_3D_EXAMPLE'
+    ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+agent_formation+'_LQR_DOUBLE_INTEGRATOR_3D_EXAMPLE'
 
     # EDIT the root directory path here to where the ensemble test folder is located
     root_directory = os.getcwd() + '/'
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     nbatches = len(batch_dirs[1:])
 
     # load batches and plot
-    sim_name_list = ['AssignmentDyn', 'AssignmentEMD']
+    sim_name_list = ['AssignmentCustom', 'AssignmentEMD']
 
     # # load and plot every batch within ensemble
     # for ii in range(nbatches):

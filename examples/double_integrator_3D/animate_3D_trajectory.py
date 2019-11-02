@@ -89,7 +89,7 @@ def get_trajectory(unpacked):
         if dim == 3:
 
             # optimal trajectories (solid lines)
-            if sim_name == 'AssignmentDyn':
+            if sim_name == 'AssignmentCustom':
 
                 # agent/target trajectories
                 for zz in range(nagents):
@@ -122,17 +122,6 @@ def get_trajectory(unpacked):
                     ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
 
                     targets.append(y_target[:, 0:3])
-
-                ### stationary points
-                for zz in range(ntargets):
-
-                    if zz >= 1:
-                        stationary_pt_label = '__nolabel__'
-
-                    offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
-                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -169,12 +158,6 @@ def get_trajectory(unpacked):
                     ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
                     ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
                     ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
-
-                # stationary locations
-                for zz in range(ntargets):
-                    offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[0], offset[1], offset[2], color='k')
-                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -248,7 +231,7 @@ def get_trajectory_qc(unpacked):
 
         assignment_switches = post_process.find_switches(tout, yout, nagents, ntargets, dx, dx)
 
-        agent_traj_label = 'Agent Path (Dyn)'
+        agent_traj_label = 'Agent Path (Custom)'
         agent_start_pt_label = 'Agent Start'
         target_start_pt_label = 'Target Start'
         target_traj_label = 'Target Path'
@@ -263,7 +246,7 @@ def get_trajectory_qc(unpacked):
         if dim == 3:
 
             # optimal trajectories (solid lines)
-            if sim_name == 'AssignmentDyn':
+            if sim_name == 'AssignmentCustom':
 
                 # agent/target trajectories
                 for zz in range(nagents):
@@ -296,17 +279,6 @@ def get_trajectory_qc(unpacked):
                     ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
 
                     targets.append(y_target[:, 0:3])
-
-                ### stationary points
-                for zz in range(ntargets):
-
-                    if zz >= 1:
-                        stationary_pt_label = '__nolabel__'
-
-                    offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
-                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -343,12 +315,6 @@ def get_trajectory_qc(unpacked):
                     ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
                     ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
                     ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
-
-                # stationary locations
-                for zz in range(ntargets):
-                    offset = stationary_states[zz*dx:(zz+1)*dx]
-                    ax.scatter3D(offset[0], offset[1], offset[2], color='k')
-                    ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
 
                 ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
                 ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -395,11 +361,11 @@ nagents = 10
 ntargets = 10
 
 agent_model = 'Double_Integrator'
-target_model = 'Double_Integrator'
+agent_formation = 'uniform_distribution'
+target_formation = 'circle'
 
 # EDIT the date here to match the ensemble test folder, you would like to load
-ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+\
-        'identical_'+agent_model+'_LQR_LQR_DOUBLE_INTEGRATOR_3D_EXAMPLE'
+ensemble_name = 'ensemble_0_'+str(dim)+'D_'+str(nagents)+'v'+str(ntargets)+'_'+agent_formation+'_LQR_DOUBLE_INTEGRATOR_3D_EXAMPLE'
 
 root_directory = os.getcwd() + '/'
 ensemble_directory = root_directory + ensemble_name
@@ -409,7 +375,7 @@ batch_dirs = [x[0] for x in os.walk(ensemble_directory)]
 nbatches = len(batch_dirs[1:])
 
 # load batches and plot
-sim_name_list = ['AssignmentDyn', 'AssignmentEMD']
+sim_name_list = ['AssignmentCustom', 'AssignmentEMD']
 
 # EDIT select specific batch you want to animate
 # load and plot a specific batch
