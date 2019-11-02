@@ -72,11 +72,11 @@ pip install pytest
 
 ### Installation
 
-To download this package from the online git repository (currently not publically available):
+To download this package from the online git repository:
  
 1. Clone the repo
 ```sh
-git clone git@bitbucket.org:goroda/targetingmdp.git
+git clone https://github.com/kachark/FormFlight.git
 ```
 
 
@@ -89,7 +89,7 @@ The workflow for FormFlight is as follows
 
 main.py creates the test data directory under the following format:
 ```sh
-ensemble_0_<dimension>_<#agentsV#targets>_identical_<agent/target model>_<agent controller>_<target_controller>_<date/time>
+ensemble_0_<dimension>_<#agentsV#targets>_<agent model>_<agent start formation>_<agent controller>_<date/time>
 ```
 
 Once a test is run, the user must provide the information of the new test folder into the load_sims.py (or equivalent) file to properly load and plot the results. 
@@ -199,7 +199,7 @@ agent_model = 'Double_Integrator'
 ```python
 # EDIT the date here to match the ensemble test folder, you would like to load 
 ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + '_' +\
-        str(nagents) + '_' + str(ntargets) + '_' + target_formation + '_' + agent_control_policy + '_' +\
+        str(nagents) + '_' + str(ntargets) + '_' + agent_model + '_' + agent_formation + '_' + agent_controller +\
         '_' + 2019_07_31_14_06_36'
 
 ```
