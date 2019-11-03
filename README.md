@@ -2,7 +2,8 @@
 
 # FormFlight
 
-<img src="/images/multi_agent_formation.png" width="400">
+![](https://github.com/kachark/FormFlight/blob/master/images/circle_formation.gif)
+15 quadcopters with randomized initial states flying into formation
 
 ## Table of Contents
 
