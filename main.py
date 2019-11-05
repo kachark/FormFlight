@@ -68,8 +68,8 @@ def main():
     dt = 0.01
     maxtime = 5
     dim = 3
-    nagents = 10
-    ntargets = 10
+    nagents = 5
+    ntargets = 5
     # agent_model = "Double_Integrator"
     agent_model = "Linearized_Quadcopter"
     agent_formation = 'uniform_distribution'
@@ -89,6 +89,8 @@ def main():
     root_directory = os.getcwd() + '/'
     ensemble_directory = root_directory + ensemble_name
 
+# TODO saving results disabled! - DEBUGGING
+# uncomment below and comment out lines 261, 262, 263 to stop save results
 #     # create directory to store ensemble
 #     try:
 #         os.makedirs(ensemble_directory)

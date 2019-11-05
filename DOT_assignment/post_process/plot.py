@@ -715,7 +715,7 @@ def plot_trajectory(unpacked):
         # handles = [handles[1], handles[0], handles[2], handles[3]]
 
         legend = ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
-        legend.remove()
+        # legend.remove()
 
         if dim == 2:
             ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
@@ -790,15 +790,15 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
                 ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth, label=target_traj_label)
                 ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
-            ### stationary points
-            for zz in range(ntargets):
+            # ### stationary points
+            # for zz in range(ntargets):
 
-                if zz >= 1:
-                    stationary_pt_label = '__nolabel__'
+            #     if zz >= 1:
+            #         stationary_pt_label = '__nolabel__'
 
-                offset = stationary_states[zz*dx:(zz+1)*dx]
-                ax.plot(offset[0], offset[1], 'ks', markersize=markersize, label=stationary_pt_label)
-                ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
+            #     offset = stationary_states[zz*dx:(zz+1)*dx]
+            #     ax.plot(offset[0], offset[1], 'ks', markersize=markersize, label=stationary_pt_label)
+            #     ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
             ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
             ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -837,15 +837,15 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
                 ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth)
                 ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
-            ### stationary points
-            for zz in range(ntargets):
+            # ### stationary points
+            # for zz in range(ntargets):
 
-                if zz >= 1:
-                    stationary_pt_label = '__nolabel__'
+            #     if zz >= 1:
+            #         stationary_pt_label = '__nolabel__'
 
-                offset = stationary_states[zz*dx:(zz+1)*dx]
-                ax.plot(offset[0], offset[1], 'ks', markersize=markersize)
-                ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
+            #     offset = stationary_states[zz*dx:(zz+1)*dx]
+            #     ax.plot(offset[0], offset[1], 'ks', markersize=markersize)
+            #     ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
             ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
             ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -905,20 +905,20 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
                 ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
                 ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
-            ### stationary points
-            for zz in range(ntargets):
+            # ### stationary points
+            # for zz in range(ntargets):
 
-                if zz >= 1:
-                    stationary_pt_label = '__nolabel__'
+            #     if zz >= 1:
+            #         stationary_pt_label = '__nolabel__'
 
-                offset = stationary_states[zz*dx:(zz+1)*dx]
-                ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
-                ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
+            #     offset = stationary_states[zz*dx:(zz+1)*dx]
+            #     ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
+            #     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
 
-                # TEST
-                # TODO 2d slice
-                ax2.plot(offset[0], offset[1], 'ko', markersize=markersize, label=stationary_pt_label)
-                ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
+            #     # TEST
+            #     # TODO 2d slice
+            #     ax2.plot(offset[0], offset[1], 'ko', markersize=markersize, label=stationary_pt_label)
+            #     ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
             ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
             ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -971,16 +971,16 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
                 ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
                 ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
 
-            # stationary locations
-            for zz in range(ntargets):
-                offset = stationary_states[zz*dx:(zz+1)*dx]
-                ax.scatter3D(offset[0], offset[1], offset[2], color='k')
-                ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
+            # # stationary locations
+            # for zz in range(ntargets):
+            #     offset = stationary_states[zz*dx:(zz+1)*dx]
+            #     ax.scatter3D(offset[0], offset[1], offset[2], color='k')
+            #     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
 
-                # TEST
-                # TODO 2d slice
-                ax2.plot(offset[0], offset[1], 'ko', markersize=markersize)
-                ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
+            #     # TEST
+            #     # TODO 2d slice
+            #     ax2.plot(offset[0], offset[1], 'ko', markersize=markersize)
+            #     ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
 
             ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
             ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
@@ -1018,7 +1018,7 @@ def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, nta
     # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
     # ax.legend(loc='lower right', fontsize=fontsize)
     legend = ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
-    legend.remove()
+    # legend.remove()
 
     if dim == 2:
         ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)

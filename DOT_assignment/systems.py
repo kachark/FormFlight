@@ -152,13 +152,13 @@ class OneVOneFormation(System):
         # print("Warning: Assumes that Each Target is Assigned To")
         # print("Dont forget to fix this (easy fix)")
 
-        # measure assignment execution time
+        # measure assignment + control execution time
         start_assign_time = process_time()
 
         if t0 == 0:
             assignment, cost = self.compute_assignments(t0, x0, collisions)
             self.current_assignment = assignment
-        if t0 > 0 and self.apol.__class__.__name__ != 'AssignmentDyn':
+        if t0 > 0:
             if tick % self.assignment_epoch == 0:
                 print("------> ASSIGNMENT AT: ", t0)
                 assignment, cost = self.compute_assignments(t0, x0, collisions)
@@ -167,16 +167,10 @@ class OneVOneFormation(System):
         else:
             assignment = self.current_assignment
 
+        # TODO recompute/check every assignment epoch instead
         # after assignment done
-        # pre-compute tracking control policy
-        if t0 == 0:
-            for ii, agent in enumerate(self.agents):
-                jj = assignment[ii]
-                tind_end = self.tsize_inds[jj]
-                tind_start = self.tsize_inds[jj] - self.tsizes[jj]
-                xtarget = x0[tind_start:tind_end]
-                agent.pol.set_const(t0, jj, xtarget)
-        if t0 > 0 and self.apol.__class__.__name__ != 'AssignmentDyn':
+        # compute tracking control policy
+        if t0 >= 0:
             for ii, agent in enumerate(self.agents):
                 jj = assignment[ii]
                 tind_end = self.tsize_inds[jj]
@@ -219,37 +213,17 @@ class OneVOneFormation(System):
 
             return dxdt
 
-
         tspan = (t0, t0+dt)
-
-        # TODO perform maneuver
-        if t0 == 5:
-            deviate = np.array([0, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-            for target in self.targets:
-                # perform translation
-                # TODO after t=5 translate the formation
-                # TEST
-                # TODO NEED TO DO THIS BEFORE INTEGRATION
-                target.pol.set_const(target.pol.const + deviate)
-
-        # # TODO perform maneuver
-        # if t0 == 7:
-        #     deviate = np.array([0, 0, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        #     for target in self.targets:
-        #         # perform translation
-        #         # TODO after t=5 translate the formation
-        #         # TEST
-        #         # TODO NEED TO DO THIS BEFORE INTEGRATION
-        #         target.pol.set_const(target.pol.const + deviate)
 
         # measure dynamics execution time
         start_dynamics_time = process_time()
 
+        # Compute dynamics evolution
         bunch = scint.solve_ivp(dyn, tspan, x0, method='BDF', rtol=1e-6, atol=1e-8)
 
-        # measure dynamics execution time
         elapsed_dynamics_time = process_time() - start_dynamics_time
 
+        # organize relevant data
         tout = bunch.t
         yout = bunch.y.T
         assign_out = np.tile(assignment, (tout.shape[0], 1))
