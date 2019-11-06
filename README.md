@@ -30,7 +30,7 @@ The following formations are availble for the agent and terminal state distribut
 * Fibonacci sphere
 * Circle
 
-The available agent swarm dynamic models available:
+The available agent swarm dynamic models:
 * Double Integrator (2D/3D)
 * Linearized Quadcoptor (2D/3D)
 
@@ -168,6 +168,17 @@ A sim_info.txt file is automatically provided in each ensemble folder which give
 
 Run the ensemble of simulations
 ```sh
+python -O main.py
+```
+
+Debug Mode:
+Debug mode allows you to run an ensemble of simulations without creating directories and saving
+data. After completing the tests and post-processing, it will call plotting utilities to
+allow users to immediately inspect results.
+
+This logic can be altered as needed.
+
+```sh
 python main.py
 ```
 
@@ -255,7 +266,7 @@ The example loading and plotting utilities offered are:
 
 To run a simulation setup simply run
 ```python
-python examples/double_integrator_3D/main.py
+python -O examples/double_integrator_3D/main.py
 ```
 
 Load and plot an example simulation.

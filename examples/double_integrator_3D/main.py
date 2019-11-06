@@ -37,6 +37,8 @@ def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, agent_cont
 
     """ Returns ensemble name
 
+    User defined ensemble naming convention
+
     """
 
     ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + '_' +\
@@ -45,13 +47,12 @@ def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, agent_cont
 
     return ensemble_name
 
-def main():
+def construct_ensemble():
 
-    """ main function
+    """
 
     Setup ensemble, batch, and individual simulation parameters
     Create new directory to store ensemble, batch, and individual simulation results
-    Call functions to perform simulations, pack results and diagnostics, and save to .csv
 
     ####### INFO ######
     # simulation: set of initial conditions with 1 asst pol
@@ -100,12 +101,19 @@ def main():
     root_directory = os.getcwd() + '/'
     ensemble_directory = root_directory + ensemble_name
 
-#     # create directory to store ensemble
-    try:
-        os.makedirs(ensemble_directory)
-    except FileExistsError:
-        # directory already exists
+# # TODO saving results disabled! - DEBUGGING
+# run 'python main.py' to disable debugging
+
+    if __debug__:
+        print('DEBUG ACTIVE')
         pass
+    else:
+        # create directory to store ensemble
+        try:
+            os.makedirs(ensemble_directory)
+        except FileExistsError:
+            # directory already exists
+            pass
 
     # TODO assumes homogeneous swarms
     # formations: uniform_distribution, circle, fibonacci_sphere
@@ -159,8 +167,28 @@ def main():
         # add batch to ensemble
         ensemble_simulation.append(batch)
 
-    # TODO separate functions?
-    # RUN SIMULATION
+    # parameters constant across the test ensemble
+    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim,
+            'nagents': nagents, 'ntargets': ntargets, 'agent_model': agent_model, 'agent_formation':
+            agent_formation, 'target_formation': target_formation, 'collisions': collisions,
+            'collision_tol': collision_tol, 'agent_control_policy': agent_control_policy,
+            'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name,
+            'ensemble_directory': ensemble_directory}
+
+    return ensemble_simulation, ensemble_directory, test_conditions
+
+def run_ensemble_simulation(test_conditions, ensemble_simulation, ensemble_directory):
+
+    """
+
+    Run the ensemble of tests 
+
+    """
+
+    nbatches = test_conditions['nbatches']
+    dim = test_conditions['dim']
+
+    # RUN ENSEMBLE SIMULATION
     ensemble_results = {}
     for ii, batch in enumerate(ensemble_simulation):
 
@@ -266,10 +294,11 @@ def main():
         # collect diagnostics
         packed_batch_diagnostics = post_process_batch_diagnostics(batch_diagnostics) # returns dict
 
-#         # DEBUG
-#         plot_batch_performance_metrics(batch_performance_metrics)
-#         plot_batch_diagnostics(packed_batch_diagnostics)
-#         plt.show()
+        if __debug__:
+            # DEBUG
+            plot_batch_performance_metrics(batch_performance_metrics)
+            plot_batch_diagnostics(packed_batch_diagnostics)
+            plt.show()
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
         save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, batch_name)
@@ -277,16 +306,26 @@ def main():
         # store batch results (useful for saving multiple ensembles)
         # ensemble_results.update({batch_name: batch_results})
 
-    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim,
-            'nagents': nagents, 'ntargets': ntargets, 'agent_model': agent_model, 'agent_formation':
-            agent_formation, 'target_formation': target_formation, 'collisions': collisions,
-            'collision_tol': collision_tol, 'agent_control_policy': agent_control_policy,
-            'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name,
-            'ensemble_directory': ensemble_directory}
+def main():
+
+    """ Main function
+
+    Call functions to gather user-defined test conditions, perform simulations, pack results and diagnostics, and save to .csv
+
+    """
+
+    # define ensemble simulation parameters
+    ensemble_simulation, ensemble_directory, test_conditions = construct_ensemble()
+
+    # perform ensemble of simulations and save results
+    run_ensemble_simulation(test_conditions, ensemble_simulation, ensemble_directory)
 
     print("done!")
 
     return test_conditions
+
+
+
 
 
 def secondsToStr(elapsed=None):

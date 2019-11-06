@@ -27,7 +27,7 @@ def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, agent_cont
 
     """ Returns ensemble name
 
-    User defined naming ensemble convention
+    User defined ensemble naming convention
 
     """
 
@@ -91,13 +91,18 @@ def construct_ensemble():
     ensemble_directory = root_directory + ensemble_name
 
 # # TODO saving results disabled! - DEBUGGING
-# # uncomment below and comment out lines 276, 277, 278 to save results
-#     # create directory to store ensemble
-#     try:
-#         os.makedirs(ensemble_directory)
-#     except FileExistsError:
-#         # directory already exists
-#         pass
+# run 'python main.py' to disable debugging
+
+    if __debug__:
+        print('DEBUG ACTIVE')
+        pass
+    else:
+        # create directory to store ensemble
+        try:
+            os.makedirs(ensemble_directory)
+        except FileExistsError:
+            # directory already exists
+            pass
 
     # TODO assumes homogeneous swarms
     # formations: uniform_distribution, circle, fibonacci_sphere
@@ -278,10 +283,11 @@ def run_ensemble_simulation(test_conditions, ensemble_simulation, ensemble_direc
         # collect diagnostics
         packed_batch_diagnostics = post_process_batch_diagnostics(batch_diagnostics) # returns dict
 
-        # DEBUG
-        plot_batch_performance_metrics(batch_performance_metrics)
-        plot_batch_diagnostics(packed_batch_diagnostics)
-        plt.show()
+        if __debug__:
+            # DEBUG
+            plot_batch_performance_metrics(batch_performance_metrics)
+            plot_batch_diagnostics(packed_batch_diagnostics)
+            plt.show()
 
         save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
         save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, batch_name)
@@ -308,6 +314,8 @@ def main():
     return test_conditions
 
 
+# TODO move to util file
+# Utilities
 def secondsToStr(elapsed=None):
 
     """ Converts seconds to strings
