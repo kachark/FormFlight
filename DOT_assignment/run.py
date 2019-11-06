@@ -12,6 +12,13 @@ from DOT_assignment import engine
 from DOT_assignment import systems
 from DOT_assignment import post_process
 
+#######################
+# These functions perform the individual simulations. They organize the intial conditions into
+# appropriate data structures (ie. Agents, Points), setup the simulation engine, simulation scenario
+# (ie. formations) and return the results and diagnostics
+
+# TODO update function naming convention
+######################
 
 def run_identical_doubleint_2D(dx, du, statespace, x0, ltidyn, poltrack, apol,
         assignment_epoch, nagents, ntargets, collisions, collision_tol, dt=0.01, maxtime=10):
@@ -45,6 +52,7 @@ def run_identical_doubleint_2D(dx, du, statespace, x0, ltidyn, poltrack, apol,
     agents = [ag.TrackingAgent(dx, du, statespace, dim, ltidyn, poltrack[ii]) for ii in range(nagents)]
     targets = [ag.Point(dx, du, statespace, dim) for ii in range(ntargets)]
 
+    # setup the scenario and engine
     sys = systems.OneVOneFormation(agents, targets, apol, assignment_epoch)
     eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
 
@@ -102,7 +110,7 @@ def run_identical_doubleint_3D(dx, du, statespace, x0, ltidyn, poltrack, apol,
     agents = [ag.TrackingAgent(dx, du, statespace, dim, ltidyn, poltrack[ii]) for ii in range(nagents)]
     targets = [ag.Point(dx, du, statespace, dim) for ii in range(ntargets)]
 
-    # TODO
+    # setup the scenario and engine
     sys = systems.OneVOneFormation(agents, targets, apol, assignment_epoch)
     eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
 
@@ -161,6 +169,7 @@ def run_identical_linearized_quadcopter_2D(dx, du, statespace, x0, ltidyn, poltr
     agents = [ag.TrackingAgent(dx, du, statespace, dim, ltidyn, poltrack[ii]) for ii in range(nagents)]
     targets = [ag.Point(dx, du, statespace, dim) for ii in range(ntargets)]
 
+    # setup the scenario and engine
     sys = systems.OneVOneFormation(agents, targets, apol, assignment_epoch)
     eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
 
@@ -216,12 +225,11 @@ def run_identical_linearized_quadcopter_3D(dx, du, statespace, x0, ltidyn, poltr
     agents = [ag.TrackingAgent(dx, du, statespace, dim, ltidyn, poltrack[ii]) for ii in range(nagents)]
     targets = [ag.Point(dx, du, statespace, dim) for ii in range(ntargets)]
 
-    # TODO
-    # TEST FORMATION SYSTEM
+    # setup the scenario and engine
     sys = systems.OneVOneFormation(agents, targets, apol, assignment_epoch)
     eng = engine.Engine(dim=dim, dt=dt, maxtime=maxtime, collisions=collisions, collision_tol=collision_tol)
 
-    # TODO time the simulation
+    # time the simulation
     start_run_time = process_time()
     eng.run(x0, sys)
     elapsed_run_time = process_time() - start_run_time
