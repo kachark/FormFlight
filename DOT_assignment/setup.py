@@ -13,6 +13,7 @@ from DOT_assignment import engine
 from DOT_assignment import linear_models_2D
 from DOT_assignment import linear_models_3D
 from DOT_assignment import run
+from DOT_assignment import distributions
 
 def setup_simulation(sim_profile):
 
@@ -190,47 +191,34 @@ def setup_simulation(sim_profile):
 
     return sim
 
-# TODO move formations to new file
-# Formations
-def circle(dim, radius, nsamples, sample):
-    """ Computes the x,y,z position on a circle for a given number of points
-    r: radius of circle
-    ntargets: total number of points on circle
-    target: nth point along the circle
+
+def generate_distribution(dim, space, num_particles, distribution):
+
     """
 
-    if dim == 2:
-        angle = sample*(2*np.pi)/nsamples
-        x = radius * np.cos(angle)
-        y = radius * np.sin(angle)
-        return x, y
-    elif dim == 3:
-        angle = sample*(2*np.pi)/nsamples
-        x = radius * np.cos(angle)
-        y = 0
-        z = radius * np.sin(angle)
-        return x, y, z
+    Returns discrete distribution of states (ie. X,Y,Z positions)
 
+    Input:
+    - dim:      dimension
+    - space:    range of values that distribution can take
+    - num_particles: number of particles within the distribution
+    - distribution: name of distribution
 
-def fibonacci_sphere(r, nsamples, sample):
-    """ Computes the x,y,z positions on a sphere for a given number of points
-    http://blog.marmakoide.org/?p=1
+    Output:
+    - states:     vector consisting of n-dimensional states corresponding to a desired distribution
 
-    r: radius of sphere / scaling factor
-    nsamples: total number of points on sphere
-    sample: nth point along the sphere
     """
 
-    golden_angle = np.pi * (3 - np.sqrt(5))
-    theta = golden_angle * sample
-    z_i = (1 - 1/nsamples) * (1 - (2*sample)/(nsamples-1))
-    radius = np.sqrt(1 - z_i * z_i)
+    if distribution == 'uniform_distribution':
+        states = np.random.uniform(-space, space, (num_particles,dim))
+    elif distribution == 'circle':
+        radius = space
+        states = [distributions.circle(dim, radius, num_particles, t) for t in range(num_particles)] # circle
+    elif distribution == 'fibonacci_sphere':
+        radius = space
+        states = [distributions.fibonacci_sphere(radius, num_particles, t) for t in range(num_particles)] # sphere
 
-    x = r * radius * np.cos(theta)
-    y = r * radius * np.sin(theta)
-    z = r * z_i
-    return x,y,z
-
+    return states
 
 # TODO breakdown into more functions
 def generate_initial_conditions(dim, initial_formation_params):
@@ -249,6 +237,8 @@ def generate_initial_conditions(dim, initial_formation_params):
     ntargets = initial_formation_params['ntargets']
     target_swarm_formation = initial_formation_params['target_swarm_formation']
 
+    r = 100
+
     # TODO
     # Place these into separate function
     if dim == 2:
@@ -259,17 +249,12 @@ def generate_initial_conditions(dim, initial_formation_params):
             A, B, C, D, dx, du, statespace = linear_models_2D.double_integrator_2D()
 
             ### Initial conditions
-
             # Agents
-            r = 100
-            if agent_swarm_formation == 'uniform_distribution':
-                x0p = np.random.uniform(-100, 100, (nagents,dim)) # random position spread
-            elif agent_swarm_formation == 'circle':
-                x0p = [circle(dim, r, nagents, t) for t in range(nagents)] # circle
-            elif agent_swarm_formation == 'fibonacci_sphere':
-                x0p = [fibonacci_sphere(r, nagents, t) for t in range(nagents)] # sphere
+            x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
 
             x0 = np.zeros((nagents, dx))
+
+            # NOTE user-defined how the intial state is constructed 
             vel_range = 500
             for ii, tt in enumerate(x0):
                 x0[ii] = np.array([x0p[ii][0],
@@ -280,13 +265,7 @@ def generate_initial_conditions(dim, initial_formation_params):
             x0 = x0.flatten()
 
             # Targets
-            r = 100 # circle radius
-            if target_swarm_formation == 'uniform_distribution':
-                x02p = np.random.uniform(-100, 100, (ntargets,dim)) # random position spread
-            elif target_swarm_formation == 'circle':
-                x02p = [circle(dim, r, ntargets, t) for t in range(ntargets)] # circle
-            elif target_swarm_formation == 'fibonacci_sphere':
-                x02p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
 
             rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
             vel_range = 50
@@ -307,13 +286,7 @@ def generate_initial_conditions(dim, initial_formation_params):
             A, B, C, D, dx, du, statespace = linear_models_2D.quadcopter_2D()
 
             # Agents
-            r = 100
-            if agent_swarm_formation == 'uniform_distribution':
-                x0p = np.random.uniform(-100, 100, (nagents,dim)) # random position spread
-            elif agent_swarm_formation == 'circle':
-                x0p = [circle(dim, r, nagents, t) for t in range(nagents)] # circle
-            elif agent_swarm_formation == 'fibonacci_sphere':
-                x0p = [fibonacci_sphere(r, nagents, t) for t in range(nagents)] # sphere
+            x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
 
             rot_x0p = np.random.uniform(-2*np.pi, 2*np.pi, (nagents,dim)) # position spread
             vel_range = 500
@@ -333,13 +306,7 @@ def generate_initial_conditions(dim, initial_formation_params):
             x0 = x0.flatten()
 
             # Targets
-            r = 100 # circle radius
-            if target_swarm_formation == 'uniform_distribution':
-                x02p = np.random.uniform(-100, 100, (ntargets,dim)) # random position spread
-            elif target_swarm_formation == 'circle':
-                x02p = [circle(dim, r, ntargets, t) for t in range(ntargets)] # circle
-            elif target_swarm_formation == 'fibonacci_sphere':
-                x02p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
 
             rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
             vel_range = 50
@@ -364,13 +331,7 @@ def generate_initial_conditions(dim, initial_formation_params):
             A, B, C, D, dx, du, statespace = linear_models_3D.double_integrator_3D()
 
             # Agents
-            r = 100
-            if agent_swarm_formation == 'uniform_distribution':
-                x0p = np.random.uniform(-100, 100, (nagents,dim)) # random position spread
-            elif agent_swarm_formation == 'circle':
-                x0p = [circle(dim, r, nagents, t) for t in range(nagents)] # circle
-            elif agent_swarm_formation == 'fibonacci_sphere':
-                x0p = [fibonacci_sphere(r, nagents, t) for t in range(nagents)] # sphere
+            x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
 
             x0 = np.zeros((nagents, dx))
             vel_range = 500
@@ -385,13 +346,7 @@ def generate_initial_conditions(dim, initial_formation_params):
             x0 = x0.flatten()
 
             # Targets
-            r = 100 # circle radius
-            if target_swarm_formation == 'uniform_distribution':
-                x02p = np.random.uniform(-100, 100, (ntargets,dim)) # random position spread
-            elif target_swarm_formation == 'circle':
-                x02p = [circle(dim, r, ntargets, t) for t in range(ntargets)] # circle
-            elif target_swarm_formation == 'fibonacci_sphere':
-                x02p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
 
             rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
             vel_range = 50
@@ -413,13 +368,7 @@ def generate_initial_conditions(dim, initial_formation_params):
             A, B, C, D, dx, du, statespace = linear_models_3D.quadcopter_3D()
 
             # Agents
-            r = 100
-            if agent_swarm_formation == 'uniform_distribution':
-                x0p = np.random.uniform(-100, 100, (nagents,dim)) # random position spread
-            elif agent_swarm_formation == 'circle':
-                x0p = [circle(dim, r, nagents, t) for t in range(nagents)] # circle
-            elif agent_swarm_formation == 'fibonacci_sphere':
-                x0p = [fibonacci_sphere(r, nagents, t) for t in range(nagents)] # sphere
+            x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
 
             rot_x0p = np.random.uniform(-2*np.pi, 2*np.pi, (nagents,dim)) # position spread
             vel_range = 500
@@ -443,13 +392,7 @@ def generate_initial_conditions(dim, initial_formation_params):
             x0 = x0.flatten()
 
             # Targets
-            r = 100 # circle radius
-            if target_swarm_formation == 'uniform_distribution':
-                x02p = np.random.uniform(-100, 100, (ntargets,dim)) # random position spread
-            elif target_swarm_formation == 'circle':
-                x02p = [circle(dim, r, ntargets, t) for t in range(ntargets)] # circle
-            elif target_swarm_formation == 'fibonacci_sphere':
-                x02p = [fibonacci_sphere(r, ntargets, t) for t in range(ntargets)] # sphere
+            x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
 
             rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
             vel_range = 50
@@ -458,7 +401,7 @@ def generate_initial_conditions(dim, initial_formation_params):
             for ii, tt in enumerate(x02):
                 x02[ii] = np.array([
                     x02p[ii][0],
-                    x02p[ii][1] + 500,
+                    x02p[ii][1],
                     x02p[ii][2],
                     0, 0, 0, 0, 0, 0, 0, 0, 0])
 
