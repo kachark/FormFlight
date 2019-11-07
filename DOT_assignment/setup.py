@@ -239,8 +239,13 @@ def generate_initial_conditions(dim, initial_formation_params):
 
     r = 100
 
-    # TODO
-    # Place these into separate function
+    # agent position distribution (ie. x, y, z state components)
+    x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
+    # target position distribution
+    x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
+
+    # TODO Place these into separate function
+    # populate the rest of the agent/target state components given the dynamics models
     if dim == 2:
 
         ###### DOUBLE_INTEGRATOR ######
@@ -249,9 +254,8 @@ def generate_initial_conditions(dim, initial_formation_params):
             A, B, C, D, dx, du, statespace = linear_models_2D.double_integrator_2D()
 
             ### Initial conditions
-            # Agents
-            x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
 
+            # populate agent state
             x0 = np.zeros((nagents, dx))
 
             # NOTE user-defined how the intial state is constructed 
@@ -264,9 +268,7 @@ def generate_initial_conditions(dim, initial_formation_params):
 
             x0 = x0.flatten()
 
-            # Targets
-            x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
-
+            # populate target state
             rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
             vel_range = 50
             rot_vel_range = 25
@@ -286,8 +288,8 @@ def generate_initial_conditions(dim, initial_formation_params):
             A, B, C, D, dx, du, statespace = linear_models_2D.quadcopter_2D()
 
             # Agents
-            x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
 
+            # populate agent state
             rot_x0p = np.random.uniform(-2*np.pi, 2*np.pi, (nagents,dim)) # position spread
             vel_range = 500
             rot_vel_range = 25
@@ -305,9 +307,7 @@ def generate_initial_conditions(dim, initial_formation_params):
 
             x0 = x0.flatten()
 
-            # Targets
-            x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
-
+            # populate target state
             rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
             vel_range = 50
             rot_vel_range = 25
@@ -331,8 +331,8 @@ def generate_initial_conditions(dim, initial_formation_params):
             A, B, C, D, dx, du, statespace = linear_models_3D.double_integrator_3D()
 
             # Agents
-            x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
 
+            # populate agent state
             x0 = np.zeros((nagents, dx))
             vel_range = 500
             for ii, tt in enumerate(x0):
@@ -345,9 +345,7 @@ def generate_initial_conditions(dim, initial_formation_params):
 
             x0 = x0.flatten()
 
-            # Targets
-            x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
-
+            # populate target state
             rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
             vel_range = 50
             rot_vel_range = 25
@@ -368,8 +366,8 @@ def generate_initial_conditions(dim, initial_formation_params):
             A, B, C, D, dx, du, statespace = linear_models_3D.quadcopter_3D()
 
             # Agents
-            x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
 
+            # populate agent state
             rot_x0p = np.random.uniform(-2*np.pi, 2*np.pi, (nagents,dim)) # position spread
             vel_range = 500
             rot_vel_range = 25
@@ -391,9 +389,7 @@ def generate_initial_conditions(dim, initial_formation_params):
 
             x0 = x0.flatten()
 
-            # Targets
-            x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
-
+            # populate target state
             rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
             vel_range = 50
             rot_vel_range = 25
