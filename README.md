@@ -290,7 +290,8 @@ Some immediate areas of improvement include the following additions to the targe
 * additions to the flight formation scenario, including additional formations, moving formations
 * heterogeneous swarms
 
-
+## Publications
+* Kachar, G., K., Gorodetsky, and A., A., “Dynamic multi-agent assignment via discrete optimal transport,” arXiv.org Available: https://arxiv.org/abs/1910.10748.
 
 
 ## License
