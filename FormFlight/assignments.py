@@ -44,12 +44,12 @@ class AssignmentEMD(Assignment):
     """ Class representing Earth-Movers Distance (EMD) assignment policy
     """
 
-    def assignment(self, t, ref_states, target_states):
+    def assignment(self, t, object_list, target_object_list):
 
         """ Returns EMD assignment list
 
-        ref_states and target_states are lists of tuples
-        each tuple is (state <np.array>, agent/target <Agent>).
+        object_list and target_object_list are lists of tuples
+        each tuple is (state <np.array>, agent/target/etc. <Agent>).
 
         For the nearest neighbor EMD assignment, the information
         about the Agent is unnecessary. However, for other distances
@@ -57,9 +57,9 @@ class AssignmentEMD(Assignment):
         from the agents.
 
         Input:
-        - t:                    time
-        - ref_states:           list of tuples constructed as (state at time <np.array>, agent <Agent class>)
-        - target_states:        list of tuples constructed as (state at time <np.array>, target <Agent class>
+        - t:                         time
+        - object_list:               list of tuples constructed as (state at time <np.array>, agent <Agent class>)
+        - target_object_list:        list of tuples constructed as (state at time <np.array>, target <Agent class>
 
         Output:
         - assignment:           numpy array which maps each column (agent index) to an integer representing target index
@@ -67,38 +67,41 @@ class AssignmentEMD(Assignment):
 
         """
 
-        n = len(ref_states) +  len(target_states)
-
         ## Assume first two states are the positions
-        nagents = len(ref_states)
-        ntargets = len(target_states)
+        nagents = len(object_list)
+        ntargets = len(target_object_list)
+        n = nagents + ntargets
 
-        dim_state = ref_states[0][0].shape[0]
-
-
-        dim = ref_states[0][1].get_dim()
+        # create a numpy array which represents the state distribution of all objects
+        dim = object_list[0][1].get_dim() # same for all agents/targets in the same sim
         xs = np.zeros((nagents, dim))
         xt = np.zeros((ntargets, dim))
 
-        for ii, state in enumerate(ref_states):
-            # agent state components (differs per dynamic model)
-            ref_state_statespace = ref_states[ii][1].get_statespace()
-            dim_pos = ref_state_statespace['position']
-            dim_vel = ref_state_statespace['velocity']
-            xs[ii, 0] = state[0][dim_pos[0]]
-            xs[ii, 1] = state[0][dim_pos[1]]
-            if dim == 3:
-                xs[ii, 2] = state[0][dim_pos[2]]
+        for ii in range(nagents):
+            object_state = object_list[ii][0]
+            object_i = object_list[ii][1]
 
-        for jj, target in enumerate(target_states):
-            # target state components (differs per dynamic model)
-            target_state_statespace = target_states[jj][1].get_statespace()
-            dim_pos = target_state_statespace['position']
-            dim_vel = target_state_statespace['velocity']
-            xt[jj, 0] = target[0][dim_pos[0]]
-            xt[jj, 1] = target[0][dim_pos[1]]
+            object_statespace = object_i.get_statespace()
+            dim_pos = object_statespace['position']
+            dim_vel = object_statespace['velocity']
+            assert dim_vel == None
+            xs[ii, 0] = object_state[dim_pos[0]]
+            xs[ii, 1] = object_state[dim_pos[1]]
             if dim == 3:
-                xt[jj, 2] = target[0][dim_pos[2]]
+                xs[ii, 2] = object_state[dim_pos[2]]
+
+        for jj in range(ntargets):
+            target_state = target_object_list[jj][0]
+            target = target_object_list[jj][1]
+
+            target_statespace = target.get_statespace()
+            dim_pos = target_statespace['position']
+            dim_vel = target_statespace['velocity']
+            assert dim_vel == None
+            xt[jj, 0] = target_state[dim_pos[0]]
+            xt[jj, 1] = target_state[dim_pos[1]]
+            if dim == 3:
+                xt[jj, 2] = target_state[dim_pos[2]]
 
         a = np.ones((nagents,)) / nagents
         b = np.ones((ntargets,)) / ntargets
@@ -108,74 +111,47 @@ class AssignmentEMD(Assignment):
         M /= M.max()
 
         G0, log = ot.emd(a, b, M, log=True)
+        # print("GO: ", G0)
         cost = log['cost']
 
-        thresh = 1/n
-        G0[G0>thresh] = 1
+        # thresh = 4e-1 # 2v2 case
+        # thresh = 4e-2 # 2v2 case
+        # thresh = 1/n
+        # G0[G0>thresh] = 1
+        thresh = 1/nagents # seems to work for n < m case and n=m
+        G0[G0>=thresh] = 1
 
+        # print(log)
+        # exit(1)
+
+        # TODO ok should not be simply index assignment. take the index assignment and translate
+        # that to assignment of global object indices
         inds = np.arange(ntargets)
-        assignment = np.dot(G0, inds)
-        assignment = np.array([int(a) for a in assignment])
-        return assignment, cost
+        assignment = np.dot(G0, inds) # BUG breaks if ntargets > nagents, need robust way
+        assignment = np.array([int(a) for a in assignment]) # convert to integers
+        ID_assignment = self.translate(assignment, object_list, target_object_list) # translate this
+                                                # assignment to assignment of global IDs
+        return ID_assignment, cost
 
-class AssignmentCustom(Assignment):
+    def translate(self, assignment, object_list, target_object_list):
 
-    """ Class representing dynamics-based assignment policy
-    """
-
-    def assignment(self, t, ref_states, target_states):
-
-        """
-        ref_states and target_states are lists of tuples
-        each tuple is (state <np.array>, agent/target <Agent>).
-
-        For the nearest neighbor EMD assignment, the information
-        about the Agent is unnecessary. However, for other distances
-        or other costs, this information should be extracted
-        from the agents.
-
+        """ Translates the assignment made between two distributions and returns the equivalent
+        assignment between global IDs of the objects whose states comprise the two distributions
         Input:
-        - t:                    time
-        - ref_states:           list of tuples constructed as (state at time <np.array>, agent <Agent class>)
-        - target_states:        list of tuples constructed as (state at time <np.array>, target <Agent class>
 
         Output:
-        - assignment:           numpy array which maps each column (agent index) to an integer representing target index
-        - cost:                 discrete optimal transport cost
 
         """
 
-        ref_states = copy.deepcopy(ref_states)
-        target_states = copy.deepcopy(target_states)
+        ID_assignment = [None]*assignment.shape[0]
 
-        n = len(ref_states) + len(target_states)
+        for ii, jj in enumerate(assignment):
+            object_i = object_list[ii][1]
+            try:
+                target = target_object_list[jj][1]
+            except IndexError:
+                import ipdb; ipdb.set_trace()
+            ID_assignment[ii] = (object_i.ID, target.ID)
 
-        ## Assume first two states are the positions
-        nagents = len(ref_states)
-        ntargets = len(target_states)
-
-        dim_state = ref_states[0][0].shape[0]
-
-        M = np.zeros((nagents, ntargets))
-        for ii, agent in enumerate(ref_states):
-            for jj, target in enumerate(target_states):
-                Cij = np.linalg.norm(agent[0] - target[0])
-                M[ii, jj] = Cij
-
-        # M /= M.max() # I dont divide b
-        M = M/M.max()
-
-        a = np.ones((nagents,)) / nagents
-        b = np.ones((ntargets,)) / ntargets
-
-        G0, log = ot.emd(a, b, M, log=True)
-
-        cost = log['cost']
-        thresh = 1/n
-        G0[G0>thresh] = 1
-
-        inds = np.arange(ntargets)
-        assignment = np.dot(G0, inds)
-        assignment = np.array([int(a) for a in assignment])
-        return assignment, cost
+        return ID_assignment
 

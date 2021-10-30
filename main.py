@@ -1,4 +1,5 @@
 
+import copy
 import os
 import atexit
 from time import time, strftime, localtime
@@ -7,35 +8,41 @@ from datetime import timedelta, datetime
 import numpy as np
 import pandas as pd
 
-# DOT_assignment
-from DOT_assignment.setup import (setup_simulation, generate_initial_conditions)
-from DOT_assignment.post_process.post_process import (
+# FormFlight
+from FormFlight.setup import (setup_simulation, assign_decision_pol,
+        generate_initial_conditions)
+from FormFlight.post_process.post_process import (
         post_process_batch_simulation,
         post_process_batch_diagnostics,
         plot_batch_performance_metrics,
         plot_batch_diagnostics
 )
-from DOT_assignment.log import (
-        save_batch_metrics_to_csv,
+from FormFlight.log import (
+        save_batch_metrics,
         save_batch_diagnostics_to_csv,
         save_test_info_to_txt
 )
+from FormFlight.scenarios.intercept_init import (create_world)
+from FormFlight.run import (OneVOne_runner)
 
-
-def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, agent_control_policy,
-        target_formation):
+def get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model, agent_control_policy, target_control_policy):
 
     """ Returns ensemble name
 
-    User defined ensemble naming convention
-
     """
 
-    ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + '_' +\
-            str(nagents) + '_' + str(ntargets) + '_' + target_formation + '_' + agent_control_policy + '_' +\
-            '_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+    identical = (agent_model==target_model)
+    if identical:
+        ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + '_' +\
+                str(nagents) + 'v' + str(ntargets) + '_identical_' + agent_model + '_' + agent_control_policy + '_' +\
+                target_control_policy + '_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+    else:
+        ensemble_name = 'ensemble_' + str(nensemble) + '_' + (str(dim) + 'D') + \
+                '_' + str(nagents) + 'v' + str(ntargets) + agent_model + '_' + target_model + '_' + agent_control_policy + '_' +\
+                target_control_policy + '_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
 
     return ensemble_name
+
 
 def construct_ensemble():
 
@@ -43,6 +50,7 @@ def construct_ensemble():
 
     Setup ensemble, batch, and individual simulation parameters
     Create new directory to store ensemble, batch, and individual simulation results
+    Call functions to perform simulations, pack results and diagnostics, and save to .csv
 
     ####### INFO ######
     # simulation: set of initial conditions with 1 asst pol
@@ -61,38 +69,53 @@ def construct_ensemble():
 
     """
 
+
+    # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
+    dt = 0.5
+    maxtime = 40
+    dim = 2
+    collisions = False
+    collision_tol = 1e-1
+    sim_params = {'dt': dt, 'maxtime': maxtime, 'dim': dim, 'collisions': collisions,
+            'collision_tol': collision_tol}
+
+    # SCENARIO PARAMETERS
+    scenario = "Intercept"
+    ndynamic_objects = 20
+    nstatic_objects = 10
+
+    # MONTE CARLO SIMULATION PARAMETERS
     ensemble_simulation = []
     batch_simulation = []
     nbatches = 1
 
-    # SIM PARAMETERS CONSTANT ACROSS ENSEMBLE
-    dt = 0.01
-    maxtime = 5
-    dim = 3
-    nagents = 5
-    ntargets = 5
-    # agent_model = "Double_Integrator"
+    # Create directory for storage
+    # TODO ensemble should not default to 'identical'
+    # TODO deprecated
+    nagents = 3
+    ntargets = 3
+    nterminal_states = ntargets
     agent_model = "Linearized_Quadcopter"
-    agent_formation = 'uniform_distribution'
-    target_formation = 'circle'
-    collisions = False
-    collision_tol = 1e-1
-    agent_control_policy = "LQR"
+    target_model = "Linearized_Quadcopter"
+    agent_formation = "circle"
+    target_formation = "uniform_distribution"
+    terminal_states_formation = "fibonacci_sphere"
+    agent_control_policy = "LQT"
+    target_control_policy = "LQR"
     assignment_epoch = 10
 
-    # Create directory for storage
     nensemble = 0
-
-    # TODO ensemble should not default to 'identical'
-    ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, agent_control_policy, target_formation)
+    ensemble_name = get_ensemble_name(nensemble, dim, nagents, ntargets, agent_model, target_model,
+            agent_control_policy, target_control_policy)
 
     # root_directory = './'
     root_directory = os.getcwd() + '/'
     ensemble_directory = root_directory + ensemble_name
 
-# # TODO saving results disabled! - DEBUGGING
-# run 'python main.py' to disable debugging
+    monte_carlo_params = {'nensemble': nensemble, 'nbatches': nbatches, 'ensemble_name':
+            ensemble_name, 'ensemble_directory': ensemble_directory}
 
+    # run 'python main.py' to disable debugging
     if __debug__:
         print('DEBUG ACTIVE')
         pass
@@ -104,12 +127,11 @@ def construct_ensemble():
             # directory already exists
             pass
 
-    # TODO assumes homogeneous swarms
-    # formations: uniform_distribution, circle, fibonacci_sphere
-    initial_formation_params = {
-            'nagents': nagents, 'agent_model': agent_model, 'agent_swarm_formation': agent_formation,
-            'ntargets': ntargets, 'target_swarm_formation': target_formation
-            }
+    # ### SCENARIO SPECIFIC
+    # # generate schemas which outline all of the objects (ie. agents, points) in a given scenario
+    # provides information related to dynamics,controllers,starting formations/locations of objects
+    world = create_world(ndynamic_objects, nstatic_objects)
+    ###
 
     # CONSTRUCT ENSEMBLE OF SIMULATIONS
     for batch_i in range(nbatches):
@@ -119,50 +141,47 @@ def construct_ensemble():
 
         # SIM SETUP
 
-        initial_conditions = generate_initial_conditions(dim, initial_formation_params)
+        # numerical representation of 'geometric information' provided by scenario schemas
+        initial_conditions = generate_initial_conditions(dim, world)
 
         ###### DEFINE SIMULATION PROFILES ######
         sim_profiles = {}
 
-        # EMD parameters
-        dt = dt
-        asst = 'AssignmentEMD'
-        sim_profile_name = 'emd'
-        sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'agent_control_policy':
-            agent_control_policy, 'agent_formation': agent_formation, 'target_formation':
-            target_formation, 'assignment_policy': asst, 'assignment_epoch': assignment_epoch,
-            'nagents': nagents, 'ntargets': ntargets, 'collisions': collisions, 'collision_tol':
-            collision_tol, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions':
-            initial_conditions}})
+        emd_world = copy.deepcopy(world)
+        dyn_world = copy.deepcopy(world)
 
-        # Custom Assignment parameters
-        dt = dt
-        asst = 'AssignmentCustom'
-        sim_profile_name = 'dyn'
-        sim_profiles.update({sim_profile_name: {'agent_model': agent_model, 'agent_control_policy':
-            agent_control_policy, 'agent_formation': agent_formation, 'target_formation':
-            target_formation, 'assignment_policy': asst, 'assignment_epoch': assignment_epoch,
-            'nagents': nagents, 'ntargets': ntargets, 'collisions': collisions, 'collision_tol':
-            collision_tol, 'dim': dim, 'dt': dt, 'maxtime': maxtime, 'initial_conditions':
-            initial_conditions}})
+        # updates the geometric scenario information with extraneous information
+        emd_world.set_name('emd')
+        assign_decision_pol(emd_world, 'Agent_MAS', 'EMD', assignment_epoch)
+        sim_profile_name = 'emd'
+        emd_sim_profile = {'scenario': scenario, 'initial_conditions': initial_conditions,
+                'world': emd_world, 'sim_params': sim_params}
+        sim_profiles.update({sim_profile_name: emd_sim_profile})
 
         ########################################
 
         for profile_name, profile in sim_profiles.items():
-            sim = setup_simulation(profile)
-            sim_name = sim['asst_pol'].__class__.__name__
-            batch.update({sim_name: sim})
+            # sim = setup_simulation(profile)
+            # sim_name = sim['asst_pol'].__class__.__name__
+            setup_simulation(profile)
+            sim_name = profile['world'].name
+            batch.update({sim_name: profile})
 
         # add batch to ensemble
         ensemble_simulation.append(batch)
 
+    # TODO need to update
     # parameters constant across the test ensemble
-    test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim,
-            'nagents': nagents, 'ntargets': ntargets, 'agent_model': agent_model, 'agent_formation':
-            agent_formation, 'target_formation': target_formation, 'collisions': collisions,
-            'collision_tol': collision_tol, 'agent_control_policy': agent_control_policy,
-            'assignment_epoch': assignment_epoch, 'ensemble_name': ensemble_name,
-            'ensemble_directory': ensemble_directory}
+    # test_conditions = {'nbatches': nbatches, 'default_dt': dt, 'maxtime': maxtime, 'dim': dim,
+    #         'nagents': nagents, 'ntargets': ntargets, 'agent_model': agent_model, 'target_model':
+    #         target_model, 'nterminal_states': nterminal_states, 'stationary_states_formation':
+    #         terminal_states_formation, 'collisions': collisions, 'collision_tol': collision_tol,
+    #         'agent_control_policy': agent_control_policy, 'target_control_policy':
+    #         target_control_policy, 'assignment_epoch': assignment_epoch, 'ensemble_name':
+    #         ensemble_name, 'ensemble_directory': ensemble_directory}
+
+    test_conditions = {'scenario': scenario, 'sim_params': sim_params, 'monte_carlo_params':
+            monte_carlo_params}
 
     return ensemble_simulation, ensemble_directory, test_conditions
 
@@ -170,14 +189,11 @@ def run_ensemble_simulation(test_conditions, ensemble_simulation, ensemble_direc
 
     """
 
-    Run the ensemble of tests 
+    Run the ensemble of tests
 
     """
 
-    nbatches = test_conditions['nbatches']
-    dim = test_conditions['dim']
-
-    # RUN ENSEMBLE SIMULATION
+    # RUN SIMULATION
     ensemble_results = {}
     for ii, batch in enumerate(ensemble_simulation):
 
@@ -185,82 +201,32 @@ def run_ensemble_simulation(test_conditions, ensemble_simulation, ensemble_direc
         batch_results = {}
         batch_diagnostics = {}
 
-        for sim_name, sim in batch.items():
+        for sim_name, profile in batch.items():
 
-            # TODO not the same order for heterogeneous and non-identical
-            # Simulation data structures
-            collisions = sim["collisions"]
-            collision_tol = sim["collision_tol"]
-            dt = sim["dt"]
-            maxtime = sim["maxtime"]
-            dx = sim["dx"]
-            du = sim["du"]
-            statespace = sim["statespace"]
-            x0 = sim["x0"]
-            ltidyn = sim["agent_dyn"]
-            poltrack = sim["agent_pol"]
-            assignment_pol = sim["asst_pol"]
-            assignment_epoch = sim["asst_epoch"]
-            nagents = sim["nagents"]
-            ntargets = sim["ntargets"]
-            runner = sim["runner"]
+            scenario = profile['scenario']
+            sim_params = profile['sim_params']
+            world_i = profile['world']
+            initial_world_state = profile['initial_conditions']
 
-            # Other simulation information
-            agent_model = sim["agent_model"]
-            agent_control_policy = sim["agent_control_policy"]
-            agent_formation = sim["agent_formation"]
-            target_formation = sim["target_formation"]
+            # NOTE temporary
+            runner = None
+            if scenario == 'Intercept':
+                runner = OneVOne_runner
 
             # run simulation
-            results, diagnostics = runner(
-                dx,
-                du,
-                statespace,
-                x0,
-                ltidyn,
-                poltrack,
-                assignment_pol,
-                assignment_epoch,
-                nagents,
-                ntargets,
-                collisions,
-                collision_tol,
-                dt,
-                maxtime,
-            )
+            results, diagnostics = runner(scenario, initial_world_state, world_i, sim_params)
 
             # results components
             components = [
-                "agents",
-                "targets",
+                "scenario",
                 "data",
-                "tracking_policy",
-                "nagents",
-                "ntargets",
-                "asst_cost",
-                "agent_pol",
-                "optimal_asst",
-                "asst_policy",
+                "world"
             ]
 
             # diagnostics components
             diag_components = [
-                    "runtime_diagnostics"
-                    ]
-
-            # organize simulation parameters
-            sim_parameters = {
-                "dt": dt,
-                "dim": dim,
-                "dx": dx,
-                "du": du,
-                "statespace": statespace,
-                "agent_model": agent_model,
-                "agent_control_policy": agent_control_policy,
-                "collisions": collisions,
-                "collision_tol": collision_tol,
-                "assignment_epoch": assignment_epoch
-            }
+                "runtime_diagnostics"
+            ]
 
             # organize results according to components
             sim_results = {}
@@ -273,10 +239,10 @@ def run_ensemble_simulation(test_conditions, ensemble_simulation, ensemble_direc
                 sim_diagnostics.update({diag_comp: diag})
 
             # store sim results into a batch
-            batch_results.update({sim_name: [sim_parameters, sim_results]}) # dict
+            batch_results.update({sim_name: [sim_params, sim_results]}) # dict
 
             # store sim diagnostics into a batch
-            batch_diagnostics.update({sim_name: [sim_parameters, sim_diagnostics]}) # dict
+            batch_diagnostics.update({sim_name: [sim_params, sim_diagnostics]}) # dict
 
         # post-process and save
         batch_performance_metrics = post_process_batch_simulation(batch_results) # returns dict
@@ -286,20 +252,20 @@ def run_ensemble_simulation(test_conditions, ensemble_simulation, ensemble_direc
         if __debug__:
             # DEBUG
             plot_batch_performance_metrics(batch_performance_metrics)
-            plot_batch_diagnostics(packed_batch_diagnostics)
+            # plot_batch_diagnostics(packed_batch_diagnostics) # TODO need to fix
             plt.show()
 
-        save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name)
+        save_batch_metrics(batch_performance_metrics, ensemble_directory, batch_name)
         save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, batch_name)
 
         # store batch results (useful for saving multiple ensembles)
         # ensemble_results.update({batch_name: batch_results})
 
 def main():
-
     """ Main function
 
-    Call functions to gather user-defined test conditions, perform simulations, pack results and diagnostics, and save to .csv
+    Call functions to gather user-defined test conditions, perform simulations, pack results and
+    diagnostics, and save to .csv
 
     """
 
@@ -360,18 +326,22 @@ if __name__ == "__main__":
     # atexit.register(endlog) # print end time at program termination
     starttime = log("Start Program")
 
-    # PERFORM ENSEMBLE OF TESTS
+    # PERFORM TEST
     test_conditions = main()
 
-    ensemble_name = test_conditions['ensemble_name']
-    ensemble_directory = test_conditions['ensemble_directory']
+    ensemble_name = test_conditions['monte_carlo_params']['ensemble_name']
+    ensemble_directory = test_conditions['monte_carlo_params']['ensemble_directory']
 
     # PRINT TEST INFO TO TERMINAL
     print()
     line = "*"*40
     print(line)
-    for condition, value in test_conditions.items():
-        print(condition, ': ', value)
+    for param_type, parameter in test_conditions.items():
+        if isinstance(parameter, str):
+            print(param_type, ': ', parameter)
+        else:
+            for condition, value in parameter.items():
+                print(condition, ': ', value)
     print(line)
     print()
 

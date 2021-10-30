@@ -9,6 +9,7 @@ from . import engine
 from . import systems
 from . import linear_models_2D
 from . import linear_models_3D
+from . import nonlinear_models
 from . import assignments
 from . import log
 

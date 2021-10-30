@@ -5,15 +5,18 @@
 import numpy as np
 import copy
 
-# DOT_assignment
-from DOT_assignment import assignments
-from DOT_assignment import controls
-from DOT_assignment import dynamics
-from DOT_assignment import engine
-from DOT_assignment import linear_models_2D
-from DOT_assignment import linear_models_3D
-from DOT_assignment import run
-from DOT_assignment import distributions
+# FormFlight
+from FormFlight import assignments
+from FormFlight import controls
+from FormFlight import dynamics
+from FormFlight import engine
+from FormFlight import linear_models_2D
+from FormFlight import linear_models_3D
+from FormFlight import nonlinear_models
+from FormFlight import run
+from FormFlight import distributions
+from FormFlight import agents
+from FormFlight.scenarios import intercept_init
 
 def setup_simulation(sim_profile):
 
@@ -22,193 +25,480 @@ def setup_simulation(sim_profile):
     Input: Standard python dict containing descriptors outlining simulation requirements
     Output: Standard python dict containing controls, dynamics, assignment, etc. data structures
 
+    NEW:
+    creates actual dynamic objects (ie. Agents) and initializes controllers, assignment policies
+    etc.
+
     """
 
-    x0 = None
-    stationary_states = None
-
-    agent_model = sim_profile["agent_model"]
-    agent_control_policy = sim_profile["agent_control_policy"]
-    agent_formation = sim_profile["agent_formation"]
-    target_formation = sim_profile["target_formation"]
-    assignment_policy = sim_profile["assignment_policy"]
-    assignment_epoch = sim_profile["assignment_epoch"]
-    nagents = sim_profile["nagents"]
-    ntargets = sim_profile["ntargets"]
-    collisions = sim_profile["collisions"]
-    collision_tol = sim_profile["collision_tol"]
-    dim = sim_profile["dim"]
-    dt = sim_profile["dt"]
-    maxtime = sim_profile["maxtime"]
+    # params and initial conditions
+    scenario = sim_profile['scenario']
     initial_conditions = sim_profile['initial_conditions']
+    world_i = sim_profile['world']
+    sim_params = sim_profile['sim_params']
 
-    if initial_conditions == None:
-        initial_formation_params = {
-                'nagents': nagents, 'agent_model': agent_model, 'agent_swarm_formation': agent_formation,
-                'ntargets': ntargets, 'target_swarm_formation': target_formation
-                }
-        initial_conditions = generate_initial_conditions(dim, initial_formation_params)
-        x0 = ic[0]
-        targets = ic[1]
-    else:
-        x0 = initial_conditions[0]
-        targets = initial_conditions[1]
+    collisions = sim_params["collisions"]
+    collision_tol = sim_params["collision_tol"]
+    dim = sim_params["dim"]
+    dt = sim_params["dt"]
+    maxtime = sim_params["maxtime"]
 
-    sim = {}
-    parameters = ['agent_model', 'dx', 'du', 'A', 'B', 'agent_dyn', 'agent_pol', 'asst_pol', 'x0']
-    sim.fromkeys(parameters)
+    dynamic_indices = world_i.dynamic_multi_object_IDs
+    static_indices = world_i.static_multi_object_IDs
 
-    ##### Dynamic Model #####
-    if dim == 2:
+    # NOTE assumes that there are grouped objects
+    # populate dynamic objects with controllers, models, decision_makers
+    dummy = agents.Agent('dummy_object')
+    for group_ID in dynamic_indices:
+        mas = world_i.multi_objects[group_ID]
 
-        if agent_model == "Double_Integrator":
+        ### Decision-Maker
+        if mas.decision_maker_type == 'DYN':
+            apol = assignments.AssignmentDyn(0, 0) # constructor args deprecated/not used
+            mas.decision_maker = apol
+        elif mas.decision_maker_type == 'EMD':
+            apol = assignments.AssignmentEMD(0, 0) # constructor args deprecated/not used
+            mas.decision_maker = apol
 
-            A, B, C, D, dx, du, statespace = linear_models_2D.double_integrator_2D()
+        ### object dynamics
+        for agent in mas.agent_list:
+            statespace = None
+            dx = None
+            du = None
+            dynamics_model = None
+            controller = None
 
-            ### runner
-            sim_runner = run.run_identical_doubleint_2D
+            dyn_type = agent.info['dyn_type']
+            dyn_model = agent.info['dyn_model']
+            control_pol = agent.info['control_pol']
 
-        if agent_model == "Linearized_Quadcopter":
+            if dyn_type == 'linear':
+                A = None
+                B = None
+                C = None
+                D = None
+                if dyn_model == 'Double_Integrator':
+                    if dim == 2:
+                        A, B, C, D, dx, du, statespace = linear_models_2D.double_integrator_2D()
+                    elif dim == 3:
+                        A, B, C, D, dx, du, statespace = linear_models_3D.double_integrator_3D()
+                elif dyn_model == 'Linearized_Quadcopter':
+                    if dim == 2:
+                        A, B, C, D, dx, du, statespace = linear_models_2D.quadcopter_2D()
+                    elif dim == 3:
+                        A, B, C, D, dx, du, statespace = linear_models_3D.quadcopter_3D()
 
-            A, B, C, D, dx, du, statespace = linear_models_2D.quadcopter_2D()
+                dynamics_model = dynamics.LTIDyn(A, B, C, D)
 
-            ### runner
-            sim_runner = run.run_identical_linearized_quadcopter_2D
+                # controller
+                dummy_state = np.zeros(dx)
+                if control_pol == 'LQR':
+                    Q = np.eye(dx)
+                    R = np.eye(du)
+                    # TODO match static states with 'target_MAS'
+                    controller = controls.LinearFeedbackConstTracker(A, B, C, D, Q, R, dummy_state)
+                elif control_pol == 'LQT':
+                    Q = np.eye(dx)
+                    R = np.eye(du)
 
-    if dim == 3:
+                    # initialize LinearFeedbackAugmented by pre-assigning/augmenting this policy with
+                    # dummy controller
+                    dummy.info = agent.info
+                    dummy_controller = controls.LinearFeedbackConstTracker(A, B, C, D, Q, R, dummy_state)
+                    dummy.pol = dummy_controller
+                    Acl = dummy_controller.get_closed_loop_A()
+                    gcl = dummy_controller.get_closed_loop_g()
 
-        if agent_model == "Double_Integrator":
+                    # NOTE hardcoded for now
+                    if dyn_model == 'Linearized_Quadcopter':
+                        if dim == 2:
+                            Q[0, 0] = 1000
+                            Q[1, 1] = 1000
+                            Q[2,2] = 1000
+                            Q[3,3] = 1000
+                            Q[4,4] = 0.0
+                            Q[5,5] = 0.0
+                            Q[6, 6] = 0.0
+                            Q[7, 7] = 0.0
+                        elif dim == 3:
+                            Q[0, 0] = 1000
+                            Q[1, 1] = 1000
+                            Q[2, 2] = 1000
+                            Q[3,3] = 1000
+                            Q[4,4] = 1000
+                            Q[5,5] = 1000
+                            Q[6,6] = 0.0
+                            Q[7,7] = 0.0
+                            Q[8,8] = 0.0
+                            Q[9, 9] = 0.0
+                            Q[10, 10] = 0.0
+                            Q[11, 11] = 0.0
+                    elif dyn_model == 'Double_Integrator':
+                        if dim == 2:
+                            Q[0, 0] = 1000
+                            Q[1, 1] = 1000
+                            Q[2,2] = 0.0
+                            Q[3,3] = 0.0
+                        elif dim == 3:
+                            Q[0, 0] = 1000
+                            Q[1, 1] = 1000
+                            Q[2, 2] = 1000
+                            Q[3,3] = 0.0
+                            Q[4,4] = 0.0
+                            Q[5,5] = 0.0
 
-            A, B, C, D, dx, du, statespace = linear_models_3D.double_integrator_3D()
+                    controller = controls.LinearFeedbackAugmented(A, B, C, D, Q, R, Acl, gcl) # initial
 
-            ### runner
-            sim_runner = run.run_identical_doubleint_3D
+                agent.statespace = statespace
+                agent.dx = dx
+                agent.du = du
+                agent.dim = dim
+                agent.dyn = dynamics_model
+                agent.pol = controller
 
-        if agent_model == "Linearized_Quadcopter":
+            else: # nonlinear
 
-            A, B, C, D, dx, du, statespace = linear_models_3D.quadcopter_3D()
+                # dynamics
+                if dyn_model == "NonlinearModel":
+                    if dim == 2:
+                        # retrieve the model
+                        f, dx, du, statespace = nonlinear_models.NonlinearModel2D()
+                        # generate a dynamics object based off the model
+                        dynamics_model = dynamics.NonlinearDyn(f)
 
-            ### runner
-            sim_runner = run.run_identical_linearized_quadcopter_3D
+                    if dim == 3:
+                        # retrieve the model
+                        f, dx, du, statespace = nonlinear_models.NonlinearModel3D()
+                        # generate a dynamics object based off the model
+                        dynamics_model = dynamics.NonlinearDyn(f)
 
-    Q = np.eye(dx)
-    R = np.eye(du)
+                # controller
+                if control_pol == 'NonlinearController':
+                    if dim == 2:
+                        controller = controls.NonlinearController()
 
-    # TODO - remove
-    # DEBUG control terms
-    Q2 = None
-    Q3 = None
-    ######################
-    if dim == 2:
-        if agent_model == 'Double_Integrator':
-            Q2 = copy.deepcopy(Q)
-            Q2[2,2] = 0.0
-            Q2[3,3] = 0.0
+                    if dim == 3:
+                        controller = controls.NonlinearController()
 
-            Q3 = copy.deepcopy(Q)
-            Q3[0, 0] = 100
-            Q3[1, 1] = 100
-            Q3[2,2] = 0.0
-            Q3[3,3] = 0.0
-        if agent_model == 'Linearized_Quadcopter':
+                if control_pol == 'NonlinearControllerTarget':
+                    if dim == 2:
+                        controller = controls.NonlinearControllerTarget()
 
-            Q3 = copy.deepcopy(Q)
-            Q3[0, 0] = 100
-            Q3[1, 1] = 100
-            Q3[2,2] = 100
-            Q3[3,3] = 100
-            Q3[4,4] = 0.0
-            Q3[5,5] = 0.0
-            Q3[6, 6] = 0.0
-            Q3[7, 7] = 0.0
+                    if dim == 3:
+                        controller = controls.NonlinearControllerTarget()
 
 
-    if dim == 3:
-        if agent_model == 'Double_Integrator':
-            Q2 = copy.deepcopy(Q)
-            Q2[3,3] = 0.0
-            Q2[4,4] = 0.0
-            Q2[5,5] = 0.0
+                agent.statespace = statespace
+                agent.dx = dx
+                agent.du = du
+                agent.dim = dim
+                agent.dyn = dynamics_model
+                agent.pol = controller
 
-            Q3 = copy.deepcopy(Q)
-            Q3[0, 0] = 1000
-            Q3[1, 1] = 1000
-            Q3[2, 2] = 1000
-            Q3[3,3] = 0.0
-            Q3[4,4] = 0.0
-            Q3[5,5] = 0.0
-        if agent_model == 'Linearized_Quadcopter':
-            Q3 = copy.deepcopy(Q)
-            Q3[0, 0] = 1000
-            Q3[1, 1] = 1000
-            Q3[2, 2] = 1000
-            Q3[3,3] = 1000
-            Q3[4,4] = 1000
-            Q3[5,5] = 1000
-            Q3[6,6] = 0.0
-            Q3[7,7] = 0.0
-            Q3[8,8] = 0.0
-            Q3[9, 9] = 0.0
-            Q3[10, 10] = 0.0
-            Q3[11, 11] = 0.0
 
-    ######################
+    # populate static objects with models
+    for group_ID in static_indices:
+        mas = world_i.multi_objects[group_ID]
 
-    ### Agent control law
-    if agent_control_policy == "LQR":
-        poltrack = [controls.LinearFeedbackConstTracker(A, B, Q, R, t) for t in targets]
+        ### object state information
+        for point in mas.agent_list:
+            statespace = None
+            dx = None
+            dynamics_model = None
 
-    ### Agent Dynamics
-    ltidyn = dynamics.LTIDyn(A, B)
+            # TODO: bug but useful workaround for now
+            dyn_type = agent.info['dyn_type']
 
-    ### Assignment Policy
-    if assignment_policy == 'AssignmentCustom':
-        apol = assignments.AssignmentCustom(nagents, ntargets)
+            if dyn_type == 'linear':
+                # TODO: bug but useful workaround for now
+                if dyn_model == 'Double_Integrator':
+                    if dim == 2:
+                        _, _, _, _, dx, du, statespace = linear_models_2D.double_integrator_2D()
+                    elif dim == 3:
+                        _, _, _, _, dx, du, statespace = linear_models_3D.double_integrator_3D()
+                elif dyn_model == 'Linearized_Quadcopter':
+                    if dim == 2:
+                        _, _, _, _, dx, du, statespace = linear_models_2D.quadcopter_2D()
+                    elif dim == 3:
+                        _, _, _, _, dx, du, statespace = linear_models_3D.quadcopter_3D()
 
-    if assignment_policy == 'AssignmentEMD':
-        apol = assignments.AssignmentEMD(nagents, ntargets)
+                point.statespace = statespace
+                point.dx = dx
+                point.dim = dim
 
-    ### CONSTRUCT SIMULATION DICTIONARY
-    sim['agent_control_policy'] = agent_control_policy
-    sim['agent_model'] = agent_model
-    sim['agent_formation'] = agent_formation
-    sim['target_formation'] = target_formation
-    sim['collisions'] = collisions
-    sim['collision_tol'] = collision_tol
-    sim['dt'] = dt
-    sim['maxtime'] = maxtime
-    sim['dx'] = dx
-    sim['du'] = du
-    sim['statespace'] = statespace
-    sim['x0'] = x0
-    sim['agent_dyn'] = ltidyn
-    sim['agent_pol'] = poltrack
-    sim['asst_pol'] = apol
-    sim['asst_epoch'] = assignment_epoch
-    sim['nagents'] = nagents
-    sim['ntargets'] = ntargets
-    sim['runner'] = sim_runner
+            else: # nonlinear
+                # dynamics
+                if dyn_model == "NonlinearModel":
+                    if dim == 2:
+                        # retrieve the model
+                        f, dx, du, statespace = nonlinear_models.NonlinearModel2D()
+                        # generate a dynamics object based off the model
+                        dynamics_model = dynamics.NonlinearDyn(f)
 
-    return sim
+                    if dim == 3:
+                        # retrieve the model
+                        f, dx, du, statespace = nonlinear_models.NonlinearModel3D()
+                        # generate a dynamics object based off the model
+                        dynamics_model = dynamics.NonlinearDyn(f)
 
+                point.statespace = statespace
+                point.dx = dx
+                point.dim = dim
+
+
+
+def generate_initial_conditions(dim, world_i):
+
+    """ Returns initial states for agents, targets, and target terminal locations
+
+    Input:
+    - dim:                          integer dimension (2D/3D) for the simulation 
+    - world_i:                        World datastructure
+
+    Output:
+    - x0:                           np.array representing initial states of time-varying
+                                    agents
+    - stationary_states:            np.array representing constant terminal states
+
+    """
+
+    initial_system_state = None
+
+    # radius (circle, sphere)
+    # r = 100
+    space = 3500
+
+    # TBD
+    if not world_i.multi_objects:
+        pass
+
+    dynamic_indices = world_i.dynamic_multi_object_IDs
+    static_indices = world_i.static_multi_object_IDs
+
+    dynamic_formation_states = []
+    static_formation_states = []
+    for group_ID in dynamic_indices:
+        multi_agent_system = world_i.multi_objects[group_ID]
+        nagents = multi_agent_system.nagents
+        formation = multi_agent_system.formation
+
+        xyz_locations = generate_distribution(dim, space, nagents, formation)
+        x0 = get_initial_object_states(dim, multi_agent_system, xyz_locations, True, vel_range=500)
+        dynamic_formation_states.append(x0)
+
+    for group_ID in static_indices:
+        multi_agent_system = world_i.multi_objects[group_ID]
+        nagents = multi_agent_system.nagents
+        formation = multi_agent_system.formation
+
+        xyz_locations = generate_distribution(dim, space, nagents, formation)
+        x0 = get_initial_object_states(dim, multi_agent_system, xyz_locations, False)
+        static_formation_states.append(x0)
+
+    # compile all object states
+    total_dynamic_object_states = np.hstack(dynamic_formation_states)
+    total_static_object_states = np.hstack(static_formation_states)
+
+    initial_system_state = np.hstack((total_dynamic_object_states, total_static_object_states))
+    return initial_system_state
+
+def get_initial_object_states(dim, multi_agent_system, object_positions, dynamic_states_flag, **kwargs):
+
+    x0 = None
+    nagents = multi_agent_system.nagents
+
+    vel_range = 5
+    if kwargs:
+        vel_range = kwargs['vel_range']
+
+    # get sum of statesize
+    group_statesize = 0
+    for agent in multi_agent_system.agent_list:
+        dyn_model = agent.type
+
+        dx = 0
+        if dyn_model == "Double_Integrator":
+
+            if dim == 2:
+                _, _, _, _, dx, _, _ = linear_models_2D.double_integrator_2D()
+            else:
+                _, _, _, _, dx, _, _ = linear_models_3D.double_integrator_3D()
+
+        elif dyn_model == "Linearized_Quadcopter":
+
+            if dim == 2:
+                _, _, _, _, dx, _, _ = linear_models_2D.quadcopter_2D()
+            else:
+                _, _, _, _, dx, _, _ = linear_models_3D.quadcopter_3D()
+
+        elif dyn_model == "NonlinearModel":
+
+            if dim == 2:
+                 _, dx, _, _ = nonlinear_models.NonlinearModel2D()
+            else:
+                 _, dx, _, _ = nonlinear_models.NonlinearModel3D()
+
+        group_statesize += dx
+
+    # generate initial states
+    x0 = []
+    for i, agent in enumerate(multi_agent_system.agent_list):
+        dyn_model = agent.type
+
+        if dyn_model == "Double_Integrator":
+
+            if dim == 2:
+                if dynamic_states_flag:
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-vel_range, vel_range, 1)[0]])
+                            )
+                else:
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        0, 0])
+                        )
+
+            elif dim == 3:
+                if dynamic_states_flag:
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        object_positions[i][2],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-vel_range, vel_range, 1)[0]])
+                        )
+                else:
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        object_positions[i][2],
+                        0, 0, 0])
+                        )
+
+
+        elif dyn_model == "Linearized_Quadcopter":
+
+            if dim == 2:
+                if dynamic_states_flag:
+                    rot_x0p = np.random.uniform(-2*np.pi, 2*np.pi, (nagents,dim)) # rot position spread
+                    rot_vel_range = 25
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        rot_x0p[i][0],
+                        rot_x0p[i][1],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
+                        np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0]])
+                        )
+                else:
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        0, 0, 0, 0, 0, 0])
+                        )
+
+            elif dim == 3:
+                if dynamic_states_flag:
+                    rot_x0p = np.random.uniform(-2*np.pi, 2*np.pi, (nagents,dim)) # position spread
+                    rot_vel_range = 25
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        object_positions[i][2],
+                        rot_x0p[i][0],
+                        rot_x0p[i][1],
+                        rot_x0p[i][2],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
+                        np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
+                        np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0]])
+                        )
+                else:
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        object_positions[i][2],
+                        0, 0, 0, 0, 0, 0, 0, 0, 0])
+                        )
+
+        elif dyn_model == "NonlinearModel":
+
+            if dim == 2:
+                if dynamic_states_flag:
+                    theta = np.random.uniform(0, 2*np.pi, (nagents,dim)) # rot position spread
+
+                    if multi_agent_system.name == 'Agent_MAS':
+                        x0.append(np.array([
+                            object_positions[i][0],
+                            object_positions[i][1],
+                            theta[i][0]])
+                            )
+
+                    elif multi_agent_system.name == 'Target_MAS':
+                        x0.append(np.array([
+                            object_positions[i][0] * 1.5,
+                            object_positions[i][1] * 1.5,
+                            theta[i][0] * 1.5])
+                            )
+
+                else: # static object
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        0])
+                        )
+
+# TODO: update for 3D -> static states match dynamic states for tracking
+            elif dim == 3:
+                if dynamic_states_flag:
+                    theta = np.random.uniform(0, 2*np.pi, (nagents,dim)) # rot position spread
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        object_positions[i][2],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-vel_range, vel_range, 1)[0],
+                        np.random.uniform(-vel_range, vel_range, 1)[0]])
+                        )
+                else:
+                    x0.append(np.array([
+                        object_positions[i][0],
+                        object_positions[i][1],
+                        object_positions[i][2],
+                        0, 0, 0])
+                        )
+
+    # if dynamic_states_flag:
+    #     x0 = np.hstack(x0)
+    x0 = np.hstack(x0)
+
+    return x0
 
 def generate_distribution(dim, space, num_particles, distribution):
 
     """
-
     Returns discrete distribution of states (ie. X,Y,Z positions)
-
     Input:
     - dim:      dimension
     - space:    range of values that distribution can take
     - num_particles: number of particles within the distribution
     - distribution: name of distribution
-
     Output:
     - states:     vector consisting of n-dimensional states corresponding to a desired distribution
-
     """
 
+    # np.random.seed(5)
+
+    states = np.zeros(dim)
     if distribution == 'uniform_distribution':
         states = np.random.uniform(-space, space, (num_particles,dim))
     elif distribution == 'circle':
@@ -220,189 +510,20 @@ def generate_distribution(dim, space, num_particles, distribution):
 
     return states
 
-# TODO breakdown into more functions
-def generate_initial_conditions(dim, initial_formation_params):
-
-    """ Returns initial states for agents, targets, and target terminal locations
+def assign_decision_pol(world_i, mas_name, decision_maker_type, epoch):
 
     """
+    Input:
+    - world_i:                        World datastructure
+    - mas_name:                     string naming the dynamic MultiAgentSystem to change
+    - decision_maker_type:          string naming the decision-making algorithm for the
+                                    MultiAgentSystem
+    Output:
+    """
 
-    x0 = None
-    cities = None
+    for group_ID in world_i.dynamic_multi_object_IDs:
+        if world_i.multi_objects[group_ID].name == mas_name:
+            world_i.multi_objects[group_ID].decision_maker_type = decision_maker_type
+            world_i.multi_objects[group_ID].decision_epoch = epoch
 
-    nagents = initial_formation_params['nagents']
-    agent_model = initial_formation_params['agent_model']
-    agent_swarm_formation = initial_formation_params['agent_swarm_formation']
-
-    ntargets = initial_formation_params['ntargets']
-    target_swarm_formation = initial_formation_params['target_swarm_formation']
-
-    r = 100
-
-    # agent position distribution (ie. x, y, z state components)
-    x0p = generate_distribution(dim, r, nagents, agent_swarm_formation)
-    # target position distribution
-    x02p = generate_distribution(dim, r, ntargets, target_swarm_formation)
-
-    # TODO Place these into separate function
-    # populate the rest of the agent/target state components given the dynamics models
-    if dim == 2:
-
-        ###### DOUBLE_INTEGRATOR ######
-        if agent_model == "Double_Integrator":
-
-            A, B, C, D, dx, du, statespace = linear_models_2D.double_integrator_2D()
-
-            ### Initial conditions
-
-            # populate agent state
-            x0 = np.zeros((nagents, dx))
-
-            # NOTE user-defined how the intial state is constructed 
-            vel_range = 500
-            for ii, tt in enumerate(x0):
-                x0[ii] = np.array([x0p[ii][0],
-                                    x0p[ii][1],
-                                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                                    np.random.uniform(-vel_range, vel_range, 1)[0]])
-
-            x0 = x0.flatten()
-
-            # populate target state
-            rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
-            vel_range = 50
-            rot_vel_range = 25
-            x02 = np.zeros((ntargets, dx))
-            for ii, tt in enumerate(x02):
-                x02[ii] = np.array([
-                    x02p[ii][0],
-                    x02p[ii][1],
-                    0, 0])
-
-            targets = x02.flatten()
-            x0 = np.hstack((x0, targets))
-
-        ###### LINEARIZED_QUADCOPTER ######
-        if agent_model == "Linearized_Quadcopter":
-
-            A, B, C, D, dx, du, statespace = linear_models_2D.quadcopter_2D()
-
-            # Agents
-
-            # populate agent state
-            rot_x0p = np.random.uniform(-2*np.pi, 2*np.pi, (nagents,dim)) # position spread
-            vel_range = 500
-            rot_vel_range = 25
-            x0 = np.zeros((nagents, dx))
-            for ii, tt in enumerate(x0):
-                x0[ii] = np.array([
-                    x0p[ii][0],
-                    x0p[ii][1],
-                    rot_x0p[ii][0],
-                    rot_x0p[ii][1],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0]])
-
-            x0 = x0.flatten()
-
-            # populate target state
-            rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
-            vel_range = 50
-            rot_vel_range = 25
-            x02 = np.zeros((ntargets, dx))
-            for ii, tt in enumerate(x02):
-                x02[ii] = np.array([
-                    x02p[ii][0],
-                    x02p[ii][1],
-                    0, 0, 0, 0, 0, 0])
-
-            targets = x02.flatten()
-            x0 = np.hstack((x0, targets))
-
-
-
-    if dim == 3:
-
-        ###### DOUBLE_INTEGRATOR ######
-        if agent_model == "Double_Integrator":
-
-            A, B, C, D, dx, du, statespace = linear_models_3D.double_integrator_3D()
-
-            # Agents
-
-            # populate agent state
-            x0 = np.zeros((nagents, dx))
-            vel_range = 500
-            for ii, tt in enumerate(x0):
-                x0[ii] = np.array([x0p[ii][0],
-                                    x0p[ii][1],
-                                    x0p[ii][2],
-                                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                                    np.random.uniform(-vel_range, vel_range, 1)[0]])
-
-            x0 = x0.flatten()
-
-            # populate target state
-            rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
-            vel_range = 50
-            rot_vel_range = 25
-            x02 = np.zeros((ntargets, dx))
-            for ii, tt in enumerate(x02):
-                x02[ii] = np.array([
-                    x02p[ii][0],
-                    x02p[ii][1] + 500,
-                    x02p[ii][2],
-                    0, 0, 0])
-
-            targets = x02.flatten()
-            x0 = np.hstack((x0, targets))
-
-        ###### LINEARIZED_QUADCOPTER ######
-        if agent_model == "Linearized_Quadcopter":
-
-            A, B, C, D, dx, du, statespace = linear_models_3D.quadcopter_3D()
-
-            # Agents
-
-            # populate agent state
-            rot_x0p = np.random.uniform(-2*np.pi, 2*np.pi, (nagents,dim)) # position spread
-            vel_range = 500
-            rot_vel_range = 25
-            x0 = np.zeros((nagents, dx))
-            for ii, tt in enumerate(x0):
-                x0[ii] = np.array([
-                    x0p[ii][0],
-                    x0p[ii][1],
-                    x0p[ii][2],
-                    rot_x0p[ii][0],
-                    rot_x0p[ii][1],
-                    rot_x0p[ii][2],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-vel_range, vel_range, 1)[0],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0],
-                    np.random.uniform(-rot_vel_range, rot_vel_range, 1)[0]])
-
-            x0 = x0.flatten()
-
-            # populate target state
-            rot_x02p = np.random.uniform(-2*np.pi, 2*np.pi, (ntargets,dim)) # position spread
-            vel_range = 50
-            rot_vel_range = 25
-            x02 = np.zeros((ntargets, dx))
-            for ii, tt in enumerate(x02):
-                x02[ii] = np.array([
-                    x02p[ii][0],
-                    x02p[ii][1],
-                    x02p[ii][2],
-                    0, 0, 0, 0, 0, 0, 0, 0, 0])
-
-            targets = x02.flatten()
-            x0 = np.hstack((x0, targets))
-
-    return [x0, targets]
 

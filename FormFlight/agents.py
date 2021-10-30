@@ -4,62 +4,59 @@
 
 import copy
 
-
-class Point:
-
-    """ Class representing a general point in statespace
-    """
-
-    def __init__(self, dx, du, statespace, dim):
-
-        """ Agent class constructor
-
-        Input:
-        - dx:                   state size
-        - du:                   control input size
-        - statespace:           dict containing descriptions of the components of an agent/target state
-        - dim:                  int representing the dimension the Agent acts within (2D/3D)
-
-        """
-
-        self.dx = dx
-        self.du = du
-        self.statespace = statespace
-        self.dim = dim
-
-    def state_size(self):
-        return self.dx
-
-    def get_statespace(self):
-        return self.statespace
-
 #################################
-### Agents
+### Objects
 ################################
-class Agent(Point):
 
-    """ Class representing a member of agent or target swarm
-    """
+class Object():
 
-    def __init__(self, dx, du, statespace, dim, dyn, pol):
+    def __init__(self, object_type):
+        self.type = object_type
+        self.ID = None
+
+class Point(Object):
+
+    def __init__(self, point_type):
 
         """ Agent class constructor
 
         Input:
-        - dx:                   state size
-        - du:                   control input size
-        - statespace:           dict containing descriptions of the components of an agent/target state
-        - dim:                  int representing the dimension the Agent acts within (2D/3D)
-        - dyn:                  dynamics model
-        - pol:                  control policy
 
         Output:
 
         """
 
-        self.dyn = copy.deepcopy(dyn)
-        self.pol = copy.deepcopy(pol)
-        super(Agent, self).__init__(dx, du, statespace, dim)
+        super(Point, self).__init__(point_type)
+
+        self.info = None
+        self.dx = None
+        self.statespace = None
+        self.dim = None
+
+class Agent(Object):
+
+    """ Class representing a dynamic object
+    """
+
+    def __init__(self, agent_type):
+
+        """ Agent class constructor
+
+        Input:
+
+        Output:
+
+        """
+
+        super(Agent, self).__init__(agent_type)
+
+        self.info = None
+        self.dx = None
+        self.du = None
+        self.statespace = None
+        self.dim = None
+        self.dyn = None
+        self.pol = None
 
     def get_pol(self):
         return self.pol
@@ -67,15 +64,52 @@ class Agent(Point):
     def update_pol(self, pol):
         self.pol = copy.deepcopy(pol)
 
+    def state_size(self):
+        return self.dx
+
+    def get_statespace(self):
+        return self.statespace
+
     def get_dim(self):
         return self.dim
 
-class TrackingAgent(Agent):
+    def get_ID(self):
+        return self.ID
 
-    def  __init__(self, dx, du, statespace, dim, dyn, pol):
-        super(TrackingAgent, self).__init__(dx, du, statespace, dim, dyn, pol)
+    def get_type(self):
+        return self.type
 
-    def rhs(self, t, x, ref_signal):
-        u = self.pol(t, x, ref_signal)
-        return self.dyn.rhs(t, x, u)
+class MultiAgentSystem():
+
+    def __init__(self, name, agent_list):
+
+        self.name = name
+        self.agent_list = agent_list # don't deepcopy - need reference to original
+        self.nagents = len(self.agent_list)
+        self.ID = None
+
+        self.formation = None
+
+        self.decision_maker_type = None
+        self.decision_maker = None
+        self.decision_epoch = None
+        self.current_decision = None
+
+    def get_agent_list(self):
+        return self.agent_list
+
+    def add_agent(self, agent):
+        self.agent_list.append(agent)
+        self.nagents = len(self.agent_list)
+
+    def remove_agent(self, ID):
+        for agent in self.agent_list:
+            if agent.ID == ID:
+                self.agent_list.remove(agent)
+                break
+
+        self.nagents = len(self.agent_list)
+
+    def compute_decision(self):
+        pass
 

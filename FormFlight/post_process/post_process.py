@@ -23,38 +23,21 @@ def post_process_batch_simulation(batch_results):
 
     """
 
-    sim_names = []
-    batch_performance_metrics = {} # performance metrics
-    sim_components = {} # useful parameters and objects used within the simulation
-
-    dim = 2 # default value. also uniform across batch simulations
+    batch_performance_metrics = {}
 
     # for every simulation within a batch, post-process results
     for sim_name, sim in batch_results.items():
-        sim_names.append(sim_name)
-        parameters = sim[0]
+
+        sim_params = sim[0]
         sim_results = sim[1]
+        world = sim_results['world']
         post_processed_results_df = None
 
         # post-process each sim within batch
-        # NOTE assumes agent/target homogeneity
-        if parameters['dim'] == 2:
-            if parameters['agent_model'] == 'Double_Integrator':
-                post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
-
-            if parameters['agent_model'] == 'Linearized_Quadcopter':
-                post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
-
-        # NOTE assumes agent/target homogeneity
-        if parameters['dim'] == 3:
-            if parameters['agent_model'] == 'Double_Integrator':
-                post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
-
-            if parameters['agent_model'] == 'Linearized_Quadcopter':
-                post_processed_results_df = post_process_homogeneous_identical(parameters, sim_results)
+        post_processed_results_df = post_process(sim_params, sim_results)
 
         # collect post-processed performance metrics
-        batch_performance_metrics.update({sim_name: post_processed_results_df})
+        batch_performance_metrics.update({sim_name: [world, post_processed_results_df]})
 
     return batch_performance_metrics
 
@@ -90,404 +73,231 @@ def post_process_batch_diagnostics(batch_diagnostics):
 
     return packed_batch_diagnostics
 
-# TODO rename: post_process_homogeneous_identical(parameters, sim_results):
-def post_process_homogeneous_identical(parameters, sim_results):
+def post_process(parameters, sim_results):
 
-    """ Post-process and package simulation parameters, results, and post-processed data (costs)
+    # TODO need to recompute the control costs
+    # eventually just record separately and save
 
-    Post-process and packing function for homogeneous identical agent/target swarms
-
-    Input:
-    - parameters:           dict containing simulation parameters
-    - sim_results:          dict containing simulaton results
-
-    Output:
-    - return_df:            pandas Dataframe with simulation parameters, results, costs
-
-    """
-
+    scenario = sim_results['scenario']
     df = sim_results['data']
-    poltrack = sim_results['tracking_policy']
-    nagents = sim_results['nagents']
-    ntargets = sim_results['ntargets']
-    ot_costs = sim_results['asst_cost']
-    polagents = sim_results['agent_pol']
-    opt_asst = sim_results['optimal_asst']
-    asst_policy = sim_results['asst_policy']
+    world = sim_results['world']
+    world = copy.deepcopy(world) # because we need to adjust world objects
 
-    dt = parameters['dt']
-    dim = parameters['dim']
-    dx = parameters['dx']
-    du = parameters['du']
+    yout = df.iloc[:, 1:].to_numpy()
+    tout = df.iloc[:, 0].to_numpy()
+
+    scenario_results = []
+
+    if scenario == 'Intercept':
+        engagement = [('Agent_MAS', 'Target_MAS')]
+        engagement_results = {}
+        for pair in engagement:
+            system_of_interest = pair[0]
+            targettable_set = pair[1]
+            mas = world.get_multi_object(system_of_interest)
+            target_mas = world.get_multi_object(targettable_set)
+            nagents = mas.nagents
+            ntargets = target_mas.nagents
+
+            decision_epoch = mas.decision_epoch
+
+            mas_models = [agent.type for agent in mas.agent_list]
+            target_models = [target.type for target in target_mas.agent_list]
+
+            # TODO need a better way to store this info for multiple systems of interest
+            mas_dx = [agent.dx for agent in mas.agent_list]
+            mas_du = [agent.du for agent in mas.agent_list]
+            total_mas_dx = np.sum(mas_dx)
+            total_mas_du = np.sum(mas_du)
+            target_dx = [agent.dx for agent in target_mas.agent_list]
+            total_target_dx = np.sum(target_dx)
+            # remember assignments match global IDs of Agent_MAS agents and Target_MAS
+            assignments = yout[:, total_mas_dx+(2*total_target_dx):].astype(np.int32)
+
+            final_cost = np.zeros((tout.shape[0], nagents))
+            stage_cost = np.zeros((tout.shape[0], nagents))
+            xp = np.zeros((yout.shape[0], nagents))
+            xss = np.zeros((yout.shape[0], total_mas_dx+total_target_dx))
+
+            agent_controls = []
+
+            # RECOMPUTE CONTROLS HISTORY for each agent
+            for agent in mas.agent_list:
+                dx = agent.dx
+                du = agent.du
+                # NOTE assumes that 'Agent_MAS' states start at beginning of yout
+                ag_start_ind, ag_end_ind = world.get_object_world_state_index(agent.ID)
+                agent_state_history = yout[:, ag_start_ind:ag_end_ind]
+
+                controls = np.zeros((tout.shape[0], du))
+                for k, time in enumerate(tout):
+                    target_ID_k = assignments[k, agent.ID]
+
+                    target = world.objects[target_ID_k]
+                    target_start_ind, target_end_ind = world.get_object_world_state_index(target_ID_k)
+                    target_state_k = yout[k, target_start_ind:target_end_ind]
+
+                    u_target = target.pol.evaluate(time, target_state_k)
+
+                    # update the linear augmented tracker
+                    if agent.pol.__class__.__name__ == 'LinearFeedbackAugmented':
+                        # Get agent policy in correct tracking state for P, Q, p at time ii
+                        Acl = target.pol.get_closed_loop_A()
+                        gcl = target.pol.get_closed_loop_g()
+                        agent.pol.track(time, target_ID_k, Acl, gcl)
+
+                        # TEST inten learning
+                        # agent.pol.track(time, target)
+
+                        controls[k, :] = agent.pol.evaluate(time, agent_state_history[k, :], target_state_k,
+                                feedforward=u_target)
+                    else:
+                        controls[k, :] = agent.pol.evaluate(time, agent_state_history[k, :], target_state_k)
+
+
+                agent_controls.append(controls)
+
+                # CONTROL COSTS
+
+                # post-process for t=0
+                target_ID_0 = assignments[0, agent.ID]
+                target_0 = world.objects[target_ID_0]
+                target_start_ind, target_end_ind = world.get_object_world_state_index(target_ID_0)
+                target_state_0 = yout[0, target_start_ind:target_end_ind]
+
+                u_target = target.pol.evaluate(time, target_state_0)
+
+                # update the linear augmented tracker
+                if agent.pol.__class__.__name__ == 'LinearFeedbackAugmented':
+                    # Get agent policy in correct tracking state for P, Q, p at time ii
+                    Acl = target_0.pol.get_closed_loop_A()
+                    gcl = target_0.pol.get_closed_loop_g()
+                    agent.pol.track(0, target_ID_0, Acl, gcl)
+
+                    # TEST inten learning
+                    # agent.pol.track(0, target)
+
+                    # NOTE assumes LQT
+                    # Get agent controller properties
+                    R = agent.pol.get_R()
+                    Q_0 = agent.pol.get_Q()
+                    P_0 = agent.pol.get_P()
+                    p_0 = agent.pol.get_p()
+                    uss_0 = agent.pol.get_uss()
+                    Xss_0 = agent.pol.get_xss()
+
+                    # agent LQT controller internal state representation - "augmented state"
+                    X_0 = np.hstack((agent_state_history[0, :], target_state_0))
+
+                    xp[0, agent.ID] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
+                            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
+
+                    stage_cost[0, agent.ID] = np.dot(X_0, np.dot(Q_0, X_0)) + \
+                            np.dot(controls[0, :], np.dot(R, controls[0, :])) -\
+                            (np.dot(Xss_0, np.dot(Q_0, Xss_0)) + np.dot(uss_0, np.dot(R, uss_0)))
+                else:
+                    x_0 = agent_state_history[0, :]
+                    u_0 = controls[0, :]
+
+                    r = 0.0
+
+                    # STAGE COST
+                    stage_cost[0, agent.ID] = 0.5*np.linalg.norm(x_0 - target_state_0)**2 + r*0.5*u_0[0]**2
+
+                    # COST-TO-GO
+                    xp[0, agent.ID] = 1
+
+                # continue post-processing for rest of time points
+                for k, time in enumerate(tout[1:]):
+                    target_ID_k = assignments[k, agent.ID]
+
+                    target = world.objects[target_ID_k]
+                    target_start_ind, target_end_ind = world.get_object_world_state_index(target_ID_k)
+                    target_state_k = yout[k, target_start_ind:target_end_ind]
+
+                    u_target = target.pol.evaluate(time, target_state_k)
+
+                    if agent.pol.__class__.__name__ == 'LinearFeedbackAugmented':
+                        # Get agent policy in correct tracking state for P, Q, p at iteration k
+                        Acl = target.pol.get_closed_loop_A()
+                        gcl = target.pol.get_closed_loop_g()
+                        agent.pol.track(time, target_ID_k, Acl, gcl)
+
+                        # TEST inten learning
+                        # agent.pol.track(time, target)
+
+                        # NOTE assumes LQT
+                        # Get agent controller properties
+                        R = agent.pol.get_R()
+                        Q = agent.pol.get_Q()
+                        P = agent.pol.get_P()
+                        p = agent.pol.get_p()
+                        uss = agent.pol.get_uss()
+                        Xss = agent.pol.get_xss()
+
+                        X = np.hstack((agent_state_history[k, :], target_state_k))
+
+                        # STAGE COST
+                        stage_cost[k, agent.ID] = np.dot(X, np.dot(Q, X)) +\
+                                np.dot(controls[k, :], np.dot(R, controls[k, :])) -\
+                                (np.dot(Xss, np.dot(Q, Xss)) + np.dot(uss, np.dot(R, uss)))
+
+                        # COST-TO-GO
+                        xp[k, agent.ID] = np.dot(X, np.dot(P, X)) + 2*np.dot(p, X) -\
+                            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
+
+                    else:
+                        x_k = agent_state_history[k, :]
+                        u_k = controls[k, :]
+
+                        r = 0.0
+
+                        # STAGE COST
+                        stage_cost[k, agent.ID] = 0.5*np.linalg.norm(x_k - target_state_k)**2 + r*0.5*u_k[0]**2
+
+                        # COST-TO-GO
+                        xp[k, agent.ID] = 1
+
+
+                for k in range(tout.shape[0]):
+                    # final_cost[k, agent.ID] = np.trapz(stage_cost[:k, agent.ID], x=tout[:k])
+                    final_cost[k, agent.ID] = np.sum(stage_cost[:k, agent.ID])
+ 
+            agent_controls = np.concatenate(agent_controls, axis=1)
+            engagement_results.update({
+                'engagement': pair,
+                'system_of_interest': system_of_interest,
+                'decision_epoch': decision_epoch,
+                'targettable_set': targettable_set,
+                'nagents': nagents,
+                'ntargets': ntargets,
+                'agent_models': mas_models,
+                'target_models': target_models,
+                'agent_dx': mas_dx,
+                'target_dx': target_dx,
+                'agent_controls': agent_controls,
+                'final_cost': final_cost,
+                'stage_cost': stage_cost,
+                'cost_to_go': xp})
+
+            scenario_results.append(engagement_results)
+
+    # collect results of this engagement
+
+    # TODO separate function
+    # PACK RESULTS
+    # sim params : system_of_interest : data : costs
+    columns = ['dim', 'dx', 'du', 'nagents', 'ntargets', 'tout', 'yout', 'city_states',
+            'final_cost', 'stage_cost', 'cost_to_go']
+    # eng.df = [tout, yout, asst history] dataframe
+
+    #### PACK INTO SINGLE DATAFRAME
     collisions = parameters['collisions']
     collision_tol = parameters['collision_tol']
-    assignment_epoch = parameters['assignment_epoch']
-
-    yout = df.iloc[:, 1:].to_numpy()
-    tout = df.iloc[:, 0].to_numpy()
-
-    yout = copy.deepcopy(yout)
-    assignment_switches = find_switches(tout, yout, nagents, nagents, dx, dx)
-
-    print("INITIAL CONDITION: ", yout[0])
-
-    # assignments = yout[:, nagents*2*4:].astype(np.int32)
-    assignments = yout[:, nagents*2*dx:].astype(np.int32)
-
-    # # TEST
-    # test = compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents)
-
-    # PLOT COSTS
-    final_cost = np.zeros((tout.shape[0], nagents))
-    stage_cost = np.zeros((tout.shape[0], nagents))
-    xp = np.zeros((yout.shape[0], nagents))
-    optimal_cost = np.zeros((1, nagents))
-
-    xss = np.zeros((yout.shape[0], nagents*2*dx))
-    for zz in range(nagents):
-        y_agent = yout[:, zz*dx:(zz+1)*dx]
-
-        # COMPUTE CONTROLS
-        # yout, assignments, nagents, dx, poltargets, polagents,
-        controls = np.zeros((yout.shape[0], du))
-        for ii in range(yout.shape[0]): # compute controls
-
-            # Get assigned-to target id for agent zz at time index ii
-            asst_ii = assignments[ii] # assignments at time ii
-            sigma_i = asst_ii[zz] # target assigned-to agent zz
-
-            # y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
-            y_target = yout[ii, (sigma_i+nagents)*dx:(sigma_i+nagents+1)*dx]
-
-            # CONST STATE TRACKER
-            polagents[zz].set_const(tout[ii], sigma_i, y_target)
-
-            controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :])
-
-        # COSTS
-
-        # post-process for t=0
-        y_target = yout[0, (assignments[0][zz]+nagents)*dx:(assignments[0][zz]+nagents+1)*dx]
-
-        # Get agent policy in correct tracking state for P, Q, p at t=0
-        asst_0 = assignments[0] # assignments at time ii
-        sigma_i = asst_0[zz] # target assigned-to agent zz
-        polagents[zz].set_const(0, sigma_i, y_target)
-
-        R = polagents[zz].get_R()
-        Q_0 = polagents[zz].get_Q()
-        P_0 = polagents[zz].get_P()
-        p_0 = polagents[zz].get_p()
-
-        uss_0 = polagents[zz].get_uss()
-        Xss_0 = polagents[zz].get_xss()
-        error_state_0 = y_agent[0, :] - y_target
-        xp[0, zz] = np.dot(error_state_0, np.dot(P_0, error_state_0)) + 2*np.dot(p_0, error_state_0) -\
-            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
-
-        stage_cost[0, zz] = np.dot(error_state_0, np.dot(Q_0, error_state_0)) + np.dot(controls[0, :], np.dot(R, controls[0, :])) -\
-            (np.dot(Xss_0, np.dot(Q_0, Xss_0)) + np.dot(uss_0, np.dot(R, uss_0)))
-
-        # optimal cost (ie. DYN)
-        opt_asst_y_target = yout[0, (opt_asst[zz]+nagents)*dx:(opt_asst[zz]+nagents+1)*dx]
-        opt_error_state_0 = y_agent[0, :] - opt_asst_y_target
-
-        # Get agent policy in correct tracking state for P, Q, p at t=0
-        optasst_0 = opt_asst # assignments at time ii
-        optasst_sigma_i = asst_0[zz] # target assigned-to agent zz
-        polagents[zz].set_const(0, optasst_sigma_i, opt_asst_y_target)
-
-        R = polagents[zz].get_R()
-        optasst_Q_0 = polagents[zz].get_Q()
-        optasst_P_0 = polagents[zz].get_P()
-        optasst_p_0 = polagents[zz].get_p()
-
-        optasst_uss_0 = polagents[zz].get_uss()
-        optasst_Xss_0 = polagents[zz].get_xss()
-        optimal_cost[0, zz] = np.dot(opt_error_state_0, np.dot(optasst_P_0, opt_error_state_0)) + 2*np.dot(optasst_p_0, opt_error_state_0) - (np.dot(optasst_Xss_0, np.dot(optasst_P_0, optasst_Xss_0)) + 2*np.dot(optasst_p_0.T, optasst_Xss_0))
-
-        # continue post-processing for rest of time points
-        for ii in range(1, yout.shape[0]):
-
-            # Get assigned-to target id for agent zz at time index ii
-            asst_ii = assignments[ii] # assignments at time ii
-            sigma_i = asst_ii[zz] # target assigned-to agent zz
-
-            # y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
-            y_target = yout[ii, (sigma_i+nagents)*dx:(sigma_i+nagents+1)*dx]
-            error_state = y_agent[ii, :] - y_target
-
-            # CONST STATE TRACKER
-            polagents[zz].set_const(tout[ii], sigma_i, y_target)
-
-            controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :])
-
-            R = polagents[zz].get_R()
-            Q = polagents[zz].get_Q()
-            P = polagents[zz].get_P()
-            p = polagents[zz].get_p()
-
-            # STEADY-STATE TERMS
-            uss = polagents[zz].get_uss()
-            Xss = polagents[zz].get_xss()
-
-            # STAGE COST
-            stage_cost[ii, zz] = np.dot(error_state, np.dot(Q, error_state)) + np.dot(controls[ii, :], np.dot(R, controls[ii, :])) -\
-                (np.dot(Xss, np.dot(Q, Xss)) + np.dot(uss, np.dot(R, uss)))
-
-            # COST-TO-GO
-            xp[ii, zz] = np.dot(error_state, np.dot(P, error_state)) + 2*np.dot(p, error_state) -\
-                (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
-
-        for ii in range(tout.shape[0]):
-            final_cost[ii, zz] = np.trapz(stage_cost[:ii, zz], x=tout[:ii])
-
-    optcost = np.sum(optimal_cost[0, :])
-
-    ##DEBUG
-    #print("POLICY: ", poltrack.__class__.__name__)
-    #print("FINAL TIME: ", tout[-1])
-    #print("initial optimal cost: ", optcost)
-    #print("initial incurred cost: ", final_cost[0])
-    #print("final cost-to-go value: ", np.sum(xp, axis=1)[-1])
-    #print("final incurred cost value: ", np.sum(final_cost, axis=1)[-1]) # last stage cost
-    #print("initial optimal cost - final incurred cost value = ", optcost - np.sum(final_cost, axis=1)[-1])
-    #print("INITIAL CONDITIONS")
-    #print(yout[0, :])
-    #print("FINAL STATE")
-    #print(yout[-1, :])
-    #print("OFFSET")
-    #for pt in poltargets:
-    #    print(pt.const)
-
-    # final dataset = dim, dx, du, nagents, ntargets, yout, tout, final_cost, stage_cost, cost_to_go, optimal_cost, city states
-    columns = ['dim', 'dx', 'du', 'nagents', 'ntargets', 'tout', 'yout', 'city_states', 'final_cost', 'stage_cost',
-            'cost_to_go', 'optimal_cost']
-    # eng.df = [tout, yout, asst history] dataframe
-
-    #### PACK INTO SINGLE DATAFRAME
-    if collisions:
-        col_df = pd.DataFrame([1])
-    else:
-        col_df = pd.DataFrame([0])
-
-    col_tol_df = pd.DataFrame([collision_tol])
-
-    dt_df = pd.DataFrame([dt])
-    dim_df = pd.DataFrame([dim])
-    dx_df = pd.DataFrame([dx])
-    du_df = pd.DataFrame([du])
-    assignment_epoch_df = pd.DataFrame([assignment_epoch])
-    nagents_df = pd.DataFrame([nagents])
-    ntargets_df = pd.DataFrame([ntargets])
-    parameters_df = pd.concat([dt_df, dim_df, col_df, col_tol_df, assignment_epoch_df, dx_df, du_df, nagents_df, ntargets_df], axis=1)
-
-    fc_df = pd.DataFrame(final_cost)
-    sc_df = pd.DataFrame(stage_cost)
-    ctg_df = pd.DataFrame(xp)
-    oc_df = pd.DataFrame(optimal_cost)
-    costs_df = pd.concat([fc_df, sc_df, ctg_df, oc_df], axis=1)
-
-    formations = np.zeros((1, ntargets*dx))
-    # TODO remove this field from data spec
-    # for jj in range(ntargets):
-    #     cities[0, jj*dx:(jj+1)*dx] = poltargets[jj].const
-    stationary_states_df = pd.DataFrame(formations)
-
-    # controls_df = pd.DataFrame(compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents))
-    controls_df = pd.DataFrame(compute_controls(dx, du, yout, tout, assignments, nagents, polagents))
-
-    outputs_df = pd.concat([df, stationary_states_df, controls_df], axis=1)
-
-    return_df = pd.concat([parameters_df, outputs_df, costs_df], axis=1)
-
-    return return_df
-
-def post_process_homogeneous_nonidentical(parameters, sim_results):
-
-    """ Post-process and package simulation parameters, results, and post-processed data (costs)
-
-    Post-process and packing function for homogeneous non-identical agent and target swarms
-    Homogeneous Non-identical implies that the agent and targets have different dynamic models, but are uniform
-    within their respective swarms
-
-    Input:
-    - parameters:           dict containing simulation parameters
-    - sim_results:          dict containing simulaton results
-
-    Output:
-    - return_df:            pandas Dataframe with simulation parameters, results, costs
-
-    """
-
-    df = sim_results['data']
-    poltrack = sim_results['tracking_policy']
-    poltargets = sim_results['target_pol']
-    nagents = sim_results['nagents']
-    ntargets = sim_results['ntargets']
-    ot_costs = sim_results['asst_cost']
-    polagents = sim_results['agent_pol']
-    opt_asst = sim_results['optimal_asst']
-    asst_policy = sim_results['asst_policy']
-
     dt = parameters['dt']
     dim = parameters['dim']
-    dx_a = parameters['dx']
-    du = parameters['du']
-    collisions = parameters['collisions']
-    assignment_epoch = parameters['assignment_epoch']
+    maxtime = parameters['maxtime']
 
-    yout = df.iloc[:, 1:].to_numpy()
-    tout = df.iloc[:, 0].to_numpy()
-
-    yout = copy.deepcopy(yout)
-    assignment_switches = find_switches(tout, yout, nagents, nagents, dx, dx)
-
-    print("INITIAL CONDITION: ", yout[0])
-
-    # assignments = yout[:, nagents*2*4:].astype(np.int32)
-    assignments = yout[:, nagents*2*dx:].astype(np.int32)
-
-    # # TEST
-    # test = compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents)
-
-    # PLOT COSTS
-    final_cost = np.zeros((tout.shape[0], nagents))
-    stage_cost = np.zeros((tout.shape[0], nagents))
-    xp = np.zeros((yout.shape[0], nagents))
-    optimal_cost = np.zeros((1, nagents))
-
-    xss = np.zeros((yout.shape[0], nagents*2*dx))
-    for zz in range(nagents):
-        y_agent = yout[:, zz*dx:(zz+1)*dx]
-
-        # COMPUTE CONTROLS
-        # yout, assignments, nagents, dx, poltargets, polagents,
-        controls = np.zeros((yout.shape[0], du))
-        for ii in range(yout.shape[0]): # compute controls
-            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
-
-            # AUGMENTED TRACKER
-            asst_ii = assignments[ii] # assignments at time ii
-            sigma_i = asst_ii[zz] # target assigned-to agent zz
-            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
-
-            # NEW
-            # Get agent policy in correct tracking state for P, Q, p at time ii
-            Acl = poltargets[sigma_i].get_closed_loop_A()
-            gcl = poltargets[sigma_i].get_closed_loop_g()
-            polagents[zz].track(ii, sigma_i, Acl, gcl)
-
-            controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
-
-        # COSTS
-
-        # post-process for t=0
-        y_target = yout[0, (assignments[0][zz]+nagents)*dx:(assignments[0][zz]+nagents+1)*dx]
-
-        # Get agent policy in correct tracking state for P, Q, p at t=0
-        asst_0 = assignments[0] # assignments at time ii
-        sigma_i = asst_0[zz] # target assigned-to agent zz
-        Acl_0 = poltargets[sigma_i].get_closed_loop_A()
-        gcl_0 = poltargets[sigma_i].get_closed_loop_g()
-        polagents[zz].track(0, sigma_i, Acl_0, gcl_0)
-
-        R = polagents[zz].get_R()
-        Q_0 = polagents[zz].get_Q()
-        P_0 = polagents[zz].get_P()
-        p_0 = polagents[zz].get_p()
-
-        uss_0 = polagents[zz].get_uss()
-        Xss_0 = polagents[zz].get_xss()
-        X_0 = np.hstack((y_agent[0, :], y_target))
-        xp[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
-            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
-
-        stage_cost[0, zz] = np.dot(X_0, np.dot(Q_0, X_0)) + np.dot(controls[0, :], np.dot(R, controls[0, :])) -\
-            (np.dot(Xss_0, np.dot(Q_0, Xss_0)) + np.dot(uss_0, np.dot(R, uss_0)))
-
-        # optimal cost (ie. DYN)
-        opt_asst_y_target = yout[0, (opt_asst[zz]+nagents)*dx:(opt_asst[zz]+nagents+1)*dx]
-        X_0 = np.hstack((y_agent[0, :], opt_asst_y_target))
-
-        # Get agent policy in correct tracking state for P, Q, p at t=0
-        optasst_0 = opt_asst # assignments at time ii
-        optasst_sigma_i = asst_0[zz] # target assigned-to agent zz
-        optasst_Acl_0 = poltargets[optasst_sigma_i].get_closed_loop_A()
-        optasst_gcl_0 = poltargets[optasst_sigma_i].get_closed_loop_g()
-        polagents[zz].track(0, optasst_sigma_i, optasst_Acl_0, optasst_gcl_0)
-
-        R = polagents[zz].get_R()
-        optasst_Q_0 = polagents[zz].get_Q()
-        optasst_P_0 = polagents[zz].get_P()
-        optasst_p_0 = polagents[zz].get_p()
-
-        optasst_uss_0 = polagents[zz].get_uss()
-        optasst_Xss_0 = polagents[zz].get_xss()
-        optimal_cost[0, zz] = np.dot(X_0, np.dot(P_0, X_0)) + 2*np.dot(p_0, X_0) -\
-            (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
-
-        # continue post-processing for rest of time points
-        for ii in range(1, yout.shape[0]):
-            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
-
-            # TEST
-            asst_ii = assignments[ii] # assignments at time ii
-            sigma_i = asst_ii[zz] # target assigned-to agent zz
-            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
-            X = np.hstack((y_agent[ii, :], y_target))
-
-            # Get agent policy in correct tracking state for P, Q, p at time ii
-            asst_ii = assignments[ii] # assignments at time ii
-            sigma_i = asst_ii[zz] # target assigned-to agent zz
-            Acl = poltargets[sigma_i].get_closed_loop_A()
-            gcl = poltargets[sigma_i].get_closed_loop_g()
-            polagents[zz].track(ii, sigma_i, Acl, gcl)
-
-            R = polagents[zz].get_R()
-            Q = polagents[zz].get_Q()
-            P = polagents[zz].get_P()
-            p = polagents[zz].get_p()
-
-            # STEADY-STATE TERMS
-            uss = polagents[zz].get_uss()
-            Xss = polagents[zz].get_xss()
-
-            # STAGE COST
-            stage_cost[ii, zz] = np.dot(X, np.dot(Q, X)) + np.dot(controls[ii, :], np.dot(R, controls[ii, :])) -\
-                (np.dot(Xss, np.dot(Q, Xss)) + np.dot(uss, np.dot(R, uss)))
-
-            # COST-TO-GO
-            xp[ii, zz] = np.dot(X, np.dot(P, X)) + 2*np.dot(p, X) -\
-                (np.dot(Xss_0, np.dot(P_0, Xss_0)) + 2*np.dot(p_0.T, Xss_0))
-
-        for ii in range(tout.shape[0]):
-            final_cost[ii, zz] = np.trapz(stage_cost[:ii, zz], x=tout[:ii])
-
-    optcost = np.sum(optimal_cost[0, :])
-
-    ##DEBUG
-    #print("POLICY: ", poltrack.__class__.__name__)
-    #print("FINAL TIME: ", tout[-1])
-    #print("initial optimal cost: ", optcost)
-    #print("initial incurred cost: ", final_cost[0])
-    #print("final cost-to-go value: ", np.sum(xp, axis=1)[-1])
-    #print("final incurred cost value: ", np.sum(final_cost, axis=1)[-1]) # last stage cost
-    #print("initial optimal cost - final incurred cost value = ", optcost - np.sum(final_cost, axis=1)[-1])
-    #print("INITIAL CONDITIONS")
-    #print(yout[0, :])
-    #print("FINAL STATE")
-    #print(yout[-1, :])
-    #print("OFFSET")
-    #for pt in poltargets:
-    #    print(pt.const)
-
-    # final dataset = dim, dx, du, nagents, ntargets, yout, tout, final_cost, stage_cost, cost_to_go, optimal_cost, city states
-    columns = ['dim', 'dx', 'du', 'nagents', 'ntargets', 'tout', 'yout', 'city_states', 'final_cost', 'stage_cost',
-            'cost_to_go', 'optimal_cost']
-    # eng.df = [tout, yout, asst history] dataframe
-
-    #### PACK INTO SINGLE DATAFRAME
     if collisions:
         col_df = pd.DataFrame([1])
     else:
@@ -497,65 +307,57 @@ def post_process_homogeneous_nonidentical(parameters, sim_results):
 
     dt_df = pd.DataFrame([dt])
     dim_df = pd.DataFrame([dim])
-    dx_df = pd.DataFrame([dx])
-    du_df = pd.DataFrame([du])
-    assignment_epoch_df = pd.DataFrame([assignment_epoch])
-    nagents_df = pd.DataFrame([nagents])
-    ntargets_df = pd.DataFrame([ntargets])
-    parameters_df = pd.concat([dt_df, dim_df, col_df, col_tol_df, assignment_epoch_df, dx_df, du_df, nagents_df, ntargets_df], axis=1)
+    maxtime_df = pd.DataFrame([maxtime])
+    parameters_df = pd.concat([dt_df, dim_df, col_df, col_tol_df, maxtime_df], axis=1)
+
+    # save the World state instead
+#     engagement = scenario_results[0]['engagement']
+#     system_of_interest = scenario_results[0]['system_of_interest']
+#     decision_epoch = scenario_results[0]['decision_epoch']
+#     targettable_set = scenario_results[0]['targettable_set']
+#     nagents = scenario_results[0]['nagents']
+#     ntargets = scenario_results[0]['ntargets']
+#     agent_models = scenario_results[0]['agent_models']
+#     target_models = scenario_results[0]['target_models']
+#     agent_dx = scenario_results[0]['agent_dx']
+#     target_dx = scenario_results[0]['target_dx']
+
+#     agent_dx_df = pd.DataFrame([agent_dx])
+#     target_dx_df = pd.DataFrame([agent_dx])
+#     du_df = pd.DataFrame([du])
+#     decision_epoch_df = pd.DataFrame([decision_epoch])
+#     nagents_df = pd.DataFrame([nagents])
+#     ntargets_df = pd.DataFrame([ntargets])
+
+    # system_of_interest_df = pd.concat([decision_epoch, dx_df, du_df, nagents_df, ntargets_df], axis=1)
+
+    final_cost = scenario_results[0]['final_cost']
+    stage_cost = scenario_results[0]['stage_cost']
+    cost_to_go = scenario_results[0]['cost_to_go']
 
     fc_df = pd.DataFrame(final_cost)
     sc_df = pd.DataFrame(stage_cost)
-    ctg_df = pd.DataFrame(xp)
-    oc_df = pd.DataFrame(optimal_cost)
-    costs_df = pd.concat([fc_df, sc_df, ctg_df, oc_df], axis=1)
+    ctg_df = pd.DataFrame(cost_to_go)
+    costs_df = pd.concat([fc_df, sc_df, ctg_df], axis=1)
 
-    cities = np.zeros((1, ntargets*dx))
-    for jj in range(ntargets):
-        cities[0, jj*dx:(jj+1)*dx] = poltargets[jj].const
-    stationary_states_df = pd.DataFrame(cities)
+    # cities = np.zeros((1, ntargets*dx))
+    # for jj in range(ntargets):
+    #     cities[0, jj*dx:(jj+1)*dx] = poltargets[jj].const
+    # stationary_states_df = pd.DataFrame(cities)
 
-    controls_df = pd.DataFrame(compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents))
+    controls_df = pd.DataFrame(scenario_results[0]['agent_controls'])
 
-    outputs_df = pd.concat([df, stationary_states_df, controls_df], axis=1)
+    outputs_df = pd.concat([df, controls_df], axis=1)
 
     return_df = pd.concat([parameters_df, outputs_df, costs_df], axis=1)
 
     return return_df
-
-def post_process_heterogeneous(parameters, sim_results):
-
-    """ Post-process and package simulation parameters, results, and post-processed data (costs)
-
-    Post-process and packing function for homogeneous non-identical agent and target swarms
-    Heterogeneous implies that the agent and targets have different dynamic models and each member may have different dynamic models
-
-    Input:
-    - parameters:           dict containing simulation parameters
-    - sim_results:          dict containing simulaton results
-
-    Output:
-    - return_df:            pandas Dataframe with simulation parameters, results, costs
-
-    """
-
-    pass
-
-# TODO
-# def unpack_performance_metrics(batch_performance_metrics):
-
-#     if homogeneous and identical:
-#         unpack_homogeneous_identical(batch_performance_metrics)
-#     elif homogeneous and not identical:
-#         unpack_homogeneous_nonidentical(batch_performance_metrics)
-#     else:
-#         unpack_heterogeneous(batch_performance_metrics)
-
-# TODO rename to unpack_homogeneous_identical(batch_performance_metrics):
 
 def unpack_performance_metrics(batch_performance_metrics):
 
     """ Unpacks batch performance metrics DataFrame into a python standard dictionary
+
+    DATE: 02/07/2020
 
     Input:
     - batch_performance_metrics:           pandas DataFrame
@@ -565,37 +367,53 @@ def unpack_performance_metrics(batch_performance_metrics):
 
     """
 
-    unpacked_batch_metrics = {}
+    # parameters_df = pd.concat([dt_df, dim_df, col_df, col_tol_df, maxtime_df], axis=1)
+    # outputs_df = pd.concat([df, controls_df], axis=1)
+    # costs_df = pd.concat([fc_df, sc_df, ctg_df], axis=1)
 
-    for sim_name, metrics_df in batch_performance_metrics.items():
+    unpacked_batch_metrics = {}
+    unpacked_worlds = {}
+
+    for sim_name, sim_metrics in batch_performance_metrics.items():
 
         ### unpack simulation metrics ###
+        world = sim_metrics[0]
+        metrics_df = sim_metrics[1]
 
         # simulation parameters
-        parameter_cols = 9 # see stored data spec
+        parameter_cols = 5 # see stored data spec
         parameters = metrics_df.iloc[0, 0:parameter_cols].to_numpy()
 
         dt = float(parameters[0])
         dim = int(parameters[1])
         collisions = int(parameters[2])
         collision_tol = float(parameters[3])
-        assignment_epoch = int(parameters[4])
-        dx = int(parameters[5])
-        du = int(parameters[6])
-        nagents = int(parameters[7])
-        ntargets = int(parameters[8])
+        maxtime = float(parameters[4])
+
+        # TODO assumes scenario='Intercept'
+        agent_mas = world.get_multi_object('Agent_MAS')
+        target_mas = world.get_multi_object('Target_MAS')
+        terminal_mas = world.get_multi_object('Region')
+        nagents = agent_mas.nagents
+        ntargets = target_mas.nagents
+        nterminal_states = terminal_mas.nagents
+        total_mas_dx = np.sum([agent.dx for agent in agent_mas.agent_list])
+        total_mas_du = np.sum([agent.du for agent in agent_mas.agent_list])
+        total_target_dx = np.sum([target.dx for target in target_mas.agent_list])
+        total_target_du = np.sum([target.du for target in target_mas.agent_list])
+        total_target_terminal_dx = np.sum([point.dx for point in terminal_mas.agent_list])
 
         # simulation outputs
-        output_cols = 1 + nagents*dx + ntargets*dx + nagents + ntargets*dx + nagents*du
+        output_cols = 1 + total_mas_dx + total_target_dx + total_target_terminal_dx + nagents + \
+                total_mas_du
         outputs = metrics_df.iloc[:, parameter_cols: parameter_cols + output_cols].to_numpy()
 
         tout = outputs[:, 0]
-        yout_cols = 1 + nagents*dx + ntargets*dx + nagents
-        yout = outputs[:, 1: yout_cols] # good
-        ss_cols = yout_cols + ntargets*dx
-        stationary_states = outputs[0, yout_cols: ss_cols]
-        ctrl_cols = ss_cols + nagents*du
-        agent_controls = outputs[:, ss_cols: 1+ ctrl_cols]
+        # agent states, target states, asst
+        yout_cols = 1 + total_mas_dx + total_target_dx + total_target_terminal_dx + nagents
+        yout = outputs[:, 1: yout_cols]
+        ctrl_cols = yout_cols + total_mas_du
+        agent_controls = outputs[:, yout_cols: ctrl_cols]
 
         # simulation costs
         costs = metrics_df.iloc[:, parameter_cols + output_cols: ].to_numpy()
@@ -605,29 +423,23 @@ def unpack_performance_metrics(batch_performance_metrics):
         sc_cols = fc_cols + nagents
         stage_cost = costs[:, fc_cols: sc_cols]
         ctg_cols = sc_cols + nagents
-        cost_to_go = costs[:, sc_cols: ctg_cols]
-        optimal_cost = costs[:, ctg_cols: ]
+        cost_to_go = costs[:, sc_cols: ]
 
-        unpacked = [dt, dim, assignment_epoch, collisions, collision_tol, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls, final_cost, stage_cost, cost_to_go, optimal_cost]
+        unpacked = [dt, dim, collisions, collision_tol, maxtime, tout, yout, agent_controls,
+                final_cost, stage_cost, cost_to_go]
 
         columns = [
             "dt",
             "dim",
-            "assignment_epoch",
             "collisions",
             "collision_tol",
-            "dx",
-            "du",
-            "nagents",
-            "ntargets",
+            "maxtime",
             "tout",
             "yout",
-            "stationary_states",
             "agent_controls",
             "final_cost",
             "stage_cost",
-            "cost_to_go",
-            "optimal_cost"
+            "cost_to_go"
         ]
 
         metrics = {}
@@ -635,184 +447,9 @@ def unpack_performance_metrics(batch_performance_metrics):
             metrics.update({col: met})
 
         unpacked_batch_metrics.update({sim_name: metrics})
+        unpacked_worlds.update({sim_name: world})
 
-    return unpacked_batch_metrics
-
-
-def unpack_performance_metrics_OLD_2(batch_performance_metrics):
-    """ Unpacks batch performance metrics DataFrame into a python standard dictionary
-
-    Targets old data storage schematic PRIOR TO AUGUST 13, 2019, AFTER JULY 25, 2019
-
-    Input:
-    - batch_performance_metrics:           pandas DataFrame
-
-    Output:
-    - unpacked_batch_metrics:              dict containing simulation parameters, results, post-processed results (costs)
-
-    """
-
-    unpacked_batch_metrics = {}
-
-    for sim_name, metrics_df in batch_performance_metrics.items():
-
-        ### unpack simulation metrics ###
-
-        # simulation parameters
-        parameter_cols = 8 # see stored data spec
-        parameters = metrics_df.iloc[0, 0:parameter_cols].to_numpy()
-
-        dt = float(parameters[0])
-        dim = int(parameters[1])
-        collisions = int(parameters[2])
-        assignment_epoch = int(parameters[3])
-        dx = int(parameters[4])
-        du = int(parameters[5])
-        nagents = int(parameters[6])
-        ntargets = int(parameters[7])
-
-        # simulation outputs
-        output_cols = 1 + nagents*dx + ntargets*dx + nagents + ntargets*dx + nagents*du
-        outputs = metrics_df.iloc[:, parameter_cols: parameter_cols + output_cols].to_numpy()
-
-        tout = outputs[:, 0]
-        yout_cols = 1 + nagents*dx + ntargets*dx + nagents
-        yout = outputs[:, 1: yout_cols] # good
-        ss_cols = yout_cols + ntargets*dx
-        stationary_states = outputs[0, yout_cols: ss_cols]
-        ctrl_cols = ss_cols + nagents*du
-        agent_controls = outputs[:, ss_cols: 1+ ctrl_cols]
-
-        # simulation costs
-        costs = metrics_df.iloc[:, parameter_cols + output_cols: ].to_numpy()
-
-        fc_cols = nagents
-        final_cost = costs[:, 0:fc_cols]
-        sc_cols = fc_cols + nagents
-        stage_cost = costs[:, fc_cols: sc_cols]
-        ctg_cols = sc_cols + nagents
-        cost_to_go = costs[:, sc_cols: ctg_cols]
-        optimal_cost = costs[:, ctg_cols: ]
-
-        unpacked = [dt, dim, assignment_epoch, collisions, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls,
-                final_cost, stage_cost, cost_to_go, optimal_cost]
-
-        columns = [
-            "dt",
-            "dim",
-            "assignment_epoch",
-            "collisions",
-            "dx",
-            "du",
-            "nagents",
-            "ntargets",
-            "tout",
-            "yout",
-            "stationary_states",
-            "agent_controls",
-            "final_cost",
-            "stage_cost",
-            "cost_to_go",
-            "optimal_cost"
-        ]
-
-        metrics = {}
-        for (col, met) in zip(columns, unpacked):
-            metrics.update({col: met})
-
-        unpacked_batch_metrics.update({sim_name: metrics})
-
-    return unpacked_batch_metrics
-
-def unpack_performance_metrics_OLD(batch_performance_metrics):
-
-    """ Unpacks batch performance metrics DataFrame into a python standard dictionary
-
-    Targets old data storage schematic PRIOR TO JULY 25, 2019
-
-    Input:
-    - batch_performance_metrics:           pandas DataFrame
-
-    Output:
-    - unpacked_batch_metrics:              dict containing simulation parameters, results, post-processed results (costs)
-
-    """
-
-
-    unpacked_batch_metrics = {}
-
-    for sim_name, metrics_df in batch_performance_metrics.items():
-
-        ### unpack simulation metrics ###
-
-        #### OLD DATA (earlier than 7/25) ####
-        # simulation parameters
-        parameter_cols = 7 # see stored data spec
-        parameters = metrics_df.iloc[0, 0:parameter_cols].to_numpy()
-
-        dt = float(parameters[0])
-        dim = int(parameters[1])
-        collisions = int(parameters[2])
-        dx = int(parameters[3])
-        du = int(parameters[4])
-        nagents = int(parameters[5])
-        ntargets = int(parameters[6])
-
-
-        # simulation outputs
-        output_cols = 1 + nagents*dx + ntargets*dx + nagents + ntargets*dx + nagents*du
-        outputs = metrics_df.iloc[:, parameter_cols: parameter_cols + output_cols].to_numpy()
-
-        tout = outputs[:, 0]
-        yout_cols = 1 + nagents*dx + ntargets*dx + nagents
-        yout = outputs[:, 1: yout_cols] # good
-        ss_cols = yout_cols + ntargets*dx
-        stationary_states = outputs[0, yout_cols: ss_cols]
-        ctrl_cols = ss_cols + nagents*du
-        agent_controls = outputs[:, ss_cols: 1+ ctrl_cols]
-
-        # simulation costs
-        costs = metrics_df.iloc[:, parameter_cols + output_cols: ].to_numpy()
-
-        fc_cols = nagents
-        final_cost = costs[:, 0:fc_cols]
-        sc_cols = fc_cols + nagents
-        stage_cost = costs[:, fc_cols: sc_cols]
-        ctg_cols = sc_cols + nagents
-        cost_to_go = costs[:, sc_cols: ctg_cols]
-        optimal_cost = costs[:, ctg_cols: ]
-
-        #### OLD DATA (earlier than 7/25) ####
-        unpacked = [dt, dim, collisions, dx, du, nagents, ntargets, tout, yout, stationary_states, agent_controls,
-                final_cost, stage_cost, cost_to_go, optimal_cost]
-
-        ### end unpack ###
-
-        columns = [
-            "dt",
-            "dim",
-            "collisions",
-            "dx",
-            "du",
-            "nagents",
-            "ntargets",
-            "tout",
-            "yout",
-            "stationary_states",
-            "agent_controls",
-            "final_cost",
-            "stage_cost",
-            "cost_to_go",
-            "optimal_cost"
-        ]
-
-        metrics = {}
-        for (col, met) in zip(columns, unpacked):
-            metrics.update({col: met})
-
-        unpacked_batch_metrics.update({sim_name: metrics})
-
-    return unpacked_batch_metrics
+    return [unpacked_worlds, unpacked_batch_metrics]
 
 def unpack_batch_diagnostics(batch_diagnostics):
 
@@ -854,7 +491,7 @@ def unpack_batch_diagnostics(batch_diagnostics):
     return unpack_batch_diagnostics
 
 # COMPUTE CONTROLS
-def compute_controls(dx, du, yout, tout, assignments, nagents, polagents):
+def compute_controls(dx, du, yout, tout, assignments, nagents, poltargets, polagents):
 
     """ Recreate the agent swarm member control inputs
 
@@ -866,18 +503,20 @@ def compute_controls(dx, du, yout, tout, assignments, nagents, polagents):
 
         agent_zz_controls = np.zeros((yout.shape[0], du))
         for ii in range(yout.shape[0]): # compute controls
+            y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
 
-            # Get assigned-to target id for agent zz at time index ii
+            # AUGMENTED TRACKER
             asst_ii = assignments[ii] # assignments at time ii
             sigma_i = asst_ii[zz] # target assigned-to agent zz
+            controls_targ = poltargets[sigma_i].evaluate(tout[ii], y_target)
 
-            # y_target = yout[ii, (assignments[ii][zz]+nagents)*dx:(assignments[ii][zz]+nagents+1)*dx]
-            y_target = yout[ii, (sigma_i+nagents)*dx:(sigma_i+nagents+1)*dx]
+            # NEW
+            # Get agent policy in correct tracking state for P, Q, p at time ii
+            Acl = poltargets[sigma_i].get_closed_loop_A()
+            gcl = poltargets[sigma_i].get_closed_loop_g()
+            polagents[zz].track(ii, sigma_i, Acl, gcl)
 
-            # CONST STATE TRACKER
-            polagents[zz].set_const(tout[ii], sigma_i, y_target)
-
-            agent_zz_controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :])
+            agent_zz_controls[ii, :] = polagents[zz].evaluate(tout[ii], y_agent[ii, :], y_target, controls_targ)
 
         agent_controls[:, zz*du:(zz+1)*du] = agent_zz_controls
 
@@ -1000,14 +639,15 @@ def plot_batch_performance_metrics(batch_performance_metrics):
     """
 
     unpacked = unpack_performance_metrics(batch_performance_metrics)
+    # unpacked = unpack_performance_metrics_OLD3(batch_performance_metrics)
+    # unpacked = unpack_performance_metrics_OLD2(batch_performance_metrics)
+    # unpacked = unpack_performance_metrics_OLD(batch_performance_metrics)
 
-    # TODO REMOVE
-    # plot.plot_costs(unpacked)
-
-    plot.plot_assignments(unpacked)
+    plot.plot_costs(unpacked)
+    # plot.plot_assignments(unpacked)
     plot.plot_trajectory(unpacked)
 
-    collisions = agent_agent_collisions(unpacked)
+    # collisions = agent_agent_collisions(unpacked)
 
     # TODO trajectory movie
     # plot_animated_trajectory(unpacked)
@@ -1198,7 +838,7 @@ def save_ensemble_metrics(ensemble_performance_metrics, ensemble_name):
 
     df = pd.DataFrame(unpacked_ensemble_fc_asst)
 
-    root_directory = '/Users/foo/my/project/'
+    root_directory = '/Users/koray/Box Sync/TargetAssignment/draper_paper/raw_data/final_costs_assignments/'
     directory = root_directory + ensemble_name
 
     try:

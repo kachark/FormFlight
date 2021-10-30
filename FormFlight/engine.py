@@ -57,7 +57,7 @@ class Engine:
             self.diagnostics.iloc[-1, :] = diag_df.iloc[0, :]
             self.diagnostics = pd.concat([self.diagnostics, diag_df.iloc[1:,:]], ignore_index=True)
 
-    def apriori_collisions(self, current_state, agents, targets, time):
+    def apriori_collisions(self, time, world_state, world):
 
         """ computes apriori collisions between agents and targets in 2D/3D
 
@@ -68,6 +68,14 @@ class Engine:
 
         """
 
+        # NOTE only checks collisions between a multiagent system named 'Agent_MAS' and another
+        # named 'Target_MAS', ie. 1 group vs 1 group collision detection
+
+        agent_mas = world.get_multi_object('Agent_MAS')
+        agents = agent_mas.agent_list
+        target_mas = world.get_multi_object('Target_MAS')
+        targets = target_mas.agent_list
+
         nagents = len(agents)
         ntargets = len(targets)
 
@@ -77,7 +85,7 @@ class Engine:
         tstart = time
         tfinal = time + self.dt
 
-        updated_state = copy.deepcopy(current_state)
+        updated_state = copy.deepcopy(world_state)
 
         # circle/sphere around every agent/target, if they touch = collision
         bounding_radius_agent = self.collision_tol/2
@@ -86,39 +94,49 @@ class Engine:
         # for now consider all agent-target pairs - can be optimized
         collided = set() # tuple(i, j)
 
-        for i in range(nagents):
-            # agent state components (differs per dynamic model)
-            y_agent_statespace = agents[i].get_statespace()
-            agent_dim_pos = y_agent_statespace['position']
-            agent_dim_vel = y_agent_statespace['velocity']
-            dx = agents[i].state_size()
+        # TODO need to update to the new API
+        # every dynamic object should be checked against every other dynamic + static object
+        dynamic_object_IDs = world.dynamic_object_IDs
+        for global_ID in dynamic_object_IDs:
+            object_i = world.objects[global_ID]
+            obj_i_start_ind, obj_i_end_ind = world.get_object_world_state_index(global_ID)
+            object_i_state = updated_state[obj_i_start_ind:obj_i_end_ind]
+            object_i_statespace = object_i.get_statespace()
 
-            # full agent state
-            y_agent = updated_state[i*dx:(i+1)*dx] # agent i
+            object_i_dim_pos = object_i_statespace['position']
+            object_i_dim_vel = object_i_statespace['velocity']
 
-            # agent current and projected future position
-            y_agent_current_pos = y_agent[agent_dim_pos]
-            y_agent_final_pos = y_agent_current_pos + y_agent[agent_dim_vel]*self.dt
+            object_i_current_pos = object_i_state[object_i_dim_pos]
+            object_i_final_pos = object_i_current_pos + object_i_state[object_i_dim_vel]*self.dt
 
-            # check each agent against each target
-            for j in range(ntargets):
-                y_target_statespace = targets[j].get_statespace()
-                target_dim_pos = y_target_statespace['position']
-                target_dim_vel = y_target_statespace['velocity']
-                dx = targets[j].state_size()
+            # # TODO use this approach when can recall static obj state indices
+            # for object_j in world.objects:
+            #     object_j_ID = object_j.ID
+            #     if global_ID == object_j_ID:
+            #         continue
 
-                # full target state
-                y_target = updated_state[(j+ntargets)*dx:(j+ntargets+1)*dx]
+
+            for global_ID_j in world.dynamic_object_IDs:
+                if global_ID == global_ID_j:
+                    continue
+
+                object_j = world.objects[global_ID_j]
+                obj_j_start_ind, obj_j_end_ind = world.get_object_world_state_index(global_ID_j)
+                object_j_state = updated_state[obj_j_start_ind:obj_j_end_ind]
+                object_j_statespace = object_j.get_statespace()
+
+                object_j_dim_pos = object_j_statespace['position']
+                object_j_dim_vel = object_j_statespace['velocity']
 
                 # target current and projected future position
-                y_target_current_pos = y_target[target_dim_pos]
-                y_target_final_pos = y_target_current_pos + y_target[target_dim_vel]*self.dt
+                object_j_current_pos = object_j_state[object_j_dim_pos]
+                object_j_final_pos = object_j_current_pos + object_j_state[object_j_dim_vel]*self.dt
 
                 # agent/target current and future positions
-                a0 = y_agent_current_pos
-                af = y_agent_final_pos
-                t0 = y_target_current_pos
-                tf = y_target_final_pos
+                a0 = object_i_current_pos
+                af = object_i_final_pos
+                t0 = object_j_current_pos
+                tf = object_j_final_pos
                 del_a = af - a0
                 del_t = tf - t0
 
@@ -134,23 +152,20 @@ class Engine:
                 # print(t_collision[np.isreal(t_collision)])
                 for t in t_collisions[np.isreal(t_collisions)]:
                     if 0 < t < 1:
-                        print("COLLISION DETECTED ", "(", i, ", ", j, ") ", t)
+                        print("COLLISION DETECTED ", "(", global_ID, ", ", global_ID_j, ") ", t)
                         print("       ", a0, " t0: ", t0)
-                        collided.add((i,j))
+                        collided.add((global_ID, global_ID_j))
 
                         # TODO update agent/target state to show projected collision location
                         # update agent to be at location of collision
-                        updated_state[i*dx:(i+1)*dx][agent_dim_pos] = y_agent_final_pos
+                        updated_state[obj_i_start_ind:obj_i_end_ind][object_i_dim_pos] = \
+                                object_i_final_pos
                         # updated_state[i*dx:(i+1)*dx][agent_dim_vel] = np.zeros((3))
 
                         # update target to be at location of collision
-                        updated_state[(j+ntargets)*dx:(j+ntargets+1)*dx][target_dim_pos] = y_target_final_pos
+                        updated_state[obj_j_start_ind:obj_j_end_ind][object_j_dim_pos] = \
+                                object_j_final_pos
                         # updated_state[(j+ntargets)*dx:(j+ntargets+1)*dx][target_dim_vel] = np.zeros((3))
-
-
-                # if t_collisions.size != 0:
-                #     if 0 <= np.amin(t_collisions[np.isreal(t_collisions)]) <= 1:
-                #         collided.append((i,j))
 
         print("COLLISIONS: ", collided)
         # return collided
@@ -160,7 +175,7 @@ class Engine:
 
     def run(self, x0, system):
 
-        """ Main simulation loop
+        """ Calls System pre-processor and contains main simulation loop
 
         Input:
         - x0:           initial agent, target, target terminal states
@@ -173,8 +188,9 @@ class Engine:
         time = 0
 
         # SYSTEM PREPROCESSOR
+        # check initial time collision condition
         if self.collisions:
-            collisions, updated_state = self.apriori_collisions(current_state, system.agents, system.targets, time)
+            collisions, updated_state = self.apriori_collisions(time, current_state, system.world)
         else:
             collisions = set()
             updated_state = current_state
@@ -186,14 +202,16 @@ class Engine:
 
             tick = time / self.dt
 
+            # print("Time: {0:3.2E}".format(time))
             if self.collisions:
-                collisions, updated_state = self.apriori_collisions(current_state, system.agents, system.targets, time)
-
+                collisions, updated_state = self.apriori_collisions(time, current_state,
+                        system.world)
             else:
                 collisions = set()
                 updated_state = current_state
 
-            thist, state_hist, assign_hist, diagnostics = system.update(time, updated_state, collisions, self.dt, tick)
+            thist, state_hist, assign_hist, diagnostics = system.update(time, self.dt, tick,
+                    updated_state, collisions)
 
             newdf = pd.DataFrame(np.hstack((thist[:, np.newaxis],
                                             state_hist,

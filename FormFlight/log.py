@@ -5,6 +5,8 @@
 import glob
 import os
 import errno
+# import pickle
+import dill as pickle
 import pandas as pd
 from datetime import datetime
 
@@ -33,7 +35,7 @@ def save_test_info_to_txt(test_name, test_conditions, test_directory, starttime,
         print(line, file=text_file)
         print(file=text_file)
 
-def save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, batch_name):
+def save_batch_metrics(batch_performance_metrics, ensemble_directory, batch_name):
 
     """ Saves DataFrames representing batch of simulations metrics to .csv
 
@@ -58,10 +60,19 @@ def save_batch_metrics_to_csv(batch_performance_metrics, ensemble_directory, bat
         # directory already exists
         pass
 
-    for sim_name, post_processed_results_df in batch_performance_metrics.items():
+    for sim_name, post_processed_results in batch_performance_metrics.items():
+        world = post_processed_results[0]
+        results_df = post_processed_results[1]
+
         file_name = batch_name + '_' + sim_name + '_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.csv'
         path = directory + '/' + file_name
-        post_processed_results_df.to_csv(path, index=False, header=False)
+        results_df.to_csv(path, index=False, header=False)
+        # TODO serialize world object
+        world_file_name = batch_name + '_' + sim_name + '_' + 'world' + '_' + \
+                datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.pkl'
+        world_path = directory + '/' + world_file_name
+        with open(world_path, 'wb') as f:
+            pickle.dump(world, f)
 
 def save_batch_diagnostics_to_csv(packed_batch_diagnostics, ensemble_directory, batch_name):
 
@@ -111,20 +122,34 @@ def load_batch_metrics(ensemble_directory, batch_name, sim_name_list):
 
     directory = ensemble_directory + '/' + batch_name
 
-    # TODO fix conflicts of loading in diagnostics instead of performance metrics
     sim_file_list = glob.glob(directory + '/' + '*.csv')
+    sim_file_list = sim_file_list + glob.glob(directory + '/' + '*.pkl')
 
-    # TEST
     # TODO reorder sim_file_list to make sure files loaded in correct way
     # sim_file_list = sorted(sim_file_list, key=lambda x: x.split()[1])
     sim_file_list = sorted(sim_file_list, key=lambda x: x.split()[0])
 
+    file_types = ['.csv', '.pkl']
+    nfiletypes = len(file_types)
+
+    # create empty dict
     batch_performance_metrics = {}
+    batch_performance_metrics = batch_performance_metrics.fromkeys(sim_name_list)
+    for sim_name in sim_name_list:
+        batch_performance_metrics[sim_name] = [None]*nfiletypes
+
     for sim_file_name in sim_file_list:
         for sim_name in sim_name_list:
             if sim_name in sim_file_name and 'DIAGNOSTICS' not in sim_file_name:
-                loaded_sim = pd.read_csv(sim_file_name, header=None)
-                batch_performance_metrics.update({sim_name: loaded_sim})
+                if '.pkl' in sim_file_name:
+                    loaded_world = None
+                    with open(sim_file_name, 'rb') as f:
+                        loaded_world = pickle.load(f)
+                    batch_performance_metrics[sim_name][0] = loaded_world
+                if '.csv' in sim_file_name:
+                    loaded_results = None
+                    loaded_results = pd.read_csv(sim_file_name, header=None)
+                    batch_performance_metrics[sim_name][1] = loaded_results
 
     return batch_performance_metrics
 

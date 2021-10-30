@@ -29,7 +29,6 @@ def circle(dim, radius, nsamples, sample):
 def fibonacci_sphere(r, nsamples, sample):
     """ Computes the x,y,z positions on a sphere for a given number of points
     http://blog.marmakoide.org/?p=1
-
     r: radius of sphere / scaling factor
     nsamples: total number of points on sphere
     sample: nth point along the sphere
@@ -44,5 +43,4 @@ def fibonacci_sphere(r, nsamples, sample):
     y = r * radius * np.sin(theta)
     z = r * z_i
     return x,y,z
-
 

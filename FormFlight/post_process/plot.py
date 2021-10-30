@@ -37,65 +37,56 @@ rc('font', family='serif')
 def plot_costs(unpacked):
 
     """ Plots costs
+
+    DATE: 02/07/2020
+
     """
 
-    linewidth = 4
+    linewidth = 2
 
-    labelsize = 40
-    fontsize = 40
+    labelsize = 18
+    fontsize = 18
     fig, axs = plt.subplots(1,1)
     axs.set_xlabel('Time (s)', fontsize=fontsize)
     # axs.set_ylabel('Cost', fontsize=fontsize)
 
     axs.set_ylabel('Normalized Cost', fontsize=fontsize)
     # axs.set_title('Cost VS Time')
-    for sim_name, metrics in unpacked.items():
+
+    unpacked_worlds = unpacked[0]
+    unpacked_batch_metrics = unpacked[1]
+
+    emd = 'emd'
+    emd_cost_to_go = unpacked_batch_metrics[emd]['cost_to_go']
+    # summed_opt_cost = np.sum(opt_cost_to_go[0, :])
+    summed_opt_cost = 10E9
+
+    for (sim_name, world), (_, metrics) in zip(unpacked_worlds.items(),
+            unpacked_batch_metrics.items()):
 
         tout = metrics['tout']
         yout = metrics['yout']
         final_cost = metrics['final_cost']
         cost_to_go = metrics['cost_to_go']
-        optimal_cost = metrics['optimal_cost']
 
-        summed_opt_cost = np.sum(optimal_cost[0, :])
+        label = sim_name
 
-        label = sim_name.split('Assignment', 1)[1]
-
-        ### cost plots
-        if sim_name == 'AssignmentCustom':
-            # axs.plot(tout, summed_opt_cost*np.ones((yout.shape[0])), '--k', label='Optimal cost with no switching')
-            # axs.plot(tout, np.sum(final_cost, axis=1), '--c', label='Cum. Stage Cost'+' '+sim_name)
-            # axs.plot(tout, np.sum(cost_to_go, axis=1), '--r', label='Cost-to-go'+' '+sim_name)
-
-            # normalized costs
-            axs.plot(tout, np.ones((yout.shape[0])), '--k', linewidth=linewidth, label='Optimal cost')
-            axs.plot(tout, np.sum(final_cost, axis=1)/summed_opt_cost, '--c', linewidth=linewidth, label='Cum. Stage Cost'+' '+label)
-            axs.plot(tout, np.sum(cost_to_go, axis=1)/summed_opt_cost, '--r', linewidth=linewidth, label='Cost-to-go'+' '+label)
-        else:
-            # axs.plot(tout, np.sum(final_cost, axis=1), '-c', label='Cum. Stage Cost'+' '+sim_name)
-            ## axs.plot(tout, np.sum(cost_to_go, axis=1), '-r', label='Cost-to-go'+' '+sim_name)
-
-            # normalized costs
-            axs.plot(tout, np.sum(final_cost, axis=1)/summed_opt_cost, '-c', linewidth=linewidth, label='Cum. Stage Cost'+' '+label)
+        # normalized costs
+        axs.plot(tout, np.sum(final_cost, axis=1)/summed_opt_cost, '-c', linewidth=linewidth,
+                label='Cum. Stage Cost'+' '+label)
 
     axs.xaxis.set_tick_params(labelsize=labelsize)
     axs.yaxis.set_tick_params(labelsize=labelsize)
 
+    # t = axs.yaxis.get_offset_text()
+    # t.set_size(fontsize)
+
     # reorder the legend terms
-    handles, labels = axs.get_legend_handles_labels()
-    #TODO hardcoded - fix
-    try:
-        labels = [labels[1], labels[0], labels[2], labels[3]]
-        handles = [handles[1], handles[0], handles[2], handles[3]]
-    except IndexError:
-        # # DYN
-        # labels = [labels[1], labels[0]]
-        # handles = [handles[1], handles[0]]
-        labels = [labels[1], labels[0]]
-        handles = [handles[1], handles[0]]
+    # handles, labels = axs.get_legend_handles_labels()
+    # labels = [labels[1], labels[0], labels[2], labels[3]]
+    # handles = [handles[1], handles[0], handles[2], handles[3]]
 
-    axs.legend(handles, labels, loc='center right', bbox_to_anchor=(1.0, 0.25), fontsize=fontsize)
-
+    # axs.legend(handles, labels, loc='center right', bbox_to_anchor=(1.0, 0.25), fontsize=fontsize)
 
     # Agent-by-agent cost plots on 1 figure
     # plt.figure()
@@ -111,6 +102,8 @@ def plot_costs(unpacked):
     #         plt.plot(tout, cost_to_go[:, zz], '-.r', label='Cost-to-go (assuming no switch) ({0})'.format(zz))
 
     #     plt.legend()
+    plt.tight_layout()
+    plt.savefig("normalized_cost.pdf", bbox_inches='tight')
 
 def plot_cost_histogram(unpacked_ensemble_metric):
 
@@ -253,7 +246,7 @@ def plot_assignments(unpacked):
         #     assigned_to_targets = assignment
         #     # ax.plot(agents, assigned_to_targets, marker='s', label='Assignment{0}'.format(asst_num))
         #     ax.plot(agents, assigned_to_targets, label='Assignment{0}'.format(asst_num))
-        #     # if sim_name != 'AssignmentCustom':
+        #     # if sim_name != 'AssignmentDyn':
         #     #     ax.fill_between(agents, assigned_to_targets, asst_to_plot[1], color='blue')
         # ax.set_xlabel('agents')
         # ax.set_ylabel('targets')
@@ -376,30 +369,38 @@ def plot_ensemble_avg_switch(metrics_to_compare):
 def plot_trajectory(unpacked):
 
     """ Plots trajectory in 2D or 3D for homogeneous identical double integrator and linearized quadcopters
+
+    DATE: 02/07/2020
+
     """
+
+    unpacked_worlds = unpacked[0]
+    unpacked_batch_metrics = unpacked[1]
 
     dim = 2 # default value
 
     # update dim
-    for sim_name, metrics in unpacked.items():
+    for _, metrics in unpacked_batch_metrics.items():
         dim = metrics['dim']
 
     # want to display all trajectories on same figure
     linewidth_3d = 2
-    linewidth = 4
+    linewidth = 2
     markersize = 8
     scatter_width = markersize**2
-    textsize = 32
+    textsize = 16
 
-    fontsize = 40
-    fontweight = 'bold'
-    labelsize = 40
+    fontsize = 16
+    fontweight = 'light'
+    labelsize = 20
 
     axispad = 18
-    labelpad = 40
+    labelpad = 20
 
+    ax = None
     if dim == 2:
         fig, ax = plt.subplots()
+        ax.set_aspect('equal')
     if dim == 3:
         fig = plt.figure()
         fig.tight_layout()
@@ -411,278 +412,340 @@ def plot_trajectory(unpacked):
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(111)
 
-    for sim_name, metrics in unpacked.items():
+    optimal_name = 'dyn'
 
-        dx = metrics['dx']
-        du = metrics['du']
+    for (sim_name, world), (_, metrics) in zip(unpacked_worlds.items(),
+            unpacked_batch_metrics.items()):
+
         dim = metrics['dim']
-        nagents = metrics['nagents']
-        ntargets = metrics['ntargets']
         tout = metrics['tout']
         yout = metrics['yout']
-        stationary_states = metrics['stationary_states']
 
-        assignment_switches = post_process.find_switches(tout, yout, nagents, ntargets, dx, dx)
+        # TODO assumes scenario='Intercept'
+        agent_mas = world.get_multi_object('Agent_MAS')
+        target_mas = world.get_multi_object('Target_MAS')
+        nagents = agent_mas.nagents
+        ntargets = target_mas.nagents
+        total_mas_dx = np.sum([agent.dx for agent in agent_mas.agent_list])
+        total_mas_du = np.sum([agent.du for agent in agent_mas.agent_list])
+        total_target_dx = np.sum([target.dx for target in target_mas.agent_list])
+        total_target_du = np.sum([target.du for target in target_mas.agent_list])
 
-        agent_traj_label = 'Agent Path (Custom)'
+        # assignment_switches = post_process.find_switches(tout, yout, nagents, ntargets, dx, dx)
+
+        agent_traj_label = 'Agent Path (Dyn)'
         agent_start_pt_label = 'Agent Start'
         target_start_pt_label = 'Target Start'
         target_traj_label = 'Target Path'
         stationary_pt_label = 'Terminal State'
 
-        # TEST # TODO REMOVE EVENTUALLY
-        if dx == 12:
-            agent_model = 'Linearized_Quadcopter'
-            target_model = 'Linearized_Quadcopter'
-            labels = [agent_traj_label, agent_start_pt_label, target_start_pt_label, target_traj_label, stationary_pt_label]
-            plot_params = [linewidth, linewidth_3d, markersize, scatter_width, textsize, fontsize, fontweight, labelsize, axispad, labelpad]
-            figures = [(fig, ax), (fig2, ax2)]
-            plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states,
-                    assignment_switches, labels)
-            continue
-        if dx == 6:
-            agent_model = 'Double_Integrator'
-            target_model = 'Double_Integrator'
+        # # TEST # TODO REMOVE EVENTUALLY
+        # if dx == 12:
+        #     agent_model = 'Linearized_Quadcopter'
+        #     target_model = 'Linearized_Quadcopter'
+        #     labels = [agent_traj_label, agent_start_pt_label, target_start_pt_label, target_traj_label, stationary_pt_label]
+        #     plot_params = [linewidth, linewidth_3d, markersize, scatter_width, textsize, fontsize, fontweight, labelsize, axispad, labelpad]
+        #     figures = [(fig, ax), (fig2, ax2)]
+        #     plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states,
+        #             assignment_switches, labels)
+        #     continue
+        # if dx == 6:
+        #     agent_model = 'Double_Integrator'
+        #     target_model = 'Double_Integrator'
 
-        if dim == 2: # and agent/target models both double integrator (omit requirement for now)
+        ### Agent / Target Trajectories
+        # optimal trajectories (solid lines)
+        if sim_name == 'dyn':
 
-            ### Agent / Target Trajectories
-            # optimal trajectories (solid lines)
-            if sim_name == 'AssignmentCustom':
+            for agent in agent_mas.agent_list:
 
-                for zz in range(nagents):
+                dyn_model = agent.type
 
-                    if zz >= 1:
-                        agent_traj_label = '__nolabel__'
-                        agent_start_pt_label = '__nolabel__'
-                        target_start_pt_label = '__nolabel__'
-                        target_traj_label = '__nolabel__'
+                statespace = agent.get_statespace()
+                agent_dim_pos = statespace['position']
+                x_pos = agent_dim_pos[0]
+                y_pos = agent_dim_pos[1]
+                z_pos = None
+                if dim == 3:
+                    z_pos = agent_dim_pos[2]
 
-                    # agent state over time
-                    y_agent = yout[:, zz*dx:(zz+1)*dx]
+                # only need one label representing 'agents'
+                if agent.ID >= 1:
+                    agent_traj_label = '__nolabel__'
+                    agent_start_pt_label = '__nolabel__'
 
-                    # plot agent trajectory with text
-                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', markersize=markersize, label=agent_start_pt_label)
-                    ax.plot(y_agent[:, 0], y_agent[:, 1], '-r', linewidth=linewidth, label=agent_traj_label)
-                    ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
+                # agent state over time
+                ag_start_ind, ag_end_ind = world.get_object_world_state_index(agent.ID)
+                agent_state_history = yout[:, ag_start_ind:ag_end_ind]
+                y_agent = agent_state_history
 
-                    # # plot location of assignment switches
-                    # patches = []
-                    # for switch_ind in assignment_switches[zz]:
-                    #     ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='b', fill=True)
-                    #     patches.append(ci)
-                    # p = PatchCollection(patches)
-                    # ax.add_collection(p)
+                # plot agent trajectory with text
+                if dim == 2:
+                    ax.plot(y_agent[0, x_pos], y_agent[0, y_pos], 'rs', markersize=markersize,
+                            label=agent_start_pt_label)
+                    ax.plot(y_agent[:, x_pos], y_agent[:, y_pos], '-r', linewidth=linewidth,
+                            label=agent_traj_label)
+                    ax.text(y_agent[0, x_pos], y_agent[0, y_pos], 'A{0}'.format(agent.ID),
+                            fontsize=textsize)
+                elif dim == 3:
+                    ax.scatter3D(y_agent[0, x_pos], y_agent[0, y_pos], y_agent[0, z_pos], color='r',
+                            s=scatter_width, label=agent_start_pt_label)
+                    ax.plot3D(y_agent[:, x_pos], y_agent[:, y_pos], y_agent[:, z_pos], '-r',
+                            linewidth=linewidth_3d, label=agent_traj_label)
+                    ax.text(y_agent[0, x_pos], y_agent[0, y_pos], y_agent[0, z_pos],
+                            'A{0}'.format(agent.ID), fontsize=textsize)
 
-                    # plot target trajectory
-                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs', markersize=markersize, label=target_start_pt_label)
-                    ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth, label=target_traj_label)
-                    ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
+                    # >> 2d slice view <<
+                    ax2.plot(y_agent[:, x_pos], y_agent[:, y_pos], '-r', linewidth=linewidth,
+                            label=agent_traj_label)
+                    # points
+                    ax2.plot(y_agent[0, x_pos], y_agent[0, y_pos], 'ro', markersize=markersize,
+                            label=agent_start_pt_label)
+                    # text
+                    ax2.text(y_agent[0, x_pos], y_agent[0, y_pos], 'A{0}'.format(agent.ID),
+                            fontsize=textsize)
 
-                # TODO deprecated
+                # # plot location of assignment switches
+                # patches = []
+                # for switch_ind in assignment_switches[zz]:
+                #     ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='b', fill=True)
+                #     patches.append(ci)
+                # p = PatchCollection(patches)
+                # ax.add_collection(p)
+
+            for target in target_mas.agent_list:
+
+                dyn_model = target.type
+
+                statespace = target.get_statespace()
+                target_dim_pos = statespace['position']
+                x_pos = target_dim_pos[0]
+                y_pos = target_dim_pos[1]
+                z_pos = None
+                if dim == 3:
+                    z_pos = target_dim_pos[2]
+
+                # only need one label representing 'agents'
+                if target.ID >= 1:
+                    target_start_pt_label = '__nolabel__'
+                    target_traj_label = '__nolabel__'
+
+                # agent state over time
+                target_start_ind, target_end_ind = world.get_object_world_state_index(target.ID)
+                target_state_history = yout[:, target_start_ind:target_end_ind]
+                y_target = target_state_history
+
+                # plot target trajectory
+                if dim == 2:
+                    ax.plot(y_target[0, x_pos], y_target[0, y_pos], 'bs', markersize=markersize,
+                            label=target_start_pt_label)
+                    ax.plot(y_target[:, x_pos], y_target[:, y_pos], '-b', linewidth=linewidth,
+                        label=target_traj_label)
+                    ax.text(y_target[0, x_pos], y_target[0, y_pos], 'T{0}'.format(target.ID),
+                            fontsize=textsize)
+                elif dim == 3:
+                    ax.scatter3D(y_target[0, x_pos], y_target[0, y_pos], y_target[0, z_pos], color='b',
+                            s=scatter_width, label=target_start_pt_label)
+                    ax.plot3D(y_target[:, x_pos], y_target[:, y_pos], y_target[:, z_pos], '-b',
+                            linewidth=linewidth_3d, label=target_traj_label)
+                    ax.text(y_target[0, x_pos], y_target[0, y_pos], y_target[0, z_pos],
+                            'T{0}'.format(target.ID), fontsize=textsize)
+
+                    # >> 2d slice view <<
+                    ax2.plot(y_target[:, x_pos], y_target[:, y_pos], '-b', linewidth=linewidth,
+                            label=target_traj_label)
+
+                    # points
+                    ax2.plot(y_target[0, x_pos], y_target[0, y_pos], 'bo', markersize=markersize,
+                            label=target_start_pt_label)
+
+                    # text
+                    ax2.text(y_target[0, x_pos], y_target[0, y_pos], 'T{0}'.format(target.ID),
+                            fontsize=textsize)
+
                 # ### stationary points
-                # for zz in range(ntargets):
+                # if target.ID >= 1:
+                #     stationary_pt_label = '__nolabel__'
 
-                #     if zz >= 1:
-                #         stationary_pt_label = '__nolabel__'
+                # terminal_state = target.pol.const
 
-                #     offset = stationary_states[zz*dx:(zz+1)*dx]
-                #     ax.plot(offset[0], offset[1], 'ks', markersize=markersize, label=stationary_pt_label)
-                #     ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
+                # if dim == 2:
+                #     ax.plot(terminal_state[x_pos], terminal_state[y_pos], 'ks',
+                #             markersize=markersize, label=stationary_pt_label)
+                #     ax.text(terminal_state[x_pos], terminal_state[y_pos], 'C{0}'.format(target.ID),
+                #             fontsize=textsize)
+                # if dim == 3:
+                #     ax.scatter3D(terminal_state[x_pos], terminal_state[y_pos],
+                #             terminal_state[z_pos], color='k', s=scatter_width,
+                #             label=stationary_pt_label)
+                #     ax.text(terminal_state[x_pos], terminal_state[y_pos], terminal_state[z_pos],
+                #             'C{0}'.format(target.ID), fontsize=textsize)
 
-                ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-                ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+                #     # >> 2d slice view <<
+                #     ax2.plot(terminal_state[0], terminal_state[1], 'ko', markersize=markersize,
+                #             label=stationary_pt_label)
+                #     ax2.text(terminal_state[0], terminal_state[1], 'C{0}'.format(target.ID),
+                #             fontsize=textsize)
 
-            elif sim_name == 'AssignmentEMD':
 
-                agent_traj_label = 'Agent Path (EMD)'
+            ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+            ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+            if dim == 3:
+                ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
 
-                # non-optimal trajectories (dotted lines)
-                for zz in range(nagents):
+        elif sim_name == 'emd':
 
-                    if zz >= 1:
-                        agent_traj_label = '__nolabel__'
+            # dotted lines for emd
 
-                    # agent state over time
-                    y_agent = yout[:, zz*dx:(zz+1)*dx]
+            agent_traj_label = 'Agent Path (EMD)'
 
-                    # plot agent trajectory with text
-                    ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', markersize=markersize)
-                    ax.plot(y_agent[:, 0], y_agent[:, 1], '--r', linewidth=linewidth, label=agent_traj_label)
-                    ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
+            for agent in agent_mas.agent_list:
 
-                    # plot location of assignment switches
-                    # patches = []
-                    # for switch_ind in assignment_switches[zz]:
-                        # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
-                        # patches.append(ci)
-                        # ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms', markersize=markersize)
+                dyn_model = agent.type
 
-                    # p = PatchCollection(patches)
-                    # ax.add_collection(p)
+                statespace = agent.get_statespace()
+                agent_dim_pos = statespace['position']
+                x_pos = agent_dim_pos[0]
+                y_pos = agent_dim_pos[1]
+                z_pos = None
+                if dim == 3:
+                    z_pos = agent_dim_pos[2]
 
-                    # plot target trajectory
-                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.plot(y_target[0, 0], y_target[0, 1], 'bs', markersize=markersize)
-                    ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth)
-                    ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
+                # only need one label representing 'agents'
+                if agent.ID >= 1:
+                    agent_traj_label = '__nolabel__'
 
-                # TODO deprecated
+                # agent state over time
+                ag_start_ind, ag_end_ind = world.get_object_world_state_index(agent.ID)
+                agent_state_history = yout[:, ag_start_ind:ag_end_ind]
+                y_agent = agent_state_history
+
+                # plot agent trajectory with text
+                if dim == 2:
+                    ax.plot(y_agent[0, x_pos], y_agent[0, y_pos], 'rs', markersize=markersize,
+                            label=agent_start_pt_label)
+                    ax.plot(y_agent[:, x_pos], y_agent[:, y_pos], '--r', linewidth=linewidth,
+                            label=agent_traj_label)
+                    ax.text(y_agent[0, x_pos], y_agent[0, y_pos], 'A{0}'.format(agent.ID),
+                            fontsize=textsize)
+                elif dim == 3:
+                    ax.scatter3D(y_agent[0, x_pos], y_agent[0, y_pos], y_agent[0, z_pos], color='r',
+                            s=scatter_width, label=agent_start_pt_label)
+                    ax.plot3D(y_agent[:, x_pos], y_agent[:, y_pos], y_agent[:, z_pos], '--r',
+                            linewidth=linewidth_3d, label=agent_traj_label)
+                    ax.text(y_agent[0, x_pos], y_agent[0, y_pos], y_agent[0, z_pos],
+                            'A{0}'.format(agent.ID), fontsize=textsize)
+
+                    # >> 2d slice view <<
+                    ax2.plot(y_agent[:, x_pos], y_agent[:, y_pos], '--r', linewidth=linewidth,
+                            label=agent_traj_label)
+                    # points
+                    ax2.plot(y_agent[0, x_pos], y_agent[0, y_pos], 'ro', markersize=markersize,
+                            label=agent_start_pt_label)
+                    # text
+                    ax2.text(y_agent[0, x_pos], y_agent[0, y_pos], 'A{0}'.format(agent.ID),
+                            fontsize=textsize)
+
+                # # plot location of assignment switches
+                # patches = []
+                # for switch_ind in assignment_switches[zz]:
+                #     ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='b', fill=True)
+                #     patches.append(ci)
+                # p = PatchCollection(patches)
+                # ax.add_collection(p)
+
+            for target in target_mas.agent_list:
+
+                dyn_model = target.type
+
+                statespace = target.get_statespace()
+                target_dim_pos = statespace['position']
+                x_pos = target_dim_pos[0]
+                y_pos = target_dim_pos[1]
+                z_pos = None
+                if dim == 3:
+                    z_pos = target_dim_pos[2]
+
+                # only need one label representing 'agents'
+                if target.ID >= 1:
+                    target_start_pt_label = '__nolabel__'
+                    target_traj_label = '__nolabel__'
+
+                # agent state over time
+                target_start_ind, target_end_ind = world.get_object_world_state_index(target.ID)
+                target_state_history = yout[:, target_start_ind:target_end_ind]
+                y_target = target_state_history
+
+                # plot target trajectory
+                if dim == 2:
+                    ax.plot(y_target[0, x_pos], y_target[0, y_pos], 'bs', markersize=markersize,
+                            label=target_start_pt_label)
+                    ax.plot(y_target[:, x_pos], y_target[:, y_pos], '-b', linewidth=linewidth,
+                        label=target_traj_label)
+                    ax.text(y_target[0, x_pos], y_target[0, y_pos], 'T{0}'.format(target.ID),
+                            fontsize=textsize)
+                elif dim == 3:
+                    ax.scatter3D(y_target[0, x_pos], y_target[0, y_pos], y_target[0, z_pos], color='b',
+                            s=scatter_width, label=target_start_pt_label)
+                    ax.plot3D(y_target[:, x_pos], y_target[:, y_pos], y_target[:, z_pos], '-b',
+                            linewidth=linewidth_3d, label=target_traj_label)
+                    ax.text(y_target[0, x_pos], y_target[0, y_pos], y_target[0, z_pos],
+                            'T{0}'.format(target.ID), fontsize=textsize)
+
+                    # >> 2d slice view <<
+                    ax2.plot(y_target[:, x_pos], y_target[:, y_pos], '-b', linewidth=linewidth,
+                            label=target_traj_label)
+
+                    # points
+                    ax2.plot(y_target[0, x_pos], y_target[0, y_pos], 'bo', markersize=markersize,
+                            label=target_start_pt_label)
+
+                    # text
+                    ax2.text(y_target[0, x_pos], y_target[0, y_pos], 'T{0}'.format(target.ID),
+                            fontsize=textsize)
+
                 # ### stationary points
-                # for zz in range(ntargets):
+                # if target.ID >= 1:
+                #     stationary_pt_label = '__nolabel__'
 
-                #     if zz >= 1:
-                #         stationary_pt_label = '__nolabel__'
+                # terminal_state = target.pol.const
 
-                #     offset = stationary_states[zz*dx:(zz+1)*dx]
-                #     ax.plot(offset[0], offset[1], 'ks', markersize=markersize)
-                #     ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
+                # if dim == 2:
+                #     ax.plot(terminal_state[x_pos], terminal_state[y_pos], 'ks',
+                #             markersize=markersize, label=stationary_pt_label)
+                #     ax.text(terminal_state[x_pos], terminal_state[y_pos], 'C{0}'.format(target.ID),
+                #             fontsize=textsize)
+                # if dim == 3:
+                #     ax.scatter3D(terminal_state[x_pos], terminal_state[y_pos],
+                #             terminal_state[z_pos], color='k', s=scatter_width,
+                #             label=stationary_pt_label)
+                #     ax.text(terminal_state[x_pos], terminal_state[y_pos], terminal_state[z_pos],
+                #             'C{0}'.format(target.ID), fontsize=textsize)
 
-                ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-                ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+                #     # >> 2d slice view <<
+                #     ax2.plot(terminal_state[0], terminal_state[1], 'ko', markersize=markersize,
+                #             label=stationary_pt_label)
+                #     ax2.text(terminal_state[0], terminal_state[1], 'C{0}'.format(target.ID),
+                #             fontsize=textsize)
 
-            # dim == 2
+            ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+            ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+            if dim == 3:
+                ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
+
+        if dim == 2:
             ax.xaxis.set_tick_params(labelsize=labelsize)
             ax.yaxis.set_tick_params(labelsize=labelsize)
+        if dim == 3:
+            ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+            ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
+            ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
+
+            ax2.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
+            ax2.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
 
         # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
-        ax.legend(loc='lower right', fontsize=14)
-
-        if dim == 3:
-
-            # optimal trajectories (solid lines)
-            if sim_name == 'AssignmentCustom':
-
-                # agent/target trajectories
-                for zz in range(nagents):
-
-                    # avoid repeated legend entries
-                    if zz >= 1:
-                        agent_traj_label = '__nolabel__'
-                        agent_start_pt_label = '__nolabel__'
-                        target_start_pt_label = '__nolabel__'
-                        target_traj_label = '__nolabel__'
-
-                    # agent state over time
-                    y_agent = yout[:, zz*dx:(zz+1)*dx]
-
-                    # plot agent trajectory with text
-                    ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r', s=scatter_width, label=agent_start_pt_label)
-                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r', linewidth=linewidth_3d, label=agent_traj_label)
-                    ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz), fontsize=textsize)
-
-                    # # plot location of assignment switches
-                    # for switch_ind in assignment_switches[zz]:
-                    #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
-
-                    # plot target trajectory
-                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b', s=scatter_width, label=target_start_pt_label)
-                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b', linewidth=linewidth_3d, label=target_traj_label)
-                    ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
-
-                    # TEST
-                    # TODO 2d slice
-                    # trajectories
-                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '-r', linewidth=linewidth, label=agent_traj_label)
-                    ax2.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth, label=target_traj_label)
-
-                    # points
-                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', markersize=markersize, label=agent_start_pt_label)
-                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', markersize=markersize, label=target_start_pt_label)
-
-                    # text
-                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
-                    ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
-
-                # TODO deprecated
-                # ### stationary points
-                # for zz in range(ntargets):
-
-                #     if zz >= 1:
-                #         stationary_pt_label = '__nolabel__'
-
-                #     offset = stationary_states[zz*dx:(zz+1)*dx]
-                #     ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
-                #     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
-                #     # TEST
-                #     # TODO 2d slice
-                #     ax2.plot(offset[0], offset[1], 'ko', markersize=markersize, label=stationary_pt_label)
-                #     ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
-
-                ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-                ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-                ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
-
-                ax2.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-                ax2.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-
-            elif sim_name == 'AssignmentEMD':
-                # non-optimal trajectories (dotted lines)
-
-                agent_traj_label = 'Agent Path (EMD)'
-
-                # agent/target trajectories
-                for zz in range(nagents):
-
-                    # avoid repeated legend entries
-                    if zz >= 1:
-                        agent_traj_label = '__nolabel__'
-
-                    # agent state over time
-                    y_agent = yout[:, zz*dx:(zz+1)*dx]
-
-                    # plot agent trajectory with text
-                    ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
-                    ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '--r', linewidth=linewidth_3d, label=agent_traj_label)
-                    ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz), fontsize=textsize)
-
-                    # # plot location of assignment switches
-                    # for switch_ind in assignment_switches[zz]:
-                    #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
-
-                    # plot target trajectory
-                    y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                    ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
-                    ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
-                    ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
-
-                    # TEST
-                    # TODO 2d slice
-                    # trajectories
-                    ax2.plot(y_agent[:, 0], y_agent[:, 1], '--r', linewidth=linewidth, label=agent_traj_label)
-                    ax2.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth)
-
-                    # points
-                    ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', markersize=markersize)
-                    ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', markersize=markersize)
-
-                    # text
-                    ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
-                    ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
-
-                # TODO deprecated
-                # # stationary locations
-                # for zz in range(ntargets):
-                #     offset = stationary_states[zz*dx:(zz+1)*dx]
-                #     ax.scatter3D(offset[0], offset[1], offset[2], color='k')
-                #     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
-                #     # TEST
-                #     # TODO 2d slice
-                #     ax2.plot(offset[0], offset[1], 'ko', markersize=markersize)
-                #     ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
-
-                ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-                ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-                ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
-
-                ax2.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-                ax2.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-
-            # dim = 3
+        # ax.legend(loc='lower right', fontsize=14)
 
             tick_spacing = 1000
             ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
@@ -714,318 +777,19 @@ def plot_trajectory(unpacked):
         # labels = [labels[1], labels[0], labels[2], labels[3]]
         # handles = [handles[1], handles[0], handles[2], handles[3]]
 
-        legend = ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
+        # legend = ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
         # legend.remove()
 
-        if dim == 2:
-            ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
+        # if dim == 2:
+        #     ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
 
-        if dim == 3:
-            # ax2.legend(loc='lower right', fontsize=fontsize-4)
-            ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
+        # if dim == 3:
+        #     # ax2.legend(loc='lower right', fontsize=fontsize-4)
+        #     ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
 
-# ************ TEST LINEARIZED QC ***************
-def plot_trajectory_qc(figures, plot_params, sim_name, dx, du, dim, nagents, ntargets, tout, yout, stationary_states, assignment_switches, labels):
+    plt.tight_layout()
+    plt.savefig("trajectories.pdf", bbox_inches='tight')
 
-    """ Plots trajectory in 2D/3D for homogeneous identical linearized quadcopter
-    """
-
-    # plot parameters
-    fig = figures[0][0]
-    ax = figures[0][1]
-    fig2 = figures[1][0]
-    ax2 = figures[1][1]
-
-    linewidth = plot_params[0]
-    linewidth_3d = plot_params[1]
-    markersize = plot_params[2]
-    scatter_width = plot_params[3]
-    textsize = plot_params[4]
-    fontsize = plot_params[5]
-    fontweight = plot_params[6]
-    labelsize = plot_params[7]
-    axispad = plot_params[8]
-    labelpad = plot_params[9] + 4
-
-    agent_traj_label = labels[0]
-    agent_start_pt_label = labels[1]
-    target_start_pt_label = labels[2]
-    target_traj_label = labels[3]
-    stationary_pt_label = labels[4]
-
-    if dim == 2:
-
-        ### Agent / Target Trajectories
-        # optimal trajectories (solid lines)
-        if sim_name == 'AssignmentCustom':
-
-            for zz in range(nagents):
-
-                if zz >= 1:
-                    agent_traj_label = '__nolabel__'
-                    agent_start_pt_label = '__nolabel__'
-                    target_start_pt_label = '__nolabel__'
-                    target_traj_label = '__nolabel__'
-
-                # agent state over time
-                y_agent = yout[:, zz*dx:(zz+1)*dx]
-
-                # plot agent trajectory with text
-                ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', markersize=markersize, label=agent_start_pt_label)
-                ax.plot(y_agent[:, 0], y_agent[:, 1], '-r', linewidth=linewidth, label=agent_traj_label)
-                ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
-
-                # plot location of assignment switches
-                patches = []
-                for switch_ind in assignment_switches[zz]:
-                    ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 0.2, color='b', fill=True)
-                    patches.append(ci)
-
-                p = PatchCollection(patches)
-                ax.add_collection(p)
-
-                # plot target trajectory
-                y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                ax.plot(y_target[0, 0], y_target[0, 1], 'bs', markersize=markersize, label=target_start_pt_label)
-                ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth, label=target_traj_label)
-                ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
-
-            # ### stationary points
-            # for zz in range(ntargets):
-
-            #     if zz >= 1:
-            #         stationary_pt_label = '__nolabel__'
-
-            #     offset = stationary_states[zz*dx:(zz+1)*dx]
-            #     ax.plot(offset[0], offset[1], 'ks', markersize=markersize, label=stationary_pt_label)
-            #     ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
-
-            ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-            ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-
-        elif sim_name == 'AssignmentEMD':
-
-            agent_traj_label = 'Agent Path (EMD)'
-
-            # non-optimal trajectories (dotted lines)
-            for zz in range(nagents):
-
-                if zz >= 1:
-                    agent_traj_label = '__nolabel__'
-
-                # agent state over time
-                y_agent = yout[:, zz*dx:(zz+1)*dx]
-
-                # plot agent trajectory with text
-                ax.plot(y_agent[0, 0], y_agent[0, 1], 'rs', markersize=markersize)
-                ax.plot(y_agent[:, 0], y_agent[:, 1], '--r', linewidth=linewidth, label=agent_traj_label)
-                ax.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
-
-                # plot location of assignment switches
-                # patches = []
-                # for switch_ind in assignment_switches[zz]:
-                    # ci = Circle( (y_agent[switch_ind, 0], y_agent[switch_ind, 1]), 2, color='m', fill=True)
-                    # patches.append(ci)
-                    # ax.plot(y_agent[switch_ind, 0], y_agent[switch_ind, 1], 'ms', markersize=markersize)
-
-                # p = PatchCollection(patches)
-                # ax.add_collection(p)
-
-                # plot target trajectory
-                y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                ax.plot(y_target[0, 0], y_target[0, 1], 'bs', markersize=markersize)
-                ax.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth)
-                ax.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
-
-            # ### stationary points
-            # for zz in range(ntargets):
-
-            #     if zz >= 1:
-            #         stationary_pt_label = '__nolabel__'
-
-            #     offset = stationary_states[zz*dx:(zz+1)*dx]
-            #     ax.plot(offset[0], offset[1], 'ks', markersize=markersize)
-            #     ax.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
-
-            ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-            ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-
-        # dim == 2
-        ax.xaxis.set_tick_params(labelsize=labelsize)
-        ax.yaxis.set_tick_params(labelsize=labelsize)
-
-    # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
-    ax.legend(loc='lower right', fontsize=14)
-
-
-    if dim == 3:
-
-        # optimal trajectories (solid lines)
-        if sim_name == 'AssignmentCustom':
-
-            # agent/target trajectories
-            for zz in range(nagents):
-
-                # avoid repeated legend entries
-                if zz >= 1:
-                    agent_traj_label = '__nolabel__'
-                    agent_start_pt_label = '__nolabel__'
-                    target_start_pt_label = '__nolabel__'
-                    target_traj_label = '__nolabel__'
-
-                # agent state over time
-                y_agent = yout[:, zz*dx:(zz+1)*dx]
-
-                # plot agent trajectory with text
-                ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r', s=scatter_width, label=agent_start_pt_label)
-                ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '-r', linewidth=linewidth_3d, label=agent_traj_label)
-                ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz), fontsize=textsize)
-
-                # # plot location of assignment switches
-                # for switch_ind in assignment_switches[zz]:
-                #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
-
-                # plot target trajectory
-                y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b', s=scatter_width, label=target_start_pt_label)
-                ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b', linewidth=linewidth_3d, label=target_traj_label)
-                ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
-
-                # TEST
-                # TODO 2d slice
-                # trajectories
-                ax2.plot(y_agent[:, 0], y_agent[:, 1], '-r', linewidth=linewidth, label=agent_traj_label)
-                ax2.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth, label=target_traj_label)
-
-                # points
-                ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', markersize=markersize, label=agent_start_pt_label)
-                ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', markersize=markersize, label=target_start_pt_label)
-
-                # text
-                ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
-                ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
-
-            # ### stationary points
-            # for zz in range(ntargets):
-
-            #     if zz >= 1:
-            #         stationary_pt_label = '__nolabel__'
-
-            #     offset = stationary_states[zz*dx:(zz+1)*dx]
-            #     ax.scatter3D(offset[0], offset[1], offset[2], color='k', s=scatter_width, label=stationary_pt_label)
-            #     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
-            #     # TEST
-            #     # TODO 2d slice
-            #     ax2.plot(offset[0], offset[1], 'ko', markersize=markersize, label=stationary_pt_label)
-            #     ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
-
-            ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-            ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-            ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
-
-            ax2.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-            ax2.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-
-        elif sim_name == 'AssignmentEMD':
-            # non-optimal trajectories (dotted lines)
-
-            agent_traj_label = 'Agent Path (EMD)'
-
-            # agent/target trajectories
-            for zz in range(nagents):
-
-                # avoid repeated legend entries
-                if zz >= 1:
-                    agent_traj_label = '__nolabel__'
-
-                # agent state over time
-                y_agent = yout[:, zz*dx:(zz+1)*dx]
-
-                # plot agent trajectory with text
-                ax.scatter3D(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], color='r')
-                ax.plot3D(y_agent[:, 0], y_agent[:, 1], y_agent[:, 2], '--r', linewidth=linewidth_3d, label=agent_traj_label)
-                ax.text(y_agent[0, 0], y_agent[0, 1], y_agent[0, 2], 'A{0}'.format(zz), fontsize=textsize)
-
-                # # plot location of assignment switches
-                # for switch_ind in assignment_switches[zz]:
-                #     ax.scatter3D(y_agent[switch_ind, 0], y_agent[switch_ind, 1], y_agent[switch_ind, 2], color='m') # TODO
-
-                # plot target trajectory
-                y_target = yout[:, (zz+nagents)*dx:(zz+nagents+1)*dx]
-                ax.scatter3D(y_target[0, 0], y_target[0, 1], y_target[0, 2], color='b')
-                ax.plot3D(y_target[:, 0], y_target[:, 1], y_target[:, 2], '-b')
-                ax.text(y_target[0, 0], y_target[0, 1], y_target[0, 2], 'T{0}'.format(zz), fontsize=textsize)
-
-                # TEST
-                # TODO 2d slice
-                # trajectories
-                ax2.plot(y_agent[:, 0], y_agent[:, 1], '--r', linewidth=linewidth, label=agent_traj_label)
-                ax2.plot(y_target[:, 0], y_target[:, 1], '-b', linewidth=linewidth)
-
-                # points
-                ax2.plot(y_agent[0, 0], y_agent[0, 1], 'ro', markersize=markersize)
-                ax2.plot(y_target[0, 0], y_target[0, 1], 'bo', markersize=markersize)
-
-                # text
-                ax2.text(y_agent[0, 0], y_agent[0, 1], 'A{0}'.format(zz), fontsize=textsize)
-                ax2.text(y_target[0, 0], y_target[0, 1], 'T{0}'.format(zz), fontsize=textsize)
-
-            # # stationary locations
-            # for zz in range(ntargets):
-            #     offset = stationary_states[zz*dx:(zz+1)*dx]
-            #     ax.scatter3D(offset[0], offset[1], offset[2], color='k')
-            #     ax.text(offset[0], offset[1], offset[2], 'C{0}'.format(zz), fontsize=textsize)
-
-            #     # TEST
-            #     # TODO 2d slice
-            #     ax2.plot(offset[0], offset[1], 'ko', markersize=markersize)
-            #     ax2.text(offset[0], offset[1], 'C{0}'.format(zz), fontsize=textsize)
-
-            ax.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-            ax.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-            ax.set_zlabel("z", fontweight=fontweight, fontsize=fontsize)
-
-            ax2.set_xlabel("x", fontweight=fontweight, fontsize=fontsize)
-            ax2.set_ylabel("y", fontweight=fontweight, fontsize=fontsize)
-
-        # dim = 3
-
-        tick_spacing = 100
-        ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-        ax.yaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-        ax.zaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-
-        ax.xaxis.set_tick_params(labelsize=labelsize)
-        ax.yaxis.set_tick_params(labelsize=labelsize)
-        ax.zaxis.set_tick_params(labelsize=labelsize)
-
-        ax.tick_params(axis='x', which='major', pad=axispad)
-        ax.tick_params(axis='y', which='major', pad=axispad)
-        ax.tick_params(axis='z', which='major', pad=axispad)
-
-        ax.xaxis.labelpad = labelpad
-        ax.yaxis.labelpad = labelpad
-        ax.zaxis.labelpad = labelpad
-
-        ax.set_zlim3d(-100, 100)
-
-        # TEST
-        # TODO 2d slice
-        ax2.xaxis.set_tick_params(labelsize=labelsize)
-        ax2.yaxis.set_tick_params(labelsize=labelsize)
-
-    # ax.text2D(0.40, 0.95, 'Agent-Target Trajectories', fontweight='bold', fontsize=14, transform=ax.transAxes)
-    # ax.legend(loc='lower right', fontsize=fontsize)
-    legend = ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
-    # legend.remove()
-
-    if dim == 2:
-        ax.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
-
-    if dim == 3:
-        # ax2.legend(loc='lower right', fontsize=fontsize-4)
-        ax2.legend(loc='center left', bbox_to_anchor=(1.07, 0.5), fontsize=fontsize)
 
 def plot_assignment_comp_time(unpacked):
 
@@ -1094,7 +858,7 @@ def plot_runtimes(unpacked_ensemble_diagnostic):
     axs.xaxis.set_tick_params(labelsize=labelsize)
     axs.yaxis.set_tick_params(labelsize=labelsize)
 
-    labels = ['Custom', 'EMD']
+    labels = ['Dyn', 'EMD']
     axs.set_xlabel('Simulation', fontsize=fontsize)
     axs.set_ylabel('Runtime (s)', fontsize=fontsize)
 
